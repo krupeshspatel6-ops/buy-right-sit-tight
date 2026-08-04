@@ -1,0 +1,37 @@
+@import "tailwindcss";
+
+@theme {
+  --color-wall: #faf7f0;
+  --color-wall-dark: #f0ebe0;
+  --color-ink: #26241f;
+  --color-ink-soft: #6b675d;
+  --color-tape: #1e5fbf;
+  --color-gain: #1a7f4e;
+  --color-loss: #b3372f;
+  --font-book: Georgia, "Times New Roman", serif;
+}
+
+body {
+  background-color: var(--color-wall);
+  color: var(--color-ink);
+  font-family: var(--font-book);
+}
+
+.prose-book {
+  line-height: 1.75;
+  font-size: 1.0625rem;
+}
+.prose-book p { margin: 1em 0; }
+.prose-book h2 { font-size: 1.35rem; font-weight: 700; margin: 1.6em 0 0.6em; }
+.prose-book h3 { font-size: 1.15rem; font-weight: 700; margin: 1.4em 0 0.5em; }
+.prose-book ul, .prose-book ol { margin: 1em 0; padding-left: 1.5em; }
+.prose-book ul { list-style: disc; }
+.prose-book ol { list-style: decimal; }
+.prose-book blockquote {
+  border-left: 3px solid var(--color-tape);
+  padding-left: 1em;
+  color: var(--color-ink-soft);
+  font-style: italic;
+  margin: 1.2em 0;
+}
+.prose-book a { color: var(--color-tape); text-decoration: underline; }
