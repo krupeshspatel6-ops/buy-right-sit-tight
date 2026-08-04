@@ -30,13 +30,13 @@ Samuelson ("watching paint dry"). Sitting: Sarvesh.
 ## Stack
 
 Next.js (App Router) + Tailwind v4. Chapters are markdown files in
-`chapters/` — no database. Prices come from Stooq (free, no key) with
-1-hour revalidation; if Stooq is down the site renders with "—" in the
-performance cells.
+`chapters/` — no database. Prices come from Yahoo Finance's public chart
+API (free, no key) with 1-hour revalidation; if it's down the site renders
+with "—" in the performance cells.
 
 ```powershell
 npm install
-npm run dev        # http://localhost:3900
+npm run dev        # http://localhost:4000
 npm run typecheck  # must pass before committing
 ```
 

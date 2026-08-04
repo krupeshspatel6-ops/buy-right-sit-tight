@@ -1,6 +1,6 @@
-// Daily close prices from Stooq (free, no API key). Used to score each
-// chapter against SPY from its first buy date. If Stooq is unreachable the
-// site still renders — performance cells just show "—".
+// Daily close prices from Yahoo Finance's public chart API (free, no key).
+// Used to score each chapter against SPY from its first buy date. If the
+// API is unreachable the site still renders — performance cells show "—".
 
 import { Chapter, costBasis, firstBuyDate, totalShares } from "./chapters";
 
@@ -8,16 +8,24 @@ type Daily = { date: string; close: number };
 
 async function fetchDaily(symbol: string): Promise<Daily[]> {
   try {
-    const url = `https://stooq.com/q/d/l/?s=${symbol.toLowerCase()}.us&i=d`;
-    const res = await fetch(url, { next: { revalidate: 3600 } });
+    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(
+      symbol.toUpperCase()
+    )}?range=10y&interval=1d`;
+    const res = await fetch(url, {
+      headers: { "User-Agent": "Mozilla/5.0" },
+      next: { revalidate: 3600 },
+    });
     if (!res.ok) return [];
-    const text = await res.text();
-    const lines = text.trim().split("\n").slice(1); // drop header row
+    const json = await res.json();
+    const result = json?.chart?.result?.[0];
+    const ts: number[] = result?.timestamp ?? [];
+    const closes: Array<number | null> = result?.indicators?.quote?.[0]?.close ?? [];
     const rows: Daily[] = [];
-    for (const line of lines) {
-      const [date, , , , close] = line.split(",");
-      const c = Number(close);
-      if (date && Number.isFinite(c)) rows.push({ date, close: c });
+    for (let i = 0; i < ts.length; i++) {
+      const c = closes[i];
+      if (typeof c === "number" && Number.isFinite(c)) {
+        rows.push({ date: new Date(ts[i] * 1000).toISOString().slice(0, 10), close: c });
+      }
     }
     return rows;
   } catch {

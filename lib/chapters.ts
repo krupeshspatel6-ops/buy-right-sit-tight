@@ -29,6 +29,12 @@ export type Chapter = {
 
 const CHAPTERS_DIR = path.join(process.cwd(), "chapters");
 
+// YAML parses ISO timestamps into Date objects; normalize back to strings.
+function isoString(v: unknown): string {
+  if (v instanceof Date) return v.toISOString();
+  return String(v);
+}
+
 // Files starting with "_" (templates) or "00-" (preface) are not stock chapters.
 function isChapterFile(f: string): boolean {
   return f.endsWith(".md") && !f.startsWith("_") && !f.startsWith("00-");
@@ -48,8 +54,13 @@ export function loadChapters(): Chapter[] {
         title: String(data.title ?? ""),
         ticker: String(data.ticker ?? "").toUpperCase(),
         status: data.sell ? "closed" : "open",
-        buys: (data.buys ?? []) as Buy[],
-        sell: data.sell as Sell | undefined,
+        buys: ((data.buys ?? []) as Buy[]).map((b) => ({
+          ...b,
+          date: isoString(b.date),
+        })),
+        sell: data.sell
+          ? { ...(data.sell as Sell), date: isoString((data.sell as Sell).date) }
+          : undefined,
         exitTest: String(data.exitTest ?? ""),
         body: content.trim(),
       };
