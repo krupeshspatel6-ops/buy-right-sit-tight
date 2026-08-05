@@ -13,6 +13,9 @@ Samuelson ("watching paint dry"). Sitting: Sarvesh.
 2. Chapters are never edited after publication — corrections are appended, dated.
 3. Every chapter states on day one what would trigger a sell (the "exit test").
 4. Scoreboard = cost-weighted return vs SPY over the same windows, always visible.
+5. The book has exactly **100 chapters** — a lifetime punch card. Every buy
+   spends a slot. A budget, not a quota: no deadline, blank slots are fine.
+   The homepage wall fills 1% per chapter.
 
 ## How to publish a chapter (the whole workflow)
 

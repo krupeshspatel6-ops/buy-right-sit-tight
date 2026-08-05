@@ -21,6 +21,12 @@ The rules are simple:
    good ones.
 4. **Every chapter states, on day one, what would make me sell** — so
    future-me can't quietly rewrite the story.
+5. **The book has exactly 100 chapters.** Warren Buffett said you'd invest
+   better with a punch card that had twenty slots for your whole life. I'm
+   giving myself a hundred. Every buy spends a slot, permanently. When the
+   100th chapter opens, the book is written — and the sitting continues.
+   The 100 is a budget, not a quota: there is no deadline, and slots left
+   blank are a feature, not a failure.
 
 The scoreboard on the front page compares every dollar in this book with
 the same dollars put into the S&P 500 on the same days. If, after five

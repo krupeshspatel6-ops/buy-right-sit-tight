@@ -60,9 +60,31 @@ export default async function Home() {
         </div>
 
         <p className="mt-10 text-lg leading-relaxed">
-          This is a live book. Every stock I buy with my own money opens a new
-          chapter — timestamped the day it happens. A chapter only closes when I
-          sell. Most of them, I hope, will stay open for a very long time.
+          This is a live book with exactly <b>100 chapters</b> — a punch card
+          with 100 slots for the rest of my life. Every stock I buy with my own
+          money spends one slot and opens a new chapter, timestamped the day it
+          happens. A chapter only closes when I sell. Most of them, I hope,
+          will stay open for a very long time.
+        </p>
+      </section>
+
+      {/* The wall — 100-chapter progress */}
+      <section className="mx-auto max-w-3xl px-6 pb-14">
+        <div className="flex items-center justify-between text-sm text-ink-soft mb-2">
+          <span className="uppercase tracking-wide">The wall</span>
+          <span>
+            {chapters.length} of 100 chapters opened
+          </span>
+        </div>
+        <div className="h-3 rounded-full bg-wall-dark overflow-hidden">
+          <div
+            className="h-full bg-tape transition-all"
+            style={{ width: `${Math.min(chapters.length, 100)}%` }}
+          />
+        </div>
+        <p className="mt-2 text-sm text-ink-soft">
+          Each chapter paints 1% of the wall. When the wall is painted, the
+          book is written — and the sitting continues.
         </p>
       </section>
 
