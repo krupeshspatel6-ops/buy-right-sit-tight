@@ -52,7 +52,7 @@ export default async function Home() {
   const open = chapters.filter((c) => c.status === "open");
   const closed = chapters.filter((c) => c.status === "closed");
   const hasPhoto = fs.existsSync(path.join(process.cwd(), "public", "sitting.jpg"));
-  const coverImage = hasPhoto ? "/sitting.jpg" : "/sitting.svg";
+  const coverImage = hasPhoto ? "/sitting.jpg" : "/sitting-wide.svg";
 
   const pages: React.ReactNode[] = [];
   const sideToc: SideTocEntry[] = [];
@@ -69,8 +69,8 @@ export default async function Home() {
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={coverImage}
-          alt="A man sits in a folding chair with a mug, watching a half-painted wall dry"
-          className="h-[30vh] w-full object-cover object-[center_75%]"
+          alt="A wide room: a half-painted wall, and far across it a man sits in a folding chair with a mug, watching the paint dry"
+          className="h-[30vh] w-full object-cover object-center"
         />
         <span className="absolute right-5 top-4 inline-flex items-center gap-1.5 rounded-full bg-white/90 px-3 py-1 text-xs font-bold uppercase tracking-widest text-tape shadow-sm">
           <span className="live-dot live-dot-pulse" aria-hidden /> live
@@ -79,10 +79,8 @@ export default async function Home() {
 
       {/* title block — justify-evenly keeps everything on one screen */}
       <div className="flex min-h-0 flex-1 flex-col items-center justify-evenly px-8 py-4 text-center">
-        <h1 className="cover-title font-bold leading-[0.95] tracking-tight text-[min(8vh,4.5rem)]">
-          Buy Right
-          <br />
-          Sit Tight
+        <h1 className="cover-title whitespace-nowrap font-bold leading-none tracking-tight text-[min(6.5vh,5.8vw)]">
+          Buy Right Sit Tight
         </h1>
         <p className="tape-strip">watch the paint dry.</p>
 
@@ -359,12 +357,19 @@ export default async function Home() {
       key="back-cover"
       className="flex h-full min-h-[62vh] flex-col items-center justify-center text-center"
     >
-      <p className="text-3xl font-bold">The sitting continues.</p>
-      <p className="mt-6 text-ink-soft max-w-sm">
-        This book is still being written. Come back after the next buy — or in
-        five years, which is really the same thing.
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/sitting-done.svg"
+        alt="The wall is fully painted and the tools are gone, but the man is still sitting in his chair with a mug"
+        className="w-full max-w-[420px] rounded-md shadow-sm"
+      />
+      <p className="mt-8 text-3xl font-bold">The sitting continues.</p>
+      <p className="mt-5 text-ink-soft max-w-sm">
+        The wall got painted. The chair stayed. This book is still being
+        written — come back after the next buy, or in five years, which is
+        really the same thing.
       </p>
-      <p className="mt-10 text-sm text-ink-soft">
+      <p className="mt-8 text-sm text-ink-soft">
         Title: Thomas Phelps. Tagline: Paul Samuelson. Sitting: me.
       </p>
     </div>

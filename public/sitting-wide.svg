@@ -1,0 +1,55 @@
+<svg viewBox="0 0 2200 500" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="A wide room: a half-painted wall on the left, and far to the right a man sits in a folding chair with a mug, watching the paint dry.">
+  <!-- unpainted wall -->
+  <rect x="0" y="0" width="2200" height="400" fill="#f0ebe0"/>
+  <!-- painted (drying) area with a wavy roller edge -->
+  <path d="M0 0 H880 C895 40 865 70 882 110 C899 150 868 185 884 225 C900 265 870 300 886 340 C898 372 878 388 884 400 H0 Z" fill="#7fa3d1"/>
+  <!-- roller streaks in the wet paint -->
+  <rect x="90" y="30" width="40" height="340" rx="20" fill="#8db0da" opacity="0.55"/>
+  <rect x="240" y="18" width="40" height="360" rx="20" fill="#6f96c9" opacity="0.5"/>
+  <rect x="390" y="36" width="40" height="330" rx="20" fill="#8db0da" opacity="0.55"/>
+  <rect x="540" y="24" width="40" height="350" rx="20" fill="#6f96c9" opacity="0.5"/>
+  <rect x="690" y="32" width="40" height="340" rx="20" fill="#8db0da" opacity="0.55"/>
+  <!-- painter's tape along the ceiling line -->
+  <rect x="0" y="6" width="2200" height="13" fill="#e8c86e"/>
+  <!-- floor -->
+  <rect x="0" y="400" width="2200" height="100" fill="#d9d2c4"/>
+  <rect x="0" y="396" width="2200" height="7" fill="#c4bca9"/>
+  <!-- drop cloth -->
+  <path d="M520 420 L860 420 L895 488 L485 488 Z" fill="#e7e1d3"/>
+  <!-- paint tray + resting roller -->
+  <path d="M600 452 L720 452 L708 478 L612 478 Z" fill="#55524a"/>
+  <path d="M608 456 L712 456 L704 472 L616 472 Z" fill="#6f96c9"/>
+  <g transform="rotate(-24 738 430)">
+    <rect x="718" y="424" width="70" height="18" rx="9" fill="#8db0da"/>
+    <rect x="786" y="429" width="46" height="7" rx="3" fill="#8a857a"/>
+    <rect x="828" y="424" width="12" height="17" rx="4" fill="#b3372f"/>
+  </g>
+  <!-- the man and his chair, far across the room -->
+  <g transform="translate(950 0)">
+    <!-- folding chair (side view, facing the wall) -->
+    <g stroke="#2a2a2a" stroke-width="9" stroke-linecap="round" fill="none">
+      <line x1="560" y1="330" x2="640" y2="330"/>
+      <line x1="566" y1="330" x2="600" y2="398"/>
+      <line x1="634" y1="330" x2="596" y2="398"/>
+      <line x1="638" y1="330" x2="655" y2="240"/>
+    </g>
+    <rect x="644" y="236" width="24" height="70" rx="9" fill="#2a2a2a" transform="rotate(10 656 271)"/>
+    <!-- legs -->
+    <g stroke="#26241f" stroke-width="16" stroke-linecap="round" fill="none">
+      <path d="M612 318 L556 336 L552 392"/>
+    </g>
+    <path d="M552 388 L520 396 A8 8 0 0 0 522 406 L554 404 Z" fill="#26241f"/>
+    <!-- torso -->
+    <path d="M596 322 C588 300 588 262 600 244 C612 230 640 232 646 252 C652 274 650 306 642 326 Z" fill="#3c3a36"/>
+    <!-- arm holding the mug -->
+    <path d="M614 258 C598 264 586 272 578 282" stroke="#3c3a36" stroke-width="15" stroke-linecap="round" fill="none"/>
+    <!-- mug -->
+    <rect x="556" y="272" width="26" height="24" rx="4" fill="#faf7f0"/>
+    <path d="M556 278 a8 8 0 1 0 0 12" stroke="#faf7f0" stroke-width="5" fill="none"/>
+    <!-- steam -->
+    <path d="M563 264 c-4 -6 4 -10 0 -16 M573 264 c-4 -6 4 -10 0 -16" stroke="#c4bca9" stroke-width="3" stroke-linecap="round" fill="none"/>
+    <!-- head -->
+    <circle cx="618" cy="216" r="24" fill="#c08a5f"/>
+    <path d="M600 208 a24 24 0 0 1 38 -8 c2 -10 -8 -18 -20 -18 c-14 0 -22 12 -18 26 Z" fill="#26241f"/>
+  </g>
+</svg>

@@ -1,0 +1,39 @@
+<svg viewBox="0 0 800 500" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="The wall is fully painted and the tools are gone, but the man is still sitting in his folding chair with a mug.">
+  <!-- fully painted wall — the job is done -->
+  <rect x="0" y="0" width="800" height="400" fill="#7fa3d1"/>
+  <!-- dried, even roller passes -->
+  <rect x="40" y="14" width="40" height="372" rx="20" fill="#8db0da" opacity="0.45"/>
+  <rect x="160" y="14" width="40" height="372" rx="20" fill="#6f96c9" opacity="0.4"/>
+  <rect x="280" y="14" width="40" height="372" rx="20" fill="#8db0da" opacity="0.45"/>
+  <rect x="400" y="14" width="40" height="372" rx="20" fill="#6f96c9" opacity="0.4"/>
+  <rect x="520" y="14" width="40" height="372" rx="20" fill="#8db0da" opacity="0.45"/>
+  <rect x="660" y="14" width="40" height="372" rx="20" fill="#6f96c9" opacity="0.4"/>
+  <!-- floor -->
+  <rect x="0" y="400" width="800" height="100" fill="#d9d2c4"/>
+  <rect x="0" y="396" width="800" height="7" fill="#c4bca9"/>
+  <!-- the tools are gone; only the chair and the man remain -->
+  <g stroke="#2a2a2a" stroke-width="9" stroke-linecap="round" fill="none">
+    <line x1="460" y1="330" x2="540" y2="330"/>
+    <line x1="466" y1="330" x2="500" y2="398"/>
+    <line x1="534" y1="330" x2="496" y2="398"/>
+    <line x1="538" y1="330" x2="555" y2="240"/>
+  </g>
+  <rect x="544" y="236" width="24" height="70" rx="9" fill="#2a2a2a" transform="rotate(10 556 271)"/>
+  <!-- legs -->
+  <g stroke="#26241f" stroke-width="16" stroke-linecap="round" fill="none">
+    <path d="M512 318 L456 336 L452 392"/>
+  </g>
+  <path d="M452 388 L420 396 A8 8 0 0 0 422 406 L454 404 Z" fill="#26241f"/>
+  <!-- torso -->
+  <path d="M496 322 C488 300 488 262 500 244 C512 230 540 232 546 252 C552 274 550 306 542 326 Z" fill="#3c3a36"/>
+  <!-- arm holding the mug -->
+  <path d="M514 258 C498 264 486 272 478 282" stroke="#3c3a36" stroke-width="15" stroke-linecap="round" fill="none"/>
+  <!-- mug -->
+  <rect x="456" y="272" width="26" height="24" rx="4" fill="#faf7f0"/>
+  <path d="M456 278 a8 8 0 1 0 0 12" stroke="#faf7f0" stroke-width="5" fill="none"/>
+  <!-- steam -->
+  <path d="M463 264 c-4 -6 4 -10 0 -16 M473 264 c-4 -6 4 -10 0 -16" stroke="#c4bca9" stroke-width="3" stroke-linecap="round" fill="none"/>
+  <!-- head -->
+  <circle cx="518" cy="216" r="24" fill="#c08a5f"/>
+  <path d="M500 208 a24 24 0 0 1 38 -8 c2 -10 -8 -18 -20 -18 c-14 0 -22 12 -18 26 Z" fill="#26241f"/>
+</svg>
