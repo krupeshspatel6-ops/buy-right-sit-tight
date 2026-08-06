@@ -106,6 +106,12 @@ export default function CoverArt({ progress }: { progress: number }) {
           fill="none"
         />
         <circle cx="618" cy="216" r="24" fill="#c08a5f" />
+        {/* profile face: nose, eye, brow, mouth, ear */}
+        <path d="M597 210 C589 214 588 220 596 223 Z" fill="#c08a5f" />
+        <circle cx="603" cy="211" r="2.6" fill="#26241f" />
+        <path d="M599 206 L608 205" stroke="#26241f" strokeWidth="2" strokeLinecap="round" fill="none" />
+        <path d="M598 228 q5 3 10 1" stroke="#26241f" strokeWidth="2" strokeLinecap="round" fill="none" />
+        <circle cx="627" cy="217" r="5" fill="#b07a52" />
         <path
           d="M600 208 a24 24 0 0 1 38 -8 c2 -10 -8 -18 -20 -18 c-14 0 -22 12 -18 26 Z"
           fill="#26241f"

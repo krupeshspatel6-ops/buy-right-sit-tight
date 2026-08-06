@@ -35,5 +35,11 @@
   <path d="M463 264 c-4 -6 4 -10 0 -16 M473 264 c-4 -6 4 -10 0 -16" stroke="#c4bca9" stroke-width="3" stroke-linecap="round" fill="none"/>
   <!-- head -->
   <circle cx="518" cy="216" r="24" fill="#c08a5f"/>
+  <!-- profile face: nose, eye, brow, mouth, ear -->
+  <path d="M497 210 C489 214 488 220 496 223 Z" fill="#c08a5f"/>
+  <circle cx="503" cy="211" r="2.6" fill="#26241f"/>
+  <path d="M499 206 L508 205" stroke="#26241f" stroke-width="2" stroke-linecap="round" fill="none"/>
+  <path d="M498 228 q5 3 10 1" stroke="#26241f" stroke-width="2" stroke-linecap="round" fill="none"/>
+  <circle cx="527" cy="217" r="5" fill="#b07a52"/>
   <path d="M500 208 a24 24 0 0 1 38 -8 c2 -10 -8 -18 -20 -18 c-14 0 -22 12 -18 26 Z" fill="#26241f"/>
 </svg>
