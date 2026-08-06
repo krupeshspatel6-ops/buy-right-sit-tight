@@ -25,7 +25,7 @@ body {
 
 /* LIVE broadcast-style badge */
 .live-badge {
-  color: #c22a20;
+  color: var(--color-tape);
   font-weight: 700;
   animation: livePulse 1.6s ease-in-out infinite;
   white-space: nowrap;
@@ -35,7 +35,7 @@ body {
   width: 0.55em;
   height: 0.55em;
   border-radius: 9999px;
-  background: #c22a20;
+  background: var(--color-tape);
   margin-right: 0.3em;
   vertical-align: baseline;
 }
