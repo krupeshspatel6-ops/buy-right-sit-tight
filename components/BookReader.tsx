@@ -2,9 +2,32 @@
 
 import { useCallback, useEffect, useState } from "react";
 
-export default function BookReader({ pages }: { pages: React.ReactNode[] }) {
+export type SideTocEntry = {
+  label: string;
+  sub?: string;
+  pageIndex: number;
+};
+
+export default function BookReader({
+  pages,
+  sideToc,
+}: {
+  pages: React.ReactNode[];
+  sideToc?: SideTocEntry[];
+}) {
   const [index, setIndex] = useState(0);
   const [turn, setTurn] = useState<"next" | "prev" | null>(null);
+
+  const jumpTo = useCallback(
+    (target: number) => {
+      setIndex((i) => {
+        if (target === i || target < 0 || target >= pages.length) return i;
+        setTurn(target > i ? "next" : "prev");
+        return target;
+      });
+    },
+    [pages.length]
+  );
 
   const goTo = useCallback(
     (dir: "next" | "prev") => {
@@ -34,53 +57,84 @@ export default function BookReader({ pages }: { pages: React.ReactNode[] }) {
   }, [turn, index]);
 
   return (
-    <div className="book-stage mx-auto max-w-[880px] px-4">
-      <div
-        key={index}
-        className={`book-page relative min-h-[72vh] max-h-[80vh] overflow-y-auto px-8 py-10 sm:px-12 ${
-          turn === "next" ? "page-turn-next" : turn === "prev" ? "page-turn-prev" : ""
-        }`}
-      >
-        {pages[index]}
-        {/* edge click zones */}
-        {index > 0 && (
+    <div className="flex justify-center gap-8 px-4">
+      <div className="book-stage w-full max-w-[960px]">
+        <div
+          key={index}
+          className={`book-page relative min-h-[80vh] max-h-[86vh] overflow-y-auto px-8 py-12 sm:px-14 ${
+            turn === "next" ? "page-turn-next" : turn === "prev" ? "page-turn-prev" : ""
+          }`}
+        >
+          {pages[index]}
+          {/* edge click zones */}
+          {index > 0 && (
+            <button
+              aria-label="Previous page"
+              onClick={() => goTo("prev")}
+              className="absolute inset-y-0 left-0 w-14 cursor-w-resize"
+            />
+          )}
+          {index < pages.length - 1 && (
+            <button
+              aria-label="Next page"
+              onClick={() => goTo("next")}
+              className="absolute inset-y-0 right-0 w-14 cursor-e-resize"
+            />
+          )}
+        </div>
+
+        <div className="mt-4 flex items-center justify-between text-sm text-ink-soft">
           <button
-            aria-label="Previous page"
             onClick={() => goTo("prev")}
-            className="absolute inset-y-0 left-0 w-14 cursor-w-resize"
-          />
-        )}
-        {index < pages.length - 1 && (
+            disabled={index === 0}
+            className="px-3 py-1.5 rounded border border-wall-dark bg-white disabled:opacity-40"
+          >
+            ← Previous
+          </button>
+          <span>
+            Page {index + 1} of {pages.length}
+          </span>
           <button
-            aria-label="Next page"
             onClick={() => goTo("next")}
-            className="absolute inset-y-0 right-0 w-14 cursor-e-resize"
-          />
-        )}
+            disabled={index === pages.length - 1}
+            className="px-3 py-1.5 rounded border border-wall-dark bg-white disabled:opacity-40"
+          >
+            Turn the page →
+          </button>
+        </div>
+        <p className="mt-2 text-center text-xs text-ink-soft">
+          Tip: use ← → arrow keys, or click the page edges.
+        </p>
       </div>
 
-      <div className="mt-4 flex items-center justify-between text-sm text-ink-soft">
-        <button
-          onClick={() => goTo("prev")}
-          disabled={index === 0}
-          className="px-3 py-1.5 rounded border border-wall-dark bg-white disabled:opacity-40"
-        >
-          ← Previous
-        </button>
-        <span>
-          Page {index + 1} of {pages.length}
-        </span>
-        <button
-          onClick={() => goTo("next")}
-          disabled={index === pages.length - 1}
-          className="px-3 py-1.5 rounded border border-wall-dark bg-white disabled:opacity-40"
-        >
-          Turn the page →
-        </button>
-      </div>
-      <p className="mt-2 text-center text-xs text-ink-soft">
-        Tip: use ← → arrow keys, or click the page edges.
-      </p>
+      {sideToc && sideToc.length > 0 && (
+        <aside className="hidden xl:block w-64 shrink-0">
+          <div className="sticky top-10">
+            <h3 className="text-xs uppercase tracking-widest text-ink-soft mb-3">
+              In this book
+            </h3>
+            <ul className="space-y-1 text-sm">
+              {sideToc.map((t) => (
+                <li key={t.pageIndex}>
+                  <button
+                    onClick={() => jumpTo(t.pageIndex)}
+                    className={`w-full rounded px-3 py-1.5 text-left transition-colors ${
+                      index === t.pageIndex
+                        ? "bg-white font-semibold shadow-sm"
+                        : "text-ink-soft hover:bg-white/70"
+                    }`}
+                  >
+                    <span className="block">{t.label}</span>
+                    {t.sub && (
+                      <span className="block text-xs text-ink-soft">{t.sub}</span>
+                    )}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </aside>
+      )}
     </div>
   );
 }

@@ -20,10 +20,12 @@ export type Chapter = {
   chapter: number;
   title: string;
   ticker: string;
+  company?: string;
   status: "open" | "closed";
   buys: Buy[];
   sell?: Sell;
   exitTest: string;
+  proofs: string[]; // paths under /public — broker fill screenshots / statement excerpts
   body: string;
 };
 
@@ -53,6 +55,8 @@ export function loadChapters(): Chapter[] {
         chapter: Number(data.chapter),
         title: String(data.title ?? ""),
         ticker: String(data.ticker ?? "").toUpperCase(),
+        company: data.company ? String(data.company) : undefined,
+        proofs: ((data.proofs ?? []) as unknown[]).map(String),
         status: data.sell ? "closed" : "open",
         buys: ((data.buys ?? []) as Buy[]).map((b) => ({
           ...b,

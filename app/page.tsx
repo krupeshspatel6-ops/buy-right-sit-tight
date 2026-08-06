@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import Link from "next/link";
 import { marked } from "marked";
-import BookReader from "@/components/BookReader";
+import BookReader, { type SideTocEntry } from "@/components/BookReader";
 import {
   loadChapters,
   loadPreface,
@@ -55,8 +55,10 @@ export default async function Home() {
   const coverImage = hasPhoto ? "/sitting.jpg" : "/sitting.svg";
 
   const pages: React.ReactNode[] = [];
+  const sideToc: SideTocEntry[] = [];
 
   /* ---- Page: cover ---- */
+  sideToc.push({ label: "Cover", pageIndex: pages.length });
   pages.push(
     <div
       key="cover"
@@ -89,6 +91,7 @@ export default async function Home() {
   );
 
   /* ---- Page: the pledge ---- */
+  sideToc.push({ label: "The pledge", pageIndex: pages.length });
   pages.push(
     <div key="pledge" className="flex h-full min-h-[62vh] flex-col justify-center">
       <h2 className="text-2xl font-bold mb-6">The pledge</h2>
@@ -122,6 +125,7 @@ export default async function Home() {
 
   /* ---- Page: preface ---- */
   if (preface) {
+    sideToc.push({ label: "Preface", pageIndex: pages.length });
     pages.push(
       <div key="preface">
         <h2 className="text-2xl font-bold mb-6">Preface</h2>
@@ -134,6 +138,7 @@ export default async function Home() {
   }
 
   /* ---- Page: table of contents = the portfolio ---- */
+  sideToc.push({ label: "Table of contents", sub: "the portfolio", pageIndex: pages.length });
   pages.push(
     <div key="toc">
       <h2 className="text-2xl font-bold mb-2">Table of contents</h2>
@@ -200,6 +205,11 @@ export default async function Home() {
 
   /* ---- Pages: chapters, or the waiting page ---- */
   if (chapters.length === 0) {
+    sideToc.push({
+      label: "Chapter 1",
+      sub: "(waiting for the first buy)",
+      pageIndex: pages.length,
+    });
     pages.push(
       <div key="waiting" className="flex h-full min-h-[62vh] flex-col justify-center">
         <p className="text-sm uppercase tracking-widest text-ink-soft">Chapter One</p>
@@ -225,6 +235,11 @@ export default async function Home() {
     for (const c of chapters) {
       const perf = scoreboard.chapterPerfs.get(c.chapter);
       const avgCost = costBasis(c) / totalShares(c);
+      sideToc.push({
+        label: `Chapter ${c.chapter}`,
+        sub: c.company ? `${c.company} · ${c.ticker}` : c.ticker,
+        pageIndex: pages.length,
+      });
       pages.push(
         <div key={c.slug}>
           <div className="flex items-center gap-3">
@@ -240,7 +255,7 @@ export default async function Home() {
             </span>
           </div>
           <h2 className="text-3xl font-bold mt-1 mb-5">
-            {c.ticker} — {c.title}
+            {c.company ? `${c.company} (${c.ticker})` : c.ticker} — {c.title}
           </h2>
 
           <div className="rounded-lg border border-wall-dark overflow-hidden mb-5 text-sm">
@@ -280,6 +295,25 @@ export default async function Home() {
             </p>
           )}
 
+          {c.proofs.length > 0 && (
+            <div className="mb-5">
+              <h3 className="text-xs uppercase tracking-wide text-ink-soft mb-2">
+                Broker record
+              </h3>
+              <div className="flex flex-wrap gap-3">
+                {c.proofs.map((p) => (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    key={p}
+                    src={p}
+                    alt={`Broker record for chapter ${c.chapter}`}
+                    className="max-h-56 rounded border border-wall-dark"
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
           <article
             className="prose-book"
             dangerouslySetInnerHTML={{ __html: marked.parse(c.body) as string }}
@@ -295,6 +329,7 @@ export default async function Home() {
   }
 
   /* ---- Page: back cover ---- */
+  sideToc.push({ label: "Back cover", pageIndex: pages.length });
   pages.push(
     <div
       key="back-cover"
@@ -313,7 +348,7 @@ export default async function Home() {
 
   return (
     <main className="py-10 sm:py-14">
-      <BookReader pages={pages} />
+      <BookReader pages={pages} sideToc={sideToc} />
     </main>
   );
 }

@@ -61,7 +61,10 @@ export default async function ChapterPage({
             {chapter.status === "open" ? "still drying" : "dry"}
           </span>
         </div>
-        <h1 className="text-3xl sm:text-4xl font-bold mt-2">{chapter.title}</h1>
+        <h1 className="text-3xl sm:text-4xl font-bold mt-2">
+          {chapter.company ? `${chapter.company} (${chapter.ticker})` : chapter.ticker} —{" "}
+          {chapter.title}
+        </h1>
       </header>
 
       {/* The record */}
@@ -122,6 +125,26 @@ export default async function ChapterPage({
             The exit test — written on day one
           </h2>
           <p className="mt-1 text-lg italic">&ldquo;{chapter.exitTest}&rdquo;</p>
+        </section>
+      )}
+
+      {/* Broker record */}
+      {chapter.proofs.length > 0 && (
+        <section className="mt-6">
+          <h2 className="text-xs uppercase tracking-wide text-ink-soft mb-2">
+            Broker record
+          </h2>
+          <div className="flex flex-wrap gap-3">
+            {chapter.proofs.map((p) => (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                key={p}
+                src={p}
+                alt={`Broker record for chapter ${chapter.chapter}`}
+                className="max-h-72 rounded border border-wall-dark bg-white"
+              />
+            ))}
+          </div>
         </section>
       )}
 
