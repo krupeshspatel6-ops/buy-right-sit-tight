@@ -3,6 +3,7 @@ import path from "node:path";
 import Link from "next/link";
 import { marked } from "marked";
 import BookReader, { type SideTocEntry } from "@/components/BookReader";
+import CoverArt from "@/components/CoverArt";
 import {
   loadChapters,
   loadPreface,
@@ -64,17 +65,26 @@ export default async function Home() {
       key="cover"
       className="-mx-8 -my-12 sm:-mx-14 flex h-[84vh] flex-col overflow-hidden"
     >
-      {/* full-bleed illustration */}
+      {/* full-bleed illustration — the wall paints itself, 1% per chapter */}
       <div className="relative flex-none overflow-hidden rounded-tl-[4px] rounded-tr-[10px]">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={coverImage}
-          alt="A wide room: a half-painted wall, and far across it a man sits in a folding chair with a mug, watching the paint dry"
-          className="h-[30vh] w-full object-cover object-center"
-        />
+        {hasPhoto ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={coverImage}
+            alt="The author sits in a folding chair, watching a half-painted wall dry"
+            className="h-[30vh] w-full object-cover object-center"
+          />
+        ) : (
+          <CoverArt progress={chapters.length} />
+        )}
         <span className="absolute right-5 top-4 inline-flex items-center gap-1.5 rounded-full bg-white/90 px-3 py-1 text-xs font-bold uppercase tracking-widest text-tape shadow-sm">
           <span className="live-dot live-dot-pulse" aria-hidden /> live
         </span>
+        {!hasPhoto && (
+          <span className="absolute left-5 top-4 rounded-full bg-white/90 px-3 py-1 text-xs uppercase tracking-widest text-ink-soft shadow-sm">
+            wall painted: {Math.min(chapters.length, 100)}%
+          </span>
+        )}
       </div>
 
       {/* title block — justify-evenly keeps everything on one screen */}
