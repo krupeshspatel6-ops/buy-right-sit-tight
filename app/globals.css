@@ -35,3 +35,35 @@ body {
   margin: 1.2em 0;
 }
 .prose-book a { color: var(--color-tape); text-decoration: underline; }
+
+/* ---- The book reader ---- */
+.book-stage {
+  perspective: 2000px;
+}
+.book-page {
+  background:
+    linear-gradient(90deg, rgba(38, 36, 31, 0.07) 0, rgba(38, 36, 31, 0) 28px),
+    #fffdf8;
+  box-shadow:
+    0 1px 2px rgba(38, 36, 31, 0.12),
+    0 12px 32px rgba(38, 36, 31, 0.18),
+    -6px 0 0 -2px #efe9dc,
+    -10px 0 0 -4px #e4dccb;
+  border-radius: 4px 10px 10px 4px;
+}
+.page-turn-next {
+  animation: pageTurnNext 380ms ease-out;
+  transform-origin: right center;
+}
+@keyframes pageTurnNext {
+  from { transform: rotateY(60deg); opacity: 0.3; }
+  to { transform: rotateY(0deg); opacity: 1; }
+}
+.page-turn-prev {
+  animation: pageTurnPrev 380ms ease-out;
+  transform-origin: left center;
+}
+@keyframes pageTurnPrev {
+  from { transform: rotateY(-60deg); opacity: 0.3; }
+  to { transform: rotateY(0deg); opacity: 1; }
+}
