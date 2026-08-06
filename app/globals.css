@@ -43,6 +43,22 @@ body {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.35; }
 }
+.live-dot-pulse {
+  animation: livePulse 1.6s ease-in-out infinite;
+}
+
+/* painter's tape strip holding the tagline */
+.tape-strip {
+  display: inline-block;
+  background: #ecd28a;
+  color: var(--color-ink);
+  font-style: italic;
+  font-size: 1.3rem;
+  padding: 0.35em 1.2em;
+  transform: rotate(-2deg);
+  box-shadow: 0 2px 6px rgba(38, 36, 31, 0.2);
+  clip-path: polygon(2% 0, 98% 5%, 100% 50%, 97% 100%, 3% 95%, 0 50%);
+}
 
 .prose-book {
   line-height: 1.75;

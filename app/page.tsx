@@ -60,33 +60,41 @@ export default async function Home() {
   /* ---- Page: cover ---- */
   sideToc.push({ label: "Cover", pageIndex: pages.length });
   pages.push(
-    <div
-      key="cover"
-      className="flex h-full min-h-[62vh] flex-col items-center justify-center text-center"
-    >
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={coverImage}
-        alt="A man sits in a folding chair with a mug, watching a half-painted wall dry"
-        className="w-full max-w-[440px] rounded-md shadow-sm"
-      />
-      <h1 className="mt-8 text-4xl sm:text-5xl font-bold tracking-tight">
-        Buy Right Sit Tight
-      </h1>
-      <p className="mt-3 text-xl text-ink-soft italic">watch the paint dry.</p>
-      <p className="mt-8 text-xs uppercase tracking-widest text-ink-soft">written by:</p>
-      <p className="mt-1 text-lg tracking-wide">Sarvesh Patel</p>
-      <p className="mt-6 text-sm uppercase tracking-widest text-ink-soft">
-        a <span className="live-badge"><span className="live-dot" aria-hidden /> live</span>{" "}
-        book in 100 chapters
-      </p>
-      <p className="mt-1 text-sm text-ink-soft">begun August 2026 · still being written</p>
-      <p className="mt-6 max-w-md text-sm leading-relaxed text-ink-soft">
-        This book is being written live, in real time. Every chapter is
-        published the day it happens, with a timestamp — and can never be
-        edited or deleted afterward. What you're reading is the permanent
-        record, mistakes included.
-      </p>
+    <div key="cover" className="-mx-8 -mt-12 sm:-mx-14 flex min-h-[80vh] flex-col">
+      {/* full-bleed illustration */}
+      <div className="relative overflow-hidden rounded-tl-[4px] rounded-tr-[10px]">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={coverImage}
+          alt="A man sits in a folding chair with a mug, watching a half-painted wall dry"
+          className="h-[38vh] w-full object-cover object-[center_75%]"
+        />
+        <span className="absolute right-5 top-4 inline-flex items-center gap-1.5 rounded-full bg-white/90 px-3 py-1 text-xs font-bold uppercase tracking-widest text-tape shadow-sm">
+          <span className="live-dot live-dot-pulse" aria-hidden /> live
+        </span>
+      </div>
+
+      {/* title block */}
+      <div className="flex flex-1 flex-col items-center justify-center px-8 py-10 text-center">
+        <h1 className="text-6xl sm:text-7xl font-bold leading-[0.95] tracking-tight">
+          Buy Right
+          <br />
+          Sit Tight
+        </h1>
+        <p className="tape-strip mt-8">watch the paint dry.</p>
+
+        <p className="mt-12 text-xs uppercase tracking-widest text-ink-soft">written by:</p>
+        <p className="mt-1 text-2xl tracking-wide">Sarvesh Patel</p>
+
+        <p className="mt-10 text-sm uppercase tracking-widest text-ink-soft">
+          a <span className="live-badge"><span className="live-dot" aria-hidden /> live</span>{" "}
+          book in 100 chapters
+        </p>
+        <p className="mt-2 max-w-md text-xs leading-relaxed text-ink-soft">
+          begun August 2026 · written in real time, one buy at a time · every
+          chapter timestamped · never edited after publication
+        </p>
+      </div>
     </div>
   );
 
