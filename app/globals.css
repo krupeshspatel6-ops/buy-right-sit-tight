@@ -13,8 +13,35 @@
 
 body {
   background-color: var(--color-wall);
+  /* faint vertical roller streaks so the space around the book reads as the wall */
+  background-image: repeating-linear-gradient(
+    90deg,
+    rgba(38, 36, 31, 0.025) 0 110px,
+    rgba(38, 36, 31, 0) 110px 220px
+  );
   color: var(--color-ink);
   font-family: var(--font-book);
+}
+
+/* LIVE broadcast-style badge */
+.live-badge {
+  color: #c22a20;
+  font-weight: 700;
+  animation: livePulse 1.6s ease-in-out infinite;
+  white-space: nowrap;
+}
+.live-dot {
+  display: inline-block;
+  width: 0.55em;
+  height: 0.55em;
+  border-radius: 9999px;
+  background: #c22a20;
+  margin-right: 0.3em;
+  vertical-align: baseline;
+}
+@keyframes livePulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
 }
 
 .prose-book {

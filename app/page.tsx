@@ -72,11 +72,19 @@ export default async function Home() {
         Buy Right Sit Tight
       </h1>
       <p className="mt-3 text-xl text-ink-soft italic">watch the paint dry.</p>
-      <p className="mt-8 text-lg tracking-wide">Sarvesh Patel</p>
+      <p className="mt-8 text-xs uppercase tracking-widest text-ink-soft">written by:</p>
+      <p className="mt-1 text-lg tracking-wide">Sarvesh Patel</p>
       <p className="mt-6 text-sm uppercase tracking-widest text-ink-soft">
-        a live book in 100 chapters
+        a <span className="live-badge"><span className="live-dot" aria-hidden /> live</span>{" "}
+        book in 100 chapters
       </p>
       <p className="mt-1 text-sm text-ink-soft">begun August 2026 · still being written</p>
+      <p className="mt-6 max-w-md text-sm leading-relaxed text-ink-soft">
+        This book is being written live, in real time. Every chapter is
+        published the day it happens, with a timestamp — and can never be
+        edited or deleted afterward. What you're reading is the permanent
+        record, mistakes included.
+      </p>
     </div>
   );
 

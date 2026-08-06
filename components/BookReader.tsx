@@ -34,7 +34,7 @@ export default function BookReader({ pages }: { pages: React.ReactNode[] }) {
   }, [turn, index]);
 
   return (
-    <div className="book-stage mx-auto max-w-[720px] px-4">
+    <div className="book-stage mx-auto max-w-[880px] px-4">
       <div
         key={index}
         className={`book-page relative min-h-[72vh] max-h-[80vh] overflow-y-auto px-8 py-10 sm:px-12 ${
