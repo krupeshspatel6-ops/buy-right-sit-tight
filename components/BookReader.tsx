@@ -61,7 +61,7 @@ export default function BookReader({
       <div className="book-stage w-full max-w-[960px]">
         <div
           key={index}
-          className={`book-page relative min-h-[80vh] max-h-[86vh] overflow-y-auto px-8 py-12 sm:px-14 ${
+          className={`book-page relative h-[84vh] overflow-y-auto px-8 py-12 sm:px-14 ${
             turn === "next" ? "page-turn-next" : turn === "prev" ? "page-turn-prev" : ""
           }`}
         >

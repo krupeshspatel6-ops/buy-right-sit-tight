@@ -60,40 +60,56 @@ export default async function Home() {
   /* ---- Page: cover ---- */
   sideToc.push({ label: "Cover", pageIndex: pages.length });
   pages.push(
-    <div key="cover" className="-mx-8 -mt-12 sm:-mx-14 flex min-h-[80vh] flex-col">
+    <div
+      key="cover"
+      className="-mx-8 -my-12 sm:-mx-14 flex h-[84vh] flex-col overflow-hidden"
+    >
       {/* full-bleed illustration */}
-      <div className="relative overflow-hidden rounded-tl-[4px] rounded-tr-[10px]">
+      <div className="relative flex-none overflow-hidden rounded-tl-[4px] rounded-tr-[10px]">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={coverImage}
           alt="A man sits in a folding chair with a mug, watching a half-painted wall dry"
-          className="h-[38vh] w-full object-cover object-[center_75%]"
+          className="h-[30vh] w-full object-cover object-[center_75%]"
         />
         <span className="absolute right-5 top-4 inline-flex items-center gap-1.5 rounded-full bg-white/90 px-3 py-1 text-xs font-bold uppercase tracking-widest text-tape shadow-sm">
           <span className="live-dot live-dot-pulse" aria-hidden /> live
         </span>
       </div>
 
-      {/* title block */}
-      <div className="flex flex-1 flex-col items-center justify-center px-8 py-10 text-center">
-        <h1 className="text-6xl sm:text-7xl font-bold leading-[0.95] tracking-tight">
+      {/* title block — justify-evenly keeps everything on one screen */}
+      <div className="flex min-h-0 flex-1 flex-col items-center justify-evenly px-8 py-4 text-center">
+        <h1 className="cover-title font-bold leading-[0.95] tracking-tight text-[min(8vh,4.5rem)]">
           Buy Right
           <br />
           Sit Tight
         </h1>
-        <p className="tape-strip mt-8">watch the paint dry.</p>
+        <p className="tape-strip">watch the paint dry.</p>
 
-        <p className="mt-12 text-xs uppercase tracking-widest text-ink-soft">written by:</p>
-        <p className="mt-1 text-2xl tracking-wide">Sarvesh Patel</p>
+        <div className="flex items-center gap-3 text-ink-soft" aria-hidden>
+          <span className="h-px w-16 bg-wall-dark" />
+          <span className="text-xs">·</span>
+          <span className="h-px w-16 bg-wall-dark" />
+        </div>
 
-        <p className="mt-10 text-sm uppercase tracking-widest text-ink-soft">
-          a <span className="live-badge"><span className="live-dot" aria-hidden /> live</span>{" "}
-          book in 100 chapters
-        </p>
-        <p className="mt-2 max-w-md text-xs leading-relaxed text-ink-soft">
-          begun August 2026 · written in real time, one buy at a time · every
-          chapter timestamped · never edited after publication
-        </p>
+        <div>
+          <p className="text-xs uppercase tracking-widest text-ink-soft">written by:</p>
+          <p className="mt-1 tracking-wide text-[min(3.2vh,1.5rem)]">Sarvesh Patel</p>
+        </div>
+
+        <div>
+          <p className="text-sm uppercase tracking-widest text-ink-soft">
+            a <span className="live-badge"><span className="live-dot" aria-hidden /> live</span>{" "}
+            book in 100 chapters
+          </p>
+          <p className="mx-auto mt-2 max-w-md text-xs leading-relaxed text-ink-soft">
+            begun August 2026 · written in real time, one buy at a time · every
+            chapter timestamped · never edited after publication
+          </p>
+          <p className="mt-2 text-[11px] uppercase tracking-[0.25em] text-ink-soft">
+            buyrightsittight.com
+          </p>
+        </div>
       </div>
     </div>
   );

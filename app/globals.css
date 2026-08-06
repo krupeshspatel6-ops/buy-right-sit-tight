@@ -47,6 +47,14 @@ body {
   animation: livePulse 1.6s ease-in-out infinite;
 }
 
+/* letterpress feel for the cover title */
+.cover-title {
+  text-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.65),
+    0 -1px 0 rgba(38, 36, 31, 0.08);
+  letter-spacing: -0.02em;
+}
+
 /* painter's tape strip holding the tagline */
 .tape-strip {
   display: inline-block;
