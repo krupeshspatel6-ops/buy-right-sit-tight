@@ -6,6 +6,7 @@ export const metadata: Metadata = {
   description:
     "A live book. Every stock I buy with my own money opens a new chapter, timestamped. A chapter only closes when I sell. Nothing is edited after publication.",
   metadataBase: new URL("https://buyrightsittight.com"),
+  authors: [{ name: "Sarvesh Patel" }],
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

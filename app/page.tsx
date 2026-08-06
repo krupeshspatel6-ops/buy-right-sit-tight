@@ -72,7 +72,8 @@ export default async function Home() {
         Buy Right Sit Tight
       </h1>
       <p className="mt-3 text-xl text-ink-soft italic">watch the paint dry.</p>
-      <p className="mt-8 text-sm uppercase tracking-widest text-ink-soft">
+      <p className="mt-8 text-lg tracking-wide">Sarvesh Patel</p>
+      <p className="mt-6 text-sm uppercase tracking-widest text-ink-soft">
         a live book in 100 chapters
       </p>
       <p className="mt-1 text-sm text-ink-soft">begun August 2026 · still being written</p>
