@@ -62,7 +62,7 @@ export default function BookReader({
     <div className="flex justify-center gap-8 px-4">
       {ledger && (
         <aside className="hidden xl:block w-64 shrink-0">
-          <div className="sticky top-10">{ledger}</div>
+          <div className="sticky top-10 max-h-[84vh] overflow-y-auto pr-1">{ledger}</div>
         </aside>
       )}
       <div className="book-stage w-full max-w-[960px]">
@@ -116,11 +116,11 @@ export default function BookReader({
 
       {sideToc && sideToc.length > 0 && (
         <aside className="hidden xl:block w-64 shrink-0">
-          <div className="sticky top-10">
+          <div className="sticky top-10 flex max-h-[84vh] flex-col">
             <h3 className="text-xs uppercase tracking-widest text-ink-soft mb-3">
               In this book
             </h3>
-            <ul className="space-y-1 text-sm">
+            <ul className="min-h-0 flex-1 space-y-1 overflow-y-auto pr-1 text-sm">
               {sideToc.map((t) => (
                 <li key={t.pageIndex}>
                   <button
