@@ -11,9 +11,11 @@ export type SideTocEntry = {
 export default function BookReader({
   pages,
   sideToc,
+  ledger,
 }: {
   pages: React.ReactNode[];
   sideToc?: SideTocEntry[];
+  ledger?: React.ReactNode;
 }) {
   const [index, setIndex] = useState(0);
   const [turn, setTurn] = useState<"next" | "prev" | null>(null);
@@ -58,6 +60,11 @@ export default function BookReader({
 
   return (
     <div className="flex justify-center gap-8 px-4">
+      {ledger && (
+        <aside className="hidden xl:block w-64 shrink-0">
+          <div className="sticky top-10">{ledger}</div>
+        </aside>
+      )}
       <div className="book-stage w-full max-w-[960px]">
         <div
           key={index}

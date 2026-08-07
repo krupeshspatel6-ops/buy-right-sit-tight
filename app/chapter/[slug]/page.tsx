@@ -106,8 +106,15 @@ export default async function ChapterPage({
         <div className="px-4 py-3 text-sm text-ink-soft border-t border-wall flex flex-wrap gap-x-6 gap-y-1">
           <span>Avg cost: ${avgCost.toFixed(2)}</span>
           <span>
-            {chapter.status === "open" ? "Now" : "Exit"}:{" "}
+            {chapter.status === "open" ? "Last close" : "Exit"}:{" "}
             {perf.currentPrice !== null ? `$${perf.currentPrice.toFixed(2)}` : "—"}
+            {perf.asOf
+              ? ` (${new Date(perf.asOf).toLocaleDateString("en-US", {
+                  month: "short",
+                  day: "numeric",
+                  year: "numeric",
+                })})`
+              : ""}
           </span>
           <span>
             Chapter: <b>{fmtPct(perf.returnPct)}</b>

@@ -55,6 +55,106 @@ export default async function Home() {
   const hasPhoto = fs.existsSync(path.join(process.cwd(), "public", "sitting.jpg"));
   const coverImage = hasPhoto ? "/sitting.jpg" : "/sitting-wide.svg";
 
+  /* ---- The ledger: end-of-day portfolio tracking in the left margin ---- */
+  const fmtMoney = (v: number) =>
+    `$${v.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+  const openRows = open.map((c) => {
+    const p = scoreboard.chapterPerfs.get(c.chapter);
+    const shares = totalShares(c);
+    return {
+      chapter: c.chapter,
+      ticker: c.ticker,
+      lastClose: p?.currentPrice ?? null,
+      value: p?.currentPrice != null ? p.currentPrice * shares : null,
+      returnPct: p?.returnPct ?? null,
+    };
+  });
+  const portfolioValue =
+    open.length === 0
+      ? 0
+      : openRows.every((r) => r.value !== null)
+        ? openRows.reduce((s, r) => s + (r.value ?? 0), 0)
+        : null;
+  const investedOpen = open.reduce((s, c) => s + costBasis(c), 0);
+  const realized = closed.reduce((s, c) => {
+    const shares = totalShares(c);
+    const avg = costBasis(c) / shares;
+    return s + ((c.sell?.price ?? avg) - avg) * shares;
+  }, 0);
+  const asOf = [...scoreboard.chapterPerfs.values()]
+    .map((p) => p.asOf)
+    .filter((d): d is string => d !== null)
+    .sort()
+    .pop();
+
+  const ledger = (
+    <div>
+      <h3 className="mb-3 text-xs uppercase tracking-widest text-ink-soft">The ledger</h3>
+      <div className="rounded-lg bg-white p-4 shadow-sm text-sm">
+        <p className="text-xs uppercase tracking-wide text-ink-soft">
+          Portfolio value · end of day
+        </p>
+        <p className="mt-1 text-2xl font-bold">
+          {portfolioValue !== null ? fmtMoney(portfolioValue) : "—"}
+        </p>
+        {open.length > 0 && (
+          <p className="mt-1 text-xs text-ink-soft">
+            {open.length} open position{open.length === 1 ? "" : "s"} · cost{" "}
+            {fmtMoney(investedOpen)}
+          </p>
+        )}
+        {closed.length > 0 && (
+          <p className="mt-1 text-xs text-ink-soft">
+            Realized ({closed.length} closed):{" "}
+            <span className={realized >= 0 ? "text-gain" : "text-loss"}>
+              {realized >= 0 ? "+" : "−"}{fmtMoney(Math.abs(realized))}
+            </span>
+          </p>
+        )}
+
+        {open.length > 0 && (
+          <div className="mt-3 border-t border-wall pt-2">
+            {openRows.map((r) => (
+              <div key={r.chapter} className="flex items-baseline justify-between gap-2 py-1">
+                <span className="font-bold">{r.ticker}</span>
+                <span className="text-ink-soft">
+                  {r.lastClose !== null ? fmtMoney(r.lastClose) : "—"}
+                </span>
+                <span
+                  className={`font-semibold ${
+                    r.returnPct === null
+                      ? "text-ink-soft"
+                      : r.returnPct >= 0
+                        ? "text-gain"
+                        : "text-loss"
+                  }`}
+                >
+                  {r.returnPct !== null
+                    ? `${r.returnPct > 0 ? "+" : ""}${r.returnPct.toFixed(1)}%`
+                    : "—"}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {open.length === 0 && closed.length === 0 && (
+          <p className="mt-2 text-xs text-ink-soft">
+            No positions yet. The ledger opens with Chapter 1.
+          </p>
+        )}
+
+        <p className="mt-3 border-t border-wall pt-2 text-[11px] leading-relaxed text-ink-soft">
+          {asOf
+            ? `Prices as of ${fmtDate(asOf)} market close.`
+            : "Prices update after each market close."}{" "}
+          Tracked automatically — never typed in by hand.
+        </p>
+      </div>
+    </div>
+  );
+
   const pages: React.ReactNode[] = [];
   const sideToc: SideTocEntry[] = [];
 
@@ -315,6 +415,11 @@ export default async function Home() {
             <div className="flex flex-wrap gap-x-5 gap-y-1 px-4 py-2 text-ink-soft border-t border-wall">
               <span>Avg cost ${avgCost.toFixed(2)}</span>
               <span>
+                {c.status === "open" ? "Last close" : "Exit"}{" "}
+                {perf?.currentPrice != null ? `$${perf.currentPrice.toFixed(2)}` : "—"}
+                {perf?.asOf ? ` (${fmtDate(perf.asOf)})` : ""}
+              </span>
+              <span>
                 Chapter <PctCell v={perf?.returnPct ?? null} />
               </span>
               <span>
@@ -389,7 +494,7 @@ export default async function Home() {
 
   return (
     <main className="py-10 sm:py-14">
-      <BookReader pages={pages} sideToc={sideToc} />
+      <BookReader pages={pages} sideToc={sideToc} ledger={ledger} />
     </main>
   );
 }

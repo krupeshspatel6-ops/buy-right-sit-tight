@@ -51,6 +51,7 @@ export type ChapterPerf = {
   currentPrice: number | null;
   returnPct: number | null; // chapter return since (weighted) cost basis
   spyReturnPct: number | null; // SPY over the same window
+  asOf: string | null; // date (YYYY-MM-DD) of the close behind currentPrice
 };
 
 export async function getChapterPerf(c: Chapter): Promise<ChapterPerf> {
@@ -59,11 +60,9 @@ export async function getChapterPerf(c: Chapter): Promise<ChapterPerf> {
   const end = c.sell?.date;
 
   const avgCost = costBasis(c) / totalShares(c);
-  const exitPrice = c.sell
-    ? c.sell.price
-    : stock.length
-      ? stock[stock.length - 1].close
-      : null;
+  const lastRow = stock.length ? stock[stock.length - 1] : null;
+  const exitPrice = c.sell ? c.sell.price : lastRow ? lastRow.close : null;
+  const asOf = c.sell ? c.sell.date.slice(0, 10) : lastRow ? lastRow.date : null;
 
   const spyStart = closeOnOrAfter(spy, start);
   const spyEnd = end
@@ -77,6 +76,7 @@ export async function getChapterPerf(c: Chapter): Promise<ChapterPerf> {
     returnPct: exitPrice !== null ? ((exitPrice - avgCost) / avgCost) * 100 : null,
     spyReturnPct:
       spyStart !== null && spyEnd !== null ? ((spyEnd - spyStart) / spyStart) * 100 : null,
+    asOf,
   };
 }
 
