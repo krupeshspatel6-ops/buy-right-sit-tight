@@ -5,7 +5,7 @@ opens a timestamped chapter; a chapter only closes on a sell. Free, public,
 no monetization — this exists for credibility, not revenue.
 
 Title: Thomas Phelps (*100 to 1 in the Stock Market*). Tagline: Paul
-Samuelson ("watching paint dry"). Sitting: Sarvesh.
+Samuelson ("watching paint dry"). Sitting: Krupesh.
 
 ## The pledge (the product)
 

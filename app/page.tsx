@@ -204,7 +204,7 @@ export default async function Home() {
           <p className="text-xs uppercase tracking-widest text-ink-soft">
             being written by
           </p>
-          <p className="mt-1 tracking-wide text-[min(3.2vh,1.5rem)]">Sarvesh Patel</p>
+          <p className="mt-1 tracking-wide text-[min(3.2vh,1.5rem)]">Krupesh Patel</p>
         </div>
 
         <div>
