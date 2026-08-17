@@ -42,8 +42,14 @@ export default function CoverIntro({
 
   const speak = useCallback((text: string) => {
     if (typeof window === "undefined" || !window.speechSynthesis || !text) return;
+    // Strip emoji/pictographs so the voice doesn't read "waving hand" aloud.
+    const spoken = text
+      .replace(/[\p{Extended_Pictographic}\u{1F3FB}-\u{1F3FF}\u{FE0F}\u{200D}]/gu, "")
+      .replace(/\s{2,}/g, " ")
+      .trim();
+    if (!spoken) return;
     window.speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(text);
+    const u = new SpeechSynthesisUtterance(spoken);
     u.lang = "en-US";
     u.rate = 0.95;
     window.speechSynthesis.speak(u);
