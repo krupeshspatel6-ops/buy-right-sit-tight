@@ -8,11 +8,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 const INTRO = [
-  "Hi — I'm Krupesh. I'm 15.",
-  "Honestly? I don't really know how to pick stocks yet. That's the whole point of this book.",
-  "My dad said I was careless because it wasn't my money at stake. So now it is — every dollar I've saved.",
-  "This is me learning in public, with real money, one stock at a time. Not advice — just my journey.",
-  "Buy right, sit tight… and watch the paint dry with me.",
+  "Hi — I'm Krupesh! 👋 I'm 15 and I'm learning to invest with my own money, in public. New here? Start with my story:",
 ];
 
 const TYPE_MS = 26; // per character
@@ -21,7 +17,13 @@ const STORE_KEY = "brst_visit_v1";
 
 type Mode = "intro" | "welcome";
 
-export default function CoverIntro({ chapterCount = 0 }: { chapterCount?: number }) {
+export default function CoverIntro({
+  chapterCount = 0,
+  whyPageIndex = -1,
+}: {
+  chapterCount?: number;
+  whyPageIndex?: number;
+}) {
   const [ready, setReady] = useState(false);
   const [mode, setMode] = useState<Mode>("intro");
   const [script, setScript] = useState<string[]>([]);
@@ -138,6 +140,13 @@ export default function CoverIntro({ chapterCount = 0 }: { chapterCount?: number
     }
   }, []);
 
+  const goToWhy = useCallback(() => {
+    if (typeof window !== "undefined" && whyPageIndex >= 0) {
+      window.dispatchEvent(new CustomEvent("book:goto", { detail: { index: whyPageIndex } }));
+      window.speechSynthesis?.cancel();
+    }
+  }, [whyPageIndex]);
+
   const advance = useCallback(() => {
     if (!done) {
       setChars(full.length);
@@ -188,6 +197,22 @@ export default function CoverIntro({ chapterCount = 0 }: { chapterCount?: number
         >
           {full.slice(0, chars)}
           {!done && <span className="animate-pulse">▍</span>}
+
+          {/* first-visit: point them to the story once the greeting finishes */}
+          {mode === "intro" && done && line === script.length - 1 && whyPageIndex >= 0 && (
+            <div className="mt-2">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  goToWhy();
+                }}
+                className="rounded-full bg-tape px-3 py-1 text-xs font-semibold text-white"
+              >
+                Read: Why I&apos;m writing this →
+              </button>
+            </div>
+          )}
 
           {/* welcome-back question buttons, once the greeting finishes typing */}
           {mode === "welcome" && askUpdate && done && (

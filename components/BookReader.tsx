@@ -52,6 +52,16 @@ export default function BookReader({
     return () => window.removeEventListener("keydown", onKey);
   }, [goTo]);
 
+  // Let other components (e.g. the cover intro bubble) turn to a page.
+  useEffect(() => {
+    const onGoto = (e: Event) => {
+      const idx = (e as CustomEvent<{ index?: number }>).detail?.index;
+      if (typeof idx === "number") jumpTo(idx);
+    };
+    window.addEventListener("book:goto", onGoto);
+    return () => window.removeEventListener("book:goto", onGoto);
+  }, [jumpTo]);
+
   useEffect(() => {
     if (!turn) return;
     const t = setTimeout(() => setTurn(null), 400);
