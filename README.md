@@ -17,7 +17,24 @@ Samuelson ("watching paint dry"). Sitting: Krupesh.
    spends a slot. A budget, not a quota: no deadline, blank slots are fine.
    The homepage wall fills 1% per chapter.
 
-## How to publish a chapter (the easy way)
+## The admin editor (local only)
+
+Run the site locally and open **http://localhost:4000/admin** for a web
+editor with a live preview:
+
+- Fill the fields (ticker, price, shares, fill time, exit test) and write
+  the "why" in Markdown.
+- The right pane shows a **live preview** of exactly how the chapter will
+  look — proofread it there.
+- **Publish to production** writes the chapter file, commits + pushes to
+  GitHub, and (optionally) deploys the live site.
+
+It is **local-only by design**: the `/admin` route is disabled on the
+deployed site (Vercel's filesystem is read-only, and a public publish
+surface would undermine the git-backed record). Publishing still goes
+through git, so every chapter stays a public, timestamped commit.
+
+## How to publish a chapter (the CLI way)
 
 1. Buy the stock. Screenshot the fill (save it to `public/proofs/` if you
    want it shown).
