@@ -8,11 +8,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 const LINES = [
-  "Hi — I'm Krupesh.",
-  "Every investor quotes the old line: buy right and sit tight. Almost nobody proves they can actually do it.",
-  "So I'm proving it in public. Every stock I buy with my own money becomes a chapter in this book — timestamped the day it happens.",
-  "A chapter only closes when I sell. And nothing is ever edited after it's published — my mistakes stay on the page.",
-  "One hundred chapters. One wall. I'll be right here, watching the paint dry.",
+  "Hi — I'm Krupesh. I'm 15.",
+  "Honestly? I don't really know how to pick stocks yet. That's the whole point of this book.",
+  "My dad said I was careless because it wasn't my money at stake. So now it is — every dollar I've saved.",
+  "This is me learning in public, with real money, one stock at a time. Not advice — just my journey.",
+  "Buy right, sit tight… and watch the paint dry with me.",
 ];
 
 const TYPE_MS = 26; // per character

@@ -226,6 +226,20 @@ export default async function Home() {
     </div>
   );
 
+  /* ---- Page: why I'm writing this (the origin story — first thing after the cover) ---- */
+  if (preface) {
+    sideToc.push({ label: "Why I'm writing this", pageIndex: pages.length });
+    pages.push(
+      <div key="why">
+        <h2 className="text-2xl font-bold mb-6">Why I&apos;m writing this</h2>
+        <article
+          className="prose-book"
+          dangerouslySetInnerHTML={{ __html: marked.parse(preface) as string }}
+        />
+      </div>
+    );
+  }
+
   /* ---- Page: the pledge ---- */
   sideToc.push({ label: "The pledge", pageIndex: pages.length });
   pages.push(
@@ -258,20 +272,6 @@ export default async function Home() {
       </ol>
     </div>
   );
-
-  /* ---- Page: preface ---- */
-  if (preface) {
-    sideToc.push({ label: "Preface", pageIndex: pages.length });
-    pages.push(
-      <div key="preface">
-        <h2 className="text-2xl font-bold mb-6">Preface</h2>
-        <article
-          className="prose-book"
-          dangerouslySetInnerHTML={{ __html: marked.parse(preface) as string }}
-        />
-      </div>
-    );
-  }
 
   /* ---- Page: table of contents = the portfolio ---- */
   sideToc.push({ label: "Table of contents", sub: "the portfolio", pageIndex: pages.length });

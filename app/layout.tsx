@@ -4,7 +4,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Buy Right Sit Tight — watch the paint dry.",
   description:
-    "A live book. Every stock I buy with my own money opens a new chapter, timestamped. A chapter only closes when I sell. Nothing is edited after publication.",
+    "A 15-year-old learning to invest in public, with his own saved money. Every stock I buy opens a timestamped chapter; a chapter only closes when I sell. A learning journal, not advice.",
   metadataBase: new URL("https://buyrightsittight.com"),
   authors: [{ name: "Krupesh Patel" }],
 };
@@ -19,10 +19,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             Title: Thomas Phelps. Tagline: Paul Samuelson. Sitting: me.
           </p>
           <p>
-            This is a personal investing journal, not investment advice. I write
-            about stocks I buy with my own money for my own reasons. Nothing here
-            is a recommendation to buy or sell any security. Do your own research
-            or talk to a licensed advisor.
+            This is a personal learning journal written by a 15-year-old
+            beginner — not investment advice. I write about stocks I buy with my
+            own saved money, through a custodian account, purely to learn.
+            Nothing here is a recommendation to buy or sell any security, and I
+            may well be wrong about all of it. Do your own research or talk to a
+            licensed advisor.
           </p>
         </footer>
       </body>
