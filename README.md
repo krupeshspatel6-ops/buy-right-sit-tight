@@ -28,9 +28,22 @@ Samuelson ("watching paint dry"). Sitting: Krupesh.
    ```
 
    It asks for the ticker, company, price, shares, the fill time (Enter =
-   now), your exit test, and why you bought — then writes a correctly
-   formatted `chapters/NN-ticker.md`, shows you a preview, and (if you say
-   yes) commits + pushes it. Git stays the public, timestamped record.
+   now), and your exit test. For the **"why" (the actual writing)** it offers
+   two ways:
+
+   - **Editor (recommended):** it creates the chapter file with a guided
+     scaffold and opens it in VS Code (or your default editor). You write the
+     "why" there in Markdown — headings, **bold**, lists, links, images — save,
+     and press Enter back in the terminal.
+   - **Terminal:** type the "why" line by line (fine for something short).
+
+   Then it previews the finished chapter and, if you say yes, commits + pushes
+   it. Git stays the public, timestamped record.
+
+The chapter body is plain **Markdown**, so you can also just open any
+`chapters/*.md` in VS Code and write/edit it directly (with live preview),
+or edit it on github.com from any device — every save there is a public,
+timestamped commit.
 3. Same day, mirror the chapter via a Substack email send and/or an X post
    linking it (un-editable third-party timestamps = witness #2). Attach the
    broker screenshot there.
