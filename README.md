@@ -17,18 +17,32 @@ Samuelson ("watching paint dry"). Sitting: Krupesh.
    spends a slot. A budget, not a quota: no deadline, blank slots are fine.
    The homepage wall fills 1% per chapter.
 
-## How to publish a chapter (the whole workflow)
+## How to publish a chapter (the easy way)
 
-1. Buy the stock. Screenshot the fill.
-2. Copy `chapters/_TEMPLATE.md` → `chapters/NN-ticker.md`, fill in the
-   frontmatter (exact fill time, price, shares) and write the "why".
-3. Commit + push to the **public** GitHub repo (public commit history =
-   timestamp witness #1).
-4. Same day, mirror the chapter via a Substack email send and/or an X post
+1. Buy the stock. Screenshot the fill (save it to `public/proofs/` if you
+   want it shown).
+2. Run the guided publisher and answer the questions:
+
+   ```
+   npm run new-chapter
+   ```
+
+   It asks for the ticker, company, price, shares, the fill time (Enter =
+   now), your exit test, and why you bought — then writes a correctly
+   formatted `chapters/NN-ticker.md`, shows you a preview, and (if you say
+   yes) commits + pushes it. Git stays the public, timestamped record.
+3. Same day, mirror the chapter via a Substack email send and/or an X post
    linking it (un-editable third-party timestamps = witness #2). Attach the
    broker screenshot there.
-5. Add-on buys of the same stock = new `buys:` entries in the same file.
-   A sell = uncomment the `sell:` block. That closes the chapter.
+
+### Doing it by hand (or appending later)
+
+- New chapter by hand: copy `chapters/_TEMPLATE.md` → `chapters/NN-ticker.md`
+  and fill it in.
+- **Add-on buys** of the same stock = new `buys:` entries in the same file.
+- **A sell** = uncomment the `sell:` block. That closes the chapter.
+- **Quarterly notes / splits / hedges** = append dated lines below the
+  "record continues" line. Never edit the original text above it.
 
 ## Stack
 
