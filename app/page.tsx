@@ -4,6 +4,7 @@ import Link from "next/link";
 import { marked } from "marked";
 import BookReader, { type SideTocEntry } from "@/components/BookReader";
 import CoverArt from "@/components/CoverArt";
+import CoverIntro from "@/components/CoverIntro";
 import {
   loadChapters,
   loadPreface,
@@ -185,6 +186,7 @@ export default async function Home() {
             wall painted: {Math.min(chapters.length, 100)}%
           </span>
         )}
+        <CoverIntro />
       </div>
 
       {/* title block — justify-evenly keeps everything on one screen */}
