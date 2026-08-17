@@ -1,13 +1,13 @@
 "use client";
 
-// The sitting man introduces himself — a typing speech bubble on the open
-// wall (left side, clear of his face). Optional voice narration via the
-// browser's built-in speech synthesis; off until the reader taps the
-// speaker (browsers block autoplay audio without a gesture).
+// The sitting man speaks. First-time visitors get the full introduction;
+// returning visitors get a short "welcome back" that offers to tell them
+// what's new since their last visit. The bubble sits just to the man's
+// left so its tail points at him without covering his face.
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
-const LINES = [
+const INTRO = [
   "Hi — I'm Krupesh. I'm 15.",
   "Honestly? I don't really know how to pick stocks yet. That's the whole point of this book.",
   "My dad said I was careless because it wasn't my money at stake. So now it is — every dollar I've saved.",
@@ -16,54 +16,93 @@ const LINES = [
 ];
 
 const TYPE_MS = 26; // per character
-const HOLD_MS = 3200; // pause on a finished line
-const LOOP_HOLD_MS = 9000; // longer sit on the last line before starting over
+const HOLD_MS = 2600; // pause between intro lines
+const STORE_KEY = "brst_visit_v1";
 
-export default function CoverIntro() {
+type Mode = "intro" | "welcome";
+
+export default function CoverIntro({ chapterCount = 0 }: { chapterCount?: number }) {
+  const [ready, setReady] = useState(false);
+  const [mode, setMode] = useState<Mode>("intro");
+  const [script, setScript] = useState<string[]>([]);
   const [line, setLine] = useState(0);
   const [chars, setChars] = useState(0);
+  const [askUpdate, setAskUpdate] = useState(false);
+  const [newCount, setNewCount] = useState(0);
+  const [dismissed, setDismissed] = useState(false);
   const [voice, setVoice] = useState(false);
-  const holdRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const voiceRef = useRef(false);
+  const holdRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const decidedRef = useRef(false);
 
-  const full = LINES[line];
+  const full = script[line] ?? "";
   const done = chars >= full.length;
 
   const speak = useCallback((text: string) => {
-    if (typeof window === "undefined" || !window.speechSynthesis) return;
+    if (typeof window === "undefined" || !window.speechSynthesis || !text) return;
     window.speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(text);
     u.lang = "en-US";
     u.rate = 0.95;
-    u.pitch = 1;
     window.speechSynthesis.speak(u);
   }, []);
 
-  const next = useCallback(() => {
-    if (holdRef.current) clearTimeout(holdRef.current);
-    setLine((l) => (l + 1) % LINES.length);
-    setChars(0);
+  // Decide first-visit vs returning exactly once per mount. Guarded so
+  // React StrictMode's dev double-invoke can't read the record it just wrote.
+  useEffect(() => {
+    if (decidedRef.current) return;
+    decidedRef.current = true;
+
+    let prev: { chapters?: number } | null = null;
+    try {
+      prev = JSON.parse(localStorage.getItem(STORE_KEY) || "null");
+    } catch {
+      prev = null;
+    }
+    if (!prev) {
+      setMode("intro");
+      setScript(INTRO);
+    } else {
+      setMode("welcome");
+      setNewCount(Math.max(0, chapterCount - (prev.chapters ?? 0)));
+      setScript(["Oh — hey, welcome back! 👋"]);
+      setAskUpdate(true);
+    }
+    // Record this visit so the next one is a "welcome back".
+    try {
+      localStorage.setItem(STORE_KEY, JSON.stringify({ chapters: chapterCount, at: Date.now() }));
+    } catch {
+      /* ignore */
+    }
+    setReady(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // typing + auto-advance
+  // Typing + auto-advance (intro plays once, no loop).
   useEffect(() => {
+    if (!ready || !full) return;
     if (!done) {
       const t = setTimeout(() => setChars((c) => c + 1), TYPE_MS);
       return () => clearTimeout(t);
     }
-    holdRef.current = setTimeout(next, line === LINES.length - 1 ? LOOP_HOLD_MS : HOLD_MS);
-    return () => {
-      if (holdRef.current) clearTimeout(holdRef.current);
-    };
-  }, [chars, done, line, next]);
+    if (line < script.length - 1) {
+      holdRef.current = setTimeout(() => {
+        setLine((l) => l + 1);
+        setChars(0);
+      }, HOLD_MS);
+      return () => {
+        if (holdRef.current) clearTimeout(holdRef.current);
+      };
+    }
+  }, [ready, chars, done, full, line, script]);
 
-  // speak each new line when voice is on
+  // Speak the current line when voice is on.
   useEffect(() => {
-    if (voice) speak(full);
+    if (voice && full) speak(full);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [line, voice]);
+  }, [line, voice, script]);
 
-  // stop any speech when the component unmounts
+  // Stop speech on unmount.
   useEffect(() => {
     return () => {
       if (typeof window !== "undefined" && window.speechSynthesis) {
@@ -75,33 +114,109 @@ export default function CoverIntro() {
   const toggleVoice = useCallback(() => {
     const nextOn = !voiceRef.current;
     voiceRef.current = nextOn;
-    setVoice(nextOn); // the [line, voice] effect speaks the current line when this flips on
+    setVoice(nextOn);
     if (!nextOn && typeof window !== "undefined" && window.speechSynthesis) {
       window.speechSynthesis.cancel();
     }
   }, []);
 
+  const answerUpdate = useCallback(() => {
+    setAskUpdate(false);
+    const msg =
+      newCount > 0
+        ? `${newCount} new chapter${newCount === 1 ? "" : "s"} since you were last here — turn the page to catch up →`
+        : "Nothing new yet — the paint's still drying. Check back soon.";
+    setScript([msg]);
+    setLine(0);
+    setChars(0);
+  }, [newCount]);
+
+  const dismiss = useCallback(() => {
+    setDismissed(true);
+    if (typeof window !== "undefined" && window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+    }
+  }, []);
+
+  const advance = useCallback(() => {
+    if (!done) {
+      setChars(full.length);
+    } else if (mode === "intro" && line < script.length - 1) {
+      setLine((l) => l + 1);
+      setChars(0);
+    }
+  }, [done, full.length, mode, line, script.length]);
+
+  if (!ready || dismissed) {
+    // Returning visitor who dismissed keeps a tiny re-open chip.
+    if (dismissed) {
+      return (
+        <button
+          type="button"
+          onClick={() => {
+            setDismissed(false);
+            setAskUpdate(true);
+            setScript(["Welcome back! 👋"]);
+            setLine(0);
+            setChars(0);
+          }}
+          aria-label="Say hello again"
+          className="absolute right-[8%] top-[10%] grid h-9 w-9 place-items-center rounded-full border border-wall-dark bg-white/95 text-lg shadow-md"
+        >
+          💬
+        </button>
+      );
+    }
+    return null;
+  }
+
   return (
-    <div className="absolute left-[4%] top-[9%] max-w-[190px] sm:max-w-[280px]">
+    <div className="absolute right-[35%] top-[14%] z-10 max-w-[190px] sm:max-w-[250px]">
       <div className="relative rounded-xl border border-wall-dark bg-white/95 shadow-md">
         <div
           role="button"
           tabIndex={0}
-          onClick={() => (done ? next() : setChars(full.length))}
+          onClick={advance}
           onKeyDown={(e) => {
             if (e.key === "Enter" || e.key === " ") {
               e.preventDefault();
-              done ? next() : setChars(full.length);
+              advance();
             }
           }}
-          aria-label="The author introduces the book. Click to continue."
+          aria-label="The author is speaking. Click to continue."
           className="block w-full cursor-pointer px-4 py-3 pr-9 text-left text-xs sm:text-sm leading-relaxed"
         >
           {full.slice(0, chars)}
           {!done && <span className="animate-pulse">▍</span>}
+
+          {/* welcome-back question buttons, once the greeting finishes typing */}
+          {mode === "welcome" && askUpdate && done && (
+            <div className="mt-2 flex gap-2">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  answerUpdate();
+                }}
+                className="rounded-full bg-tape px-3 py-1 text-xs font-semibold text-white"
+              >
+                Yes, what&apos;s new?
+              </button>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  dismiss();
+                }}
+                className="rounded-full border border-wall-dark px-3 py-1 text-xs text-ink-soft"
+              >
+                Not now
+              </button>
+            </div>
+          )}
         </div>
 
-        {/* voice toggle — sibling of the text, not nested inside it */}
+        {/* voice toggle */}
         <button
           type="button"
           onClick={toggleVoice}
@@ -112,10 +227,10 @@ export default function CoverIntro() {
           {voice ? "🔊" : "🔈"}
         </button>
 
-        {/* tail pointing down toward the man */}
+        {/* tail on the right, pointing toward the man */}
         <span
           aria-hidden
-          className="absolute -bottom-[7px] left-10 h-3.5 w-3.5 rotate-45 border-b border-r border-wall-dark bg-white/95"
+          className="absolute -bottom-[7px] right-8 h-3.5 w-3.5 rotate-45 border-b border-r border-wall-dark bg-white/95"
         />
       </div>
     </div>

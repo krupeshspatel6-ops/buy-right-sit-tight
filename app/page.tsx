@@ -186,7 +186,7 @@ export default async function Home() {
             wall painted: {Math.min(chapters.length, 100)}%
           </span>
         )}
-        <CoverIntro />
+        <CoverIntro chapterCount={chapters.length} />
       </div>
 
       {/* title block — justify-evenly keeps everything on one screen */}
