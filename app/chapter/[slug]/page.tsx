@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { marked } from "marked";
 import { getChapter, loadChapters, costBasis, totalShares } from "@/lib/chapters";
 import { getChapterPerf } from "@/lib/quotes";
+import { formatFillTime, formatDate } from "@/lib/format";
 
 export const revalidate = 3600;
 
@@ -10,17 +11,7 @@ export function generateStaticParams() {
   return loadChapters().map((c) => ({ slug: c.slug }));
 }
 
-function fmtTimestamp(iso: string): string {
-  const d = new Date(iso);
-  return d.toLocaleString("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-    timeZoneName: "short",
-  });
-}
+const fmtTimestamp = formatFillTime;
 
 function fmtPct(v: number | null): string {
   if (v === null) return "—";
@@ -108,13 +99,7 @@ export default async function ChapterPage({
           <span>
             {chapter.status === "open" ? "Last close" : "Exit"}:{" "}
             {perf.currentPrice !== null ? `$${perf.currentPrice.toFixed(2)}` : "—"}
-            {perf.asOf
-              ? ` (${new Date(perf.asOf).toLocaleDateString("en-US", {
-                  month: "short",
-                  day: "numeric",
-                  year: "numeric",
-                })})`
-              : ""}
+            {perf.asOf ? ` (${formatDate(perf.asOf)})` : ""}
           </span>
           <span>
             Chapter: <b>{fmtPct(perf.returnPct)}</b>

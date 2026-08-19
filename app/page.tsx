@@ -14,6 +14,7 @@ import {
   type Chapter,
 } from "@/lib/chapters";
 import { getScoreboard, type Scoreboard } from "@/lib/quotes";
+import { formatFillTime, formatDate } from "@/lib/format";
 
 export const revalidate = 3600;
 
@@ -28,24 +29,8 @@ function PctCell({ v }: { v: number | null }) {
   return <span className={`font-semibold ${cls}`}>{fmtPct(v)}</span>;
 }
 
-function fmtDate(iso: string): string {
-  return new Date(iso).toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
-}
-
-function fmtTimestamp(iso: string): string {
-  return new Date(iso).toLocaleString("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-    timeZoneName: "short",
-  });
-}
+const fmtDate = formatDate;
+const fmtTimestamp = formatFillTime;
 
 export default async function Home() {
   const chapters = loadChapters();

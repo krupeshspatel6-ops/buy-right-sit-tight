@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { marked } from "marked";
+import { formatFillTime } from "@/lib/format";
 
 type Existing = { chapter: number; ticker: string; title: string; status: string };
 
@@ -29,16 +30,7 @@ function toISOWithOffset(local: string): string {
 
 function fmtTs(iso: string): string {
   if (!iso) return "—";
-  const d = new Date(iso);
-  if (isNaN(d.getTime())) return "—";
-  return d.toLocaleString("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-    timeZoneName: "short",
-  });
+  return formatFillTime(iso);
 }
 
 const BODY_SCAFFOLD = `Write why you bought it — a few honest paragraphs.
