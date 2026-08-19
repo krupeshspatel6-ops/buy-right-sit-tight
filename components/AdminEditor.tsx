@@ -2,8 +2,10 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { marked } from "marked";
 import { formatFillTime } from "@/lib/format";
+import BrandMark from "@/components/BrandMark";
 
 type Existing = { chapter: number; ticker: string; title: string; status: string };
 
@@ -11,13 +13,11 @@ function pad(n: number) {
   return String(n).padStart(2, "0");
 }
 
-// datetime-local ("YYYY-MM-DDTHH:mm") for right now, in local time.
 function nowLocalInput(): string {
   const d = new Date();
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
-// Convert a datetime-local value to ISO 8601 with the local UTC offset.
 function toISOWithOffset(local: string): string {
   if (!local) return "";
   const d = new Date(local);
@@ -29,8 +29,7 @@ function toISOWithOffset(local: string): string {
 }
 
 function fmtTs(iso: string): string {
-  if (!iso) return "—";
-  return formatFillTime(iso);
+  return iso ? formatFillTime(iso) : "—";
 }
 
 const BODY_SCAFFOLD = `Write why you bought it — a few honest paragraphs.
@@ -49,10 +48,13 @@ export default function AdminEditor({
   nextChapter: number;
   existing: Existing[];
 }) {
+  const router = useRouter();
   const [chapter, setChapter] = useState(nextChapter);
   const [ticker, setTicker] = useState("");
   const [company, setCompany] = useState("");
   const [title, setTitle] = useState("");
+  const [logo, setLogo] = useState("");
+  const [domain, setDomain] = useState("");
   const [when, setWhen] = useState(nowLocalInput());
   const [price, setPrice] = useState("");
   const [shares, setShares] = useState("");
@@ -63,8 +65,12 @@ export default function AdminEditor({
   const [deploy, setDeploy] = useState(true);
 
   const [status, setStatus] = useState<
-    { kind: "idle" | "busy" | "ok" | "err"; msg?: string; log?: string[]; url?: string | null }
+    { kind: "idle" | "busy" | "ok" | "err"; msg?: string }
   >({ kind: "idle" });
+
+  const [ai, setAi] = useState<{ busy: boolean; text: string; mode: "improve" | "questions" | null; err?: string }>(
+    { busy: false, text: "", mode: null }
+  );
 
   const bodyHtml = useMemo(() => marked.parse(body || "") as string, [body]);
   const iso = toISOWithOffset(when);
@@ -72,8 +78,30 @@ export default function AdminEditor({
   const sharesNum = Number(shares);
   const cost = Number.isFinite(priceNum) && Number.isFinite(sharesNum) ? priceNum * sharesNum : 0;
 
+  async function askAI(mode: "improve" | "questions") {
+    setAi({ busy: true, text: "", mode });
+    try {
+      const res = await fetch("/api/admin/ai-assist", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ mode, ticker, company, draft: body }),
+      });
+      const data = await res.json();
+      if (data.ok) setAi({ busy: false, text: data.text || "", mode });
+      else setAi({ busy: false, text: "", mode, err: data.error || "AI failed." });
+    } catch (e) {
+      setAi({ busy: false, text: "", mode, err: e instanceof Error ? e.message : "Network error." });
+    }
+  }
+
+  async function logout() {
+    await fetch("/api/admin/logout", { method: "POST" });
+    router.push("/admin/login");
+    router.refresh();
+  }
+
   async function publish() {
-    setStatus({ kind: "busy", msg: deploy ? "Publishing & deploying… (about a minute)" : "Publishing…" });
+    setStatus({ kind: "busy", msg: deploy ? "Publishing & deploying…" : "Publishing…" });
     try {
       const res = await fetch("/api/admin/publish", {
         method: "POST",
@@ -83,6 +111,8 @@ export default function AdminEditor({
           title,
           ticker,
           company,
+          logo,
+          domain,
           date: iso,
           price: priceNum,
           shares: sharesNum,
@@ -95,9 +125,14 @@ export default function AdminEditor({
       });
       const data = await res.json();
       if (!data.ok) {
-        setStatus({ kind: "err", msg: data.error || "Publish failed.", log: data.log });
+        setStatus({ kind: "err", msg: data.error || "Publish failed." });
       } else {
-        setStatus({ kind: "ok", msg: `Published Chapter ${chapter} (${ticker}).`, log: data.log, url: data.prodUrl });
+        setStatus({
+          kind: "ok",
+          msg: `Published Chapter ${chapter} (${ticker}). Committed to GitHub${
+            data.deployed ? " · deploying now (live in ~1 min)" : " · set a deploy hook to auto-deploy"
+          }.`,
+        });
       }
     } catch (e) {
       setStatus({ kind: "err", msg: e instanceof Error ? e.message : "Network error." });
@@ -113,12 +148,17 @@ export default function AdminEditor({
     <main className="mx-auto max-w-[1400px] px-6 py-8">
       <div className="flex items-baseline justify-between">
         <h1 className="text-2xl font-bold">Chapter editor</h1>
-        <Link href="/" className="text-sm text-tape underline">
-          View the book →
-        </Link>
+        <div className="flex items-center gap-4 text-sm">
+          <Link href="/" className="text-tape underline">
+            View the book →
+          </Link>
+          <button onClick={logout} className="text-ink-soft underline">
+            Sign out
+          </button>
+        </div>
       </div>
       <p className="mt-1 text-sm text-ink-soft">
-        Local-only. Write, proofread in the live preview, then publish to production.
+        Write, proofread in the live preview, then publish to production.
       </p>
 
       <div className="mt-6 grid gap-8 lg:grid-cols-2">
@@ -127,21 +167,11 @@ export default function AdminEditor({
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className={label}>Chapter #</label>
-              <input
-                type="number"
-                className={field}
-                value={chapter}
-                onChange={(e) => setChapter(Number(e.target.value))}
-              />
+              <input type="number" className={field} value={chapter} onChange={(e) => setChapter(Number(e.target.value))} />
             </div>
             <div>
               <label className={label}>Ticker</label>
-              <input
-                className={field}
-                value={ticker}
-                onChange={(e) => setTicker(e.target.value.toUpperCase())}
-                placeholder="AAPL"
-              />
+              <input className={field} value={ticker} onChange={(e) => setTicker(e.target.value.toUpperCase())} placeholder="AAPL" />
             </div>
             <div>
               <label className={label}>Company</label>
@@ -150,6 +180,14 @@ export default function AdminEditor({
             <div>
               <label className={label}>Chapter title</label>
               <input className={field} value={title} onChange={(e) => setTitle(e.target.value)} placeholder="The first coat" />
+            </div>
+            <div>
+              <label className={label}>Logo image URL (optional)</label>
+              <input className={field} value={logo} onChange={(e) => setLogo(e.target.value)} placeholder="https://…/apple.png" />
+            </div>
+            <div>
+              <label className={label}>…or company domain (auto logo)</label>
+              <input className={field} value={domain} onChange={(e) => setDomain(e.target.value)} placeholder="apple.com" />
             </div>
             <div>
               <label className={label}>Price / share</label>
@@ -168,8 +206,8 @@ export default function AdminEditor({
               <input className={field} value={note} onChange={(e) => setNote(e.target.value)} placeholder="initial buy" />
             </div>
             <div className="col-span-2">
-              <label className={label}>Exit test — what would make you sell?</label>
-              <input className={field} value={exitTest} onChange={(e) => setExitTest(e.target.value)} placeholder="I will sell if…" />
+              <label className={label}>Exit plan — what would make you sell?</label>
+              <textarea className={`${field} min-h-[70px]`} value={exitTest} onChange={(e) => setExitTest(e.target.value)} placeholder="I will sell if… (be specific; you can write a few lines)" />
             </div>
             <div className="col-span-2">
               <label className={label}>Broker proof image(s) in public/proofs/ (optional, comma-separated)</label>
@@ -178,12 +216,61 @@ export default function AdminEditor({
           </div>
 
           <div className="mt-3">
-            <label className={label}>The why (Markdown)</label>
+            <div className="mb-1 flex items-center justify-between">
+              <label className={label + " mb-0"}>The why (Markdown)</label>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => askAI("questions")}
+                  disabled={ai.busy}
+                  className="rounded-full border border-tape px-3 py-1 text-xs font-semibold text-tape disabled:opacity-50"
+                >
+                  ❓ Help me start
+                </button>
+                <button
+                  onClick={() => askAI("improve")}
+                  disabled={ai.busy || !body.trim()}
+                  className="rounded-full border border-tape px-3 py-1 text-xs font-semibold text-tape disabled:opacity-50"
+                >
+                  ✨ Improve my draft
+                </button>
+              </div>
+            </div>
             <textarea
-              className={`${field} min-h-[280px] font-mono leading-relaxed`}
+              className={`${field} min-h-[260px] font-mono leading-relaxed`}
               value={body}
               onChange={(e) => setBody(e.target.value)}
             />
+
+            {(ai.busy || ai.text || ai.err) && (
+              <div className="mt-2 rounded-lg border border-wall-dark bg-white p-3 text-sm">
+                <div className="mb-1 text-xs uppercase tracking-wide text-ink-soft">
+                  {ai.mode === "questions" ? "Questions to think about" : "Suggested edit"} — your coach
+                </div>
+                {ai.busy ? (
+                  <p className="text-ink-soft">Thinking…</p>
+                ) : ai.err ? (
+                  <p className="text-loss">{ai.err}</p>
+                ) : (
+                  <>
+                    <p className="whitespace-pre-wrap">{ai.text}</p>
+                    {ai.mode === "improve" && (
+                      <button
+                        onClick={() => {
+                          setBody(ai.text);
+                          setAi({ busy: false, text: "", mode: null });
+                        }}
+                        className="mt-2 rounded-full bg-tape px-3 py-1 text-xs font-semibold text-white"
+                      >
+                        Use this
+                      </button>
+                    )}
+                  </>
+                )}
+                <p className="mt-2 text-[11px] text-ink-soft">
+                  Your coach only helps you say your own ideas better — it never invents reasons or gives advice.
+                </p>
+              </div>
+            )}
           </div>
 
           <div className="mt-4 flex flex-wrap items-center gap-4">
@@ -194,7 +281,7 @@ export default function AdminEditor({
             <button
               onClick={publish}
               disabled={busy}
-              className="rounded-full bg-home-orange-500 px-5 py-2 text-sm font-semibold text-white disabled:opacity-50"
+              className="rounded-full px-5 py-2 text-sm font-semibold text-white disabled:opacity-50"
               style={{ backgroundColor: "#F96302" }}
             >
               {busy ? "Publishing…" : "Publish to production"}
@@ -212,21 +299,6 @@ export default function AdminEditor({
               }`}
             >
               <p className="font-semibold">{status.msg}</p>
-              {status.log && status.log.length > 0 && (
-                <ul className="mt-2 list-disc pl-5 text-ink-soft">
-                  {status.log.map((l, i) => (
-                    <li key={i}>{l}</li>
-                  ))}
-                </ul>
-              )}
-              {status.url && (
-                <p className="mt-2">
-                  Live at{" "}
-                  <a href={status.url} target="_blank" rel="noreferrer" className="text-tape underline">
-                    {status.url}
-                  </a>
-                </p>
-              )}
             </div>
           )}
 
@@ -253,9 +325,12 @@ export default function AdminEditor({
               <span className="text-sm uppercase tracking-widest text-ink-soft">Chapter {chapter || "—"}</span>
               <span className="rounded-full bg-tape/10 px-2 py-0.5 text-xs font-semibold text-tape">still drying</span>
             </div>
-            <h2 className="mt-1 text-3xl font-bold">
-              {company ? `${company} (${ticker || "—"})` : ticker || "Ticker"} — {title || "Chapter title"}
-            </h2>
+            <div className="mt-1 flex items-center gap-3">
+              <BrandMark ticker={ticker || "?"} logo={logo} domain={domain} size={40} />
+              <h2 className="text-3xl font-bold">
+                {company ? `${company} (${ticker || "—"})` : ticker || "Ticker"} — {title || "Chapter title"}
+              </h2>
+            </div>
 
             <div className="mt-4 overflow-hidden rounded-lg border border-wall-dark text-sm">
               <div className="flex justify-between border-b border-wall px-4 py-2">
@@ -271,9 +346,10 @@ export default function AdminEditor({
             </div>
 
             {exitTest && (
-              <p className="mt-4 border-l-4 border-tape pl-4 italic text-ink-soft">
-                The exit test, written on day one: “{exitTest}”
-              </p>
+              <div className="mt-4 border-l-4 border-tape pl-4 text-ink-soft">
+                <div className="text-xs uppercase tracking-wide">The exit plan — written on day one</div>
+                <p className="mt-1 whitespace-pre-line italic">{exitTest}</p>
+              </div>
             )}
 
             <article className="prose-book mt-6" dangerouslySetInnerHTML={{ __html: bodyHtml }} />

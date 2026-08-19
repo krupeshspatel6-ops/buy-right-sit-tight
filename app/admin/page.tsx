@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { isAdminEnabled } from "@/lib/admin";
+import { adminConfigured } from "@/lib/auth";
 import { loadChapters } from "@/lib/chapters";
 import AdminEditor from "@/components/AdminEditor";
 
@@ -8,15 +8,14 @@ export const dynamic = "force-dynamic";
 export const metadata = { robots: { index: false, follow: false } };
 
 export default function AdminPage() {
-  if (!isAdminEnabled()) {
+  if (!adminConfigured()) {
     return (
       <main className="mx-auto max-w-xl px-6 py-24 text-center">
-        <h1 className="text-2xl font-bold">Admin is local-only</h1>
+        <h1 className="text-2xl font-bold">Admin isn&apos;t configured yet</h1>
         <p className="mt-4 text-ink-soft leading-relaxed">
-          The chapter editor runs only when you&apos;re working on your own
-          computer — never on the live site. Run the project locally
-          (<code>npm run dev</code>) and open{" "}
-          <code>http://localhost:4000/admin</code>.
+          Set these environment variables (in Vercel, or a local <code>.env.local</code>) and
+          redeploy: <code>ADMIN_USER</code>, <code>ADMIN_PASSWORD</code>, <code>SESSION_SECRET</code>,
+          <code>GITHUB_TOKEN</code>, <code>VERCEL_DEPLOY_HOOK_URL</code>, and <code>ANTHROPIC_API_KEY</code>.
         </p>
         <p className="mt-6">
           <Link href="/" className="text-tape underline">

@@ -21,6 +21,8 @@ export type Chapter = {
   title: string;
   ticker: string;
   company?: string;
+  logo?: string; // explicit logo image URL or /logos/x.png path
+  domain?: string; // company domain, used for an auto logo fallback
   status: "open" | "closed";
   buys: Buy[];
   sell?: Sell;
@@ -56,6 +58,8 @@ export function loadChapters(): Chapter[] {
         title: String(data.title ?? ""),
         ticker: String(data.ticker ?? "").toUpperCase(),
         company: data.company ? String(data.company) : undefined,
+        logo: data.logo ? String(data.logo) : undefined,
+        domain: data.domain ? String(data.domain) : undefined,
         proofs: ((data.proofs ?? []) as unknown[]).map(String),
         status: data.sell ? "closed" : "open",
         buys: ((data.buys ?? []) as Buy[]).map((b) => ({

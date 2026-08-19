@@ -1,26 +1,14 @@
 import { NextResponse } from "next/server";
-import fs from "node:fs";
-import path from "node:path";
-import { execSync } from "node:child_process";
-import { isAdminEnabled } from "@/lib/admin";
 import { buildChapterFile, chapterSlug, type ChapterFileInput } from "@/lib/chapter-file";
+import { createFileOnGitHub, triggerVercelDeploy } from "@/lib/github";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-function run(cmd: string, cwd: string): string {
-  return execSync(cmd, { cwd, stdio: "pipe", timeout: 600_000 }).toString();
-}
-
+// Auth is enforced by middleware.ts before this route runs.
 export async function POST(req: Request) {
-  if (!isAdminEnabled()) {
-    return NextResponse.json(
-      { ok: false, error: "The admin editor only runs locally, never on the deployed site." },
-      { status: 403 }
-    );
-  }
-
-  let input: (ChapterFileInput & { dry?: boolean; deploy?: boolean }) | null = null;
+  let input: (ChapterFileInput & { dry?: boolean; deploy?: boolean; logo?: string; domain?: string }) | null =
+    null;
   try {
     input = await req.json();
   } catch {
@@ -28,7 +16,6 @@ export async function POST(req: Request) {
   }
   if (!input) return NextResponse.json({ ok: false, error: "No data." }, { status: 400 });
 
-  // Validate the essentials.
   const errors: string[] = [];
   const chapter = Number(input.chapter);
   const ticker = String(input.ticker || "").toUpperCase().replace(/[^A-Z.]/g, "");
@@ -47,6 +34,8 @@ export async function POST(req: Request) {
     title: input.title,
     ticker,
     company: input.company,
+    logo: input.logo,
+    domain: input.domain,
     date: input.date,
     price,
     shares,
@@ -56,51 +45,19 @@ export async function POST(req: Request) {
     body: input.body,
   });
 
-  // Dry run: just return the built file for preview, touch nothing.
-  if (input.dry) {
-    return NextResponse.json({ ok: true, dry: true, fileText });
-  }
+  if (input.dry) return NextResponse.json({ ok: true, dry: true, fileText });
 
-  const root = process.cwd();
   const slug = chapterSlug(chapter, ticker);
-  const relPath = path.join("chapters", `${slug}.md`);
-  const filePath = path.join(root, relPath);
+  const relPath = `chapters/${slug}.md`;
+  const company = input.company ? ` (${input.company})` : "";
+  const message = `Chapter ${chapter}: ${ticker}${company} — ${input.title || "Untitled"}`;
 
-  // Never overwrite a published chapter — the pledge is that nothing is edited.
-  if (fs.existsSync(filePath)) {
-    return NextResponse.json(
-      { ok: false, error: `chapters/${slug}.md already exists. Published chapters are never overwritten.` },
-      { status: 409 }
-    );
+  const commit = await createFileOnGitHub(relPath, fileText, message);
+  if (!commit.ok) {
+    const status = commit.code === "exists" ? 409 : commit.code === "config" ? 503 : 502;
+    return NextResponse.json({ ok: false, error: commit.error }, { status });
   }
 
-  const log: string[] = [];
-  try {
-    fs.writeFileSync(filePath, fileText, "utf8");
-    log.push(`Wrote ${relPath}`);
-
-    run(`git add "${filePath}"`, root);
-    const company = input.company ? ` (${input.company})` : "";
-    const msg = `Chapter ${chapter}: ${ticker}${company} — ${input.title || "Untitled"}`.replace(/"/g, "'");
-    run(`git commit -m "${msg}"`, root);
-    log.push("Committed to git");
-    run(`git push`, root);
-    log.push("Pushed to GitHub (public, timestamped commit)");
-
-    let prodUrl: string | null = null;
-    if (input.deploy !== false) {
-      const out = run(`npx vercel deploy --prod --yes`, root);
-      const m = out.match(/https:\/\/[^\s]+\.vercel\.app/);
-      prodUrl = m ? m[0] : null;
-      log.push("Deployed to production");
-    }
-
-    return NextResponse.json({ ok: true, slug, prodUrl, log });
-  } catch (e) {
-    const detail = e instanceof Error ? e.message : String(e);
-    return NextResponse.json(
-      { ok: false, error: `Publish step failed: ${detail}`, log },
-      { status: 500 }
-    );
-  }
+  const deployed = input.deploy !== false ? await triggerVercelDeploy() : false;
+  return NextResponse.json({ ok: true, slug, committed: true, deployed, sha: commit.sha });
 }

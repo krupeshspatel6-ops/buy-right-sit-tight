@@ -6,6 +6,8 @@ export type ChapterFileInput = {
   title: string;
   ticker: string;
   company?: string;
+  logo?: string;
+  domain?: string;
   date: string; // ISO 8601 with offset
   price: number;
   shares: number;
@@ -28,6 +30,8 @@ export function buildChapterFile(i: ChapterFileInput): string {
     `title: ${JSON.stringify(i.title || "Untitled")}`,
     `ticker: ${i.ticker.toUpperCase()}`,
     ...(i.company ? [`company: ${JSON.stringify(i.company)}`] : []),
+    ...(i.logo ? [`logo: ${JSON.stringify(i.logo)}`] : []),
+    ...(i.domain ? [`domain: ${JSON.stringify(i.domain)}`] : []),
     "buys:",
     `  - date: "${i.date}"`,
     `    price: ${i.price}`,

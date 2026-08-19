@@ -4,6 +4,7 @@ import { marked } from "marked";
 import { getChapter, loadChapters, costBasis, totalShares } from "@/lib/chapters";
 import { getChapterPerf } from "@/lib/quotes";
 import { formatFillTime, formatDate } from "@/lib/format";
+import BrandMark from "@/components/BrandMark";
 
 export const revalidate = 3600;
 
@@ -52,10 +53,13 @@ export default async function ChapterPage({
             {chapter.status === "open" ? "still drying" : "dry"}
           </span>
         </div>
-        <h1 className="text-3xl sm:text-4xl font-bold mt-2">
-          {chapter.company ? `${chapter.company} (${chapter.ticker})` : chapter.ticker} —{" "}
-          {chapter.title}
-        </h1>
+        <div className="mt-2 flex items-center gap-3">
+          <BrandMark ticker={chapter.ticker} logo={chapter.logo} domain={chapter.domain} size={48} />
+          <h1 className="text-3xl sm:text-4xl font-bold">
+            {chapter.company ? `${chapter.company} (${chapter.ticker})` : chapter.ticker} —{" "}
+            {chapter.title}
+          </h1>
+        </div>
       </header>
 
       {/* The record */}
@@ -110,13 +114,13 @@ export default async function ChapterPage({
         </div>
       </section>
 
-      {/* Exit test, written at entry */}
+      {/* Exit plan, written at entry */}
       {chapter.exitTest && (
         <section className="mt-6 rounded-lg border-l-4 border-tape bg-white px-6 py-4 shadow-sm">
           <h2 className="font-bold text-sm uppercase tracking-wide text-ink-soft">
-            The exit test — written on day one
+            The exit plan — written on day one
           </h2>
-          <p className="mt-1 text-lg italic">&ldquo;{chapter.exitTest}&rdquo;</p>
+          <p className="mt-1 text-lg italic whitespace-pre-line">{chapter.exitTest}</p>
         </section>
       )}
 

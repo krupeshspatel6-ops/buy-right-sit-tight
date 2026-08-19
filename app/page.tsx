@@ -15,6 +15,7 @@ import {
 } from "@/lib/chapters";
 import { getScoreboard, type Scoreboard } from "@/lib/quotes";
 import { formatFillTime, formatDate } from "@/lib/format";
+import BrandMark from "@/components/BrandMark";
 
 export const revalidate = 3600;
 
@@ -375,9 +376,12 @@ export default async function Home() {
               {c.status === "open" ? "still drying" : "dry"}
             </span>
           </div>
-          <h2 className="text-3xl font-bold mt-1 mb-5">
-            {c.company ? `${c.company} (${c.ticker})` : c.ticker} — {c.title}
-          </h2>
+          <div className="mt-1 mb-5 flex items-center gap-3">
+            <BrandMark ticker={c.ticker} logo={c.logo} domain={c.domain} size={44} />
+            <h2 className="text-3xl font-bold">
+              {c.company ? `${c.company} (${c.ticker})` : c.ticker} — {c.title}
+            </h2>
+          </div>
 
           <div className="rounded-lg border border-wall-dark overflow-hidden mb-5 text-sm">
             {c.buys.map((b, i) => (
@@ -416,9 +420,10 @@ export default async function Home() {
           </div>
 
           {c.exitTest && (
-            <p className="border-l-4 border-tape pl-4 italic text-ink-soft mb-5">
-              The exit test, written on day one: &ldquo;{c.exitTest}&rdquo;
-            </p>
+            <div className="border-l-4 border-tape pl-4 text-ink-soft mb-5">
+              <div className="text-xs uppercase tracking-wide">The exit plan — written on day one</div>
+              <p className="mt-1 italic whitespace-pre-line">{c.exitTest}</p>
+            </div>
           )}
 
           {c.proofs.length > 0 && (
