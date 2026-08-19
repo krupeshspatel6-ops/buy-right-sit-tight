@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Analytics } from "@vercel/analytics/next";
+import Buddy from "@/components/Buddy";
 import "./globals.css";
 
 const TITLE = "Buy Right Sit Tight — watch the paint dry.";
@@ -43,6 +44,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             licensed advisor.
           </p>
         </footer>
+        <Buddy />
         <Analytics />
       </body>
     </html>

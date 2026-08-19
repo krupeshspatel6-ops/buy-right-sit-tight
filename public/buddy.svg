@@ -1,0 +1,25 @@
+<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Krupesh's book buddy">
+  <rect width="120" height="120" fill="#7fa3d1"/>
+  <rect x="6" y="6" width="14" height="108" fill="#8db0da" opacity="0.5"/>
+  <rect x="34" y="6" width="14" height="108" fill="#6f96c9" opacity="0.45"/>
+  <!-- shoulders -->
+  <path d="M20 120 C20 96 40 84 60 84 C80 84 100 96 100 120 Z" fill="#3c3a36"/>
+  <!-- neck -->
+  <rect x="52" y="70" width="16" height="20" rx="6" fill="#c08a5f"/>
+  <!-- head -->
+  <circle cx="60" cy="54" r="26" fill="#c08a5f"/>
+  <!-- hair -->
+  <path d="M35 50 C35 32 50 24 60 24 C70 24 85 32 85 50 C85 42 74 38 60 38 C46 38 35 42 35 50 Z" fill="#26241f"/>
+  <!-- eyes -->
+  <circle cx="50" cy="54" r="3.2" fill="#26241f"/>
+  <circle cx="70" cy="54" r="3.2" fill="#26241f"/>
+  <!-- brows -->
+  <path d="M45 47 L55 46 M65 46 L75 47" stroke="#26241f" stroke-width="2" stroke-linecap="round" fill="none"/>
+  <!-- nose -->
+  <path d="M60 56 L57 63 L62 63 Z" fill="#a9764f"/>
+  <!-- smile -->
+  <path d="M51 68 Q60 75 69 68" stroke="#26241f" stroke-width="2.4" stroke-linecap="round" fill="none"/>
+  <!-- mug -->
+  <rect x="86" y="98" width="18" height="16" rx="3" fill="#faf7f0"/>
+  <path d="M86 102 a6 6 0 1 0 0 9" stroke="#faf7f0" stroke-width="3.5" fill="none"/>
+</svg>
