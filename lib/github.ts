@@ -12,7 +12,7 @@ export async function createFileOnGitHub(
   message: string
 ): Promise<CommitResult> {
   const token = process.env.GITHUB_TOKEN;
-  const repo = process.env.GITHUB_REPO || "swami1234/buy-right-sit-tight";
+  const repo = process.env.GITHUB_REPO || "krupeshspatel6-ops/buy-right-sit-tight";
   const branch = process.env.GITHUB_BRANCH || "main";
   if (!token) return { ok: false, error: "GITHUB_TOKEN is not set.", code: "config" };
 
