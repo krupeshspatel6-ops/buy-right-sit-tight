@@ -63,6 +63,7 @@ export default function AdminEditor({
   const [proofs, setProofs] = useState("");
   const [body, setBody] = useState(BODY_SCAFFOLD);
   const [deploy, setDeploy] = useState(true);
+  const [confirming, setConfirming] = useState(false);
 
   const [status, setStatus] = useState<
     { kind: "idle" | "busy" | "ok" | "err"; msg?: string }
@@ -100,7 +101,8 @@ export default function AdminEditor({
     router.refresh();
   }
 
-  async function publish() {
+  async function doPublish() {
+    setConfirming(false);
     setStatus({ kind: "busy", msg: deploy ? "Publishing & deploying…" : "Publishing…" });
     try {
       const res = await fetch("/api/admin/publish", {
@@ -279,7 +281,7 @@ export default function AdminEditor({
               Deploy live after publishing
             </label>
             <button
-              onClick={publish}
+              onClick={() => setConfirming(true)}
               disabled={busy}
               className="rounded-full px-5 py-2 text-sm font-semibold text-white disabled:opacity-50"
               style={{ backgroundColor: "#F96302" }}
@@ -287,6 +289,38 @@ export default function AdminEditor({
               {busy ? "Publishing…" : "Publish to production"}
             </button>
           </div>
+
+          {confirming && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+              <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+                <h3 className="text-lg font-bold text-loss">This is permanent.</h3>
+                <p className="mt-3 text-sm leading-relaxed">
+                  You&apos;re about to publish <b>Chapter {chapter} — {ticker}</b>. Once published,
+                  this chapter is a public, timestamped commit that <b>can never be edited or
+                  deleted — not even by you</b>. That permanence is the whole point of the book.
+                </p>
+                <p className="mt-2 text-sm text-ink-soft">
+                  Read it over one more time. Corrections can only be <i>appended</i> later, dated,
+                  below the original — never changed.
+                </p>
+                <div className="mt-5 flex justify-end gap-3">
+                  <button
+                    onClick={() => setConfirming(false)}
+                    className="rounded-full border border-wall-dark px-4 py-2 text-sm"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={doPublish}
+                    className="rounded-full px-4 py-2 text-sm font-semibold text-white"
+                    style={{ backgroundColor: "#F96302" }}
+                  >
+                    Yes, publish forever
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {status.kind !== "idle" && (
             <div

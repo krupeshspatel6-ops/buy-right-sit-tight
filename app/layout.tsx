@@ -32,9 +32,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-screen antialiased">
         {children}
         <footer className="mx-auto max-w-3xl px-6 py-10 text-sm text-ink-soft border-t border-wall-dark mt-16">
-          <p className="mb-3">
-            Title: Thomas Phelps. Tagline: Paul Samuelson. Sitting: me.
-          </p>
           <p>
             This is a personal learning journal written by a 15-year-old
             beginner — not investment advice. I write about stocks I buy with my

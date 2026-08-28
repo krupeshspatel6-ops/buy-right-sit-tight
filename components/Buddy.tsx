@@ -47,6 +47,29 @@ function stripEmoji(t: string): string {
     .trim();
 }
 
+// Turn a (markdown) chapter into readable chunks (~350 chars) at sentence
+// boundaries, so the assistant can read a long chapter aloud in pieces.
+function chunkText(raw: string): string[] {
+  const plain = raw
+    .replace(/^>.*$/gm, "") // drop the append-only footer/quote lines
+    .replace(/[#>*_`~[\]]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  const sentences = plain.match(/[^.!?]+[.!?]*/g) || [plain];
+  const chunks: string[] = [];
+  let cur = "";
+  for (const s of sentences) {
+    if ((cur + s).length > 350 && cur) {
+      chunks.push(cur.trim());
+      cur = s;
+    } else {
+      cur += s;
+    }
+  }
+  if (cur.trim()) chunks.push(cur.trim());
+  return chunks.length ? chunks : [plain];
+}
+
 export default function Buddy() {
   const pathname = usePathname() || "/";
   const [hidden, setHidden] = useState(false);
@@ -312,6 +335,19 @@ export default function Buddy() {
 
   const tellStory = useCallback(() => narrate(STORY), [narrate]);
   const showBook = useCallback(() => narrate(TOUR), [narrate]);
+
+  // Read a chapter aloud when a chapter page asks (the "Read this" button).
+  useEffect(() => {
+    const onRead = (e: Event) => {
+      const t = (e as CustomEvent<{ text?: string }>).detail?.text;
+      if (!t) return;
+      interactedRef.current = true;
+      setHidden(false);
+      narrate(chunkText(t));
+    };
+    window.addEventListener("buddy:read", onRead);
+    return () => window.removeEventListener("buddy:read", onRead);
+  }, [narrate]);
 
   async function ask(e?: React.FormEvent) {
     e?.preventDefault();

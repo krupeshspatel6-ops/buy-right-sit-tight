@@ -45,5 +45,3 @@ A few things I want to be crystal clear about, because they matter:
 That's it. Buy right, sit tight, and watch the paint dry with me.
 
 — Krupesh
-
-*(Title from Thomas Phelps. Tagline from Paul Samuelson. The learning is mine.)*

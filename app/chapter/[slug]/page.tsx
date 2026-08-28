@@ -6,6 +6,7 @@ import { getChapterPerf } from "@/lib/quotes";
 import { formatFillTime, formatDate } from "@/lib/format";
 import BrandMark from "@/components/BrandMark";
 import { chapterCommitsUrl } from "@/lib/repo";
+import ReadAloudButton from "@/components/ReadAloudButton";
 
 export const revalidate = 3600;
 
@@ -165,8 +166,11 @@ export default async function ChapterPage({
       </section>
 
       {/* The why */}
+      <div className="mt-8">
+        <ReadAloudButton text={`Chapter ${chapter.chapter}. ${chapter.title}. ${chapter.body}`} />
+      </div>
       <article
-        className="prose-book mt-8"
+        className="prose-book mt-4"
         dangerouslySetInnerHTML={{ __html: marked.parse(chapter.body) as string }}
       />
     </main>

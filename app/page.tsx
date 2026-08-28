@@ -16,6 +16,7 @@ import { getScoreboard, type Scoreboard } from "@/lib/quotes";
 import { formatFillTime, formatDate } from "@/lib/format";
 import BrandMark from "@/components/BrandMark";
 import { chapterCommitsUrl } from "@/lib/repo";
+import ReadAloudButton from "@/components/ReadAloudButton";
 
 export const revalidate = 3600;
 
@@ -457,6 +458,9 @@ export default async function Home() {
             )}
           </div>
 
+          <div className="mb-3">
+            <ReadAloudButton text={`Chapter ${c.chapter}. ${c.title}. ${c.body}`} />
+          </div>
           <article
             className="prose-book"
             dangerouslySetInnerHTML={{ __html: marked.parse(c.body) as string }}
@@ -489,9 +493,6 @@ export default async function Home() {
         The wall got painted. The chair stayed. This book is still being
         written — come back after the next buy, or in five years, which is
         really the same thing.
-      </p>
-      <p className="mt-8 text-sm text-ink-soft">
-        Title: Thomas Phelps. Tagline: Paul Samuelson. Sitting: me.
       </p>
     </div>
   );
