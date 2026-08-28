@@ -70,6 +70,9 @@ export default function Buddy() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
   const rafRef = useRef(0);
+  const lineDoneRef = useRef<(() => void) | null>(null); // fires when a spoken line ends
+  const doneTimerRef = useRef(0); // fallback timer if speech-end never fires
+  const danceTimerRef = useRef(0); // stops the dance burst
 
   const stopAudio = useCallback(() => {
     cancelAnimationFrame(rafRef.current);
@@ -101,6 +104,7 @@ export default function Buddy() {
     u.onend = () => {
       expressionRef.current.talking = false;
       setSpeaking(false);
+      lineDoneRef.current?.();
     };
     window.speechSynthesis.speak(u);
   }, []);
@@ -150,6 +154,7 @@ export default function Buddy() {
         audio.onended = () => {
           stopAudio();
           URL.revokeObjectURL(url);
+          lineDoneRef.current?.();
         };
         expressionRef.current.talking = true;
         await audio.play();
@@ -177,11 +182,27 @@ export default function Buddy() {
 
   // Say a single line: set it as the target (types out) and speak it.
   const say = useCallback(
-    (line: string) => {
+    (line: string, onDone?: () => void) => {
       setTarget(line);
       setText("");
       setSpeaking(true);
       expressionRef.current.talking = true; // move the mouth even when muted
+      window.clearTimeout(doneTimerRef.current);
+      let fired = false;
+      const fire = () => {
+        if (fired) return;
+        fired = true;
+        window.clearTimeout(doneTimerRef.current);
+        lineDoneRef.current = null;
+        onDone?.();
+      };
+      lineDoneRef.current = fire;
+      // Fallback so narration still advances if speech-end never fires (muted /
+      // autoplay-blocked). Generous when voiced so it never cuts real speech off.
+      const est = voiceRef.current
+        ? line.length * TYPE_MS + line.length * 85 + 2500
+        : line.length * TYPE_MS + 1400;
+      doneTimerRef.current = window.setTimeout(fire, est);
       speak(line);
     },
     [speak]
@@ -222,6 +243,9 @@ export default function Buddy() {
 
   // Stop everything (the "stop talking" button).
   const stop = useCallback(() => {
+    window.clearTimeout(doneTimerRef.current);
+    window.clearTimeout(danceTimerRef.current);
+    lineDoneRef.current = null;
     setTalking(false);
     setDancing(false);
     setSpeaking(false);
@@ -230,39 +254,36 @@ export default function Buddy() {
     setTarget((cur) => cur); // freeze current line as-is
   }, [cancelVoice]);
 
-  // Narrate a script (the story or the book tour), dancing while he does.
+  // A short one-off dance (~3s), not a permanent one.
+  const danceBurst = useCallback(() => {
+    setDancing(true);
+    window.clearTimeout(danceTimerRef.current);
+    danceTimerRef.current = window.setTimeout(() => setDancing(false), 3000);
+  }, []);
+
+  // Narrate a script (story or tour): a quick dance, then speak each line and
+  // advance ONLY when that line has finished being spoken (no cutting off).
   const narrate = useCallback(
     (script: string[]) => {
       interactedRef.current = true;
       setAsking(false);
       scriptRef.current = script;
-      storyIdx.current = 0;
       setTalking(true);
-      setDancing(true);
-      say(script[0]);
+      danceBurst();
+      const sayLine = (i: number) => {
+        storyIdx.current = i;
+        say(script[i], () => {
+          if (i + 1 < script.length) sayLine(i + 1);
+          else setTalking(false);
+        });
+      };
+      sayLine(0);
     },
-    [say]
+    [say, danceBurst]
   );
 
   const tellStory = useCallback(() => narrate(STORY), [narrate]);
   const showBook = useCallback(() => narrate(TOUR), [narrate]);
-
-  // Advance the current script once a line finishes typing (if still narrating).
-  useEffect(() => {
-    if (!talking) return;
-    if (text.length < target.length) return;
-    const t = setTimeout(() => {
-      const next = storyIdx.current + 1;
-      if (next < scriptRef.current.length) {
-        storyIdx.current = next;
-        say(scriptRef.current[next]);
-      } else {
-        setTalking(false);
-        setDancing(false);
-      }
-    }, 1600);
-    return () => clearTimeout(t);
-  }, [talking, text, target, say]);
 
   async function ask(e?: React.FormEvent) {
     e?.preventDefault();
@@ -341,9 +362,30 @@ export default function Buddy() {
     >
       {/* speech bubble on top of the buddy — holds what he says AND the buttons */}
       <div
-        className="relative mb-2 w-full whitespace-normal break-words rounded-2xl border border-wall-dark bg-white/95 px-4 py-3 text-sm leading-relaxed shadow-lg"
+        className="relative mb-2 w-full whitespace-normal break-words rounded-2xl border border-wall-dark bg-white/95 px-4 py-3 pt-5 text-sm leading-relaxed shadow-lg"
         style={{ pointerEvents: "auto", transform: "translate(34px, 40px)" }}
       >
+        {/* sound + close, on top of the popup */}
+        <div className="absolute -top-3 right-2 flex items-center gap-1">
+          <button
+            onClick={toggleVoice}
+            title={voice ? "Mute" : "Unmute"}
+            className="grid h-7 w-7 place-items-center rounded-full border border-wall-dark bg-white text-sm shadow-sm hover:bg-wall"
+          >
+            {voice ? "🔊" : "🔈"}
+          </button>
+          <button
+            onClick={() => {
+              stop();
+              setHidden(true);
+            }}
+            title="Hide the buddy"
+            className="grid h-7 w-7 place-items-center rounded-full border border-wall-dark bg-white text-sm shadow-sm hover:bg-wall"
+          >
+            ✕
+          </button>
+        </div>
+
         {(thinking || text) && (
           <div className="mb-2">
             {thinking ? (
@@ -427,30 +469,6 @@ export default function Buddy() {
         {/* the free-standing 3D character */}
         <div className="absolute inset-0" style={{ pointerEvents: "none" }}>
           <Character3D expressionRef={expressionRef} dancing={dancing} />
-        </div>
-
-        {/* tiny mute + dismiss, top-right of the character */}
-        <div
-          className="absolute right-0 top-2 flex items-center gap-1"
-          style={{ pointerEvents: "auto" }}
-        >
-          <button
-            onClick={toggleVoice}
-            title={voice ? "Mute" : "Unmute"}
-            className="grid h-7 w-7 place-items-center rounded-full bg-white/80 text-sm hover:bg-white"
-          >
-            {voice ? "🔊" : "🔈"}
-          </button>
-          <button
-            onClick={() => {
-              stop();
-              setHidden(true);
-            }}
-            title="Hide the buddy"
-            className="grid h-7 w-7 place-items-center rounded-full bg-white/80 text-sm hover:bg-white"
-          >
-            ✕
-          </button>
         </div>
       </div>
     </div>
