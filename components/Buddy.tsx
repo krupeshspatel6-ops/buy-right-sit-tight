@@ -248,6 +248,34 @@ export default function Buddy() {
     return () => clearTimeout(t);
   }, [text, target]);
 
+  // Unlock Web Audio on the first real gesture. The neural voice routes through
+  // an AudioContext (for lip-sync), and a context can only be resumed inside a
+  // user gesture — otherwise it stays suspended and no sound plays, even though
+  // playback "succeeds". Capture phase so it runs before anything else.
+  useEffect(() => {
+    const unlock = () => {
+      try {
+        const Ctx =
+          window.AudioContext ||
+          (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+        if (!audioCtxRef.current) audioCtxRef.current = new Ctx();
+        if (audioCtxRef.current.state === "suspended") audioCtxRef.current.resume();
+      } catch {
+        /* ignore */
+      }
+      if (audioCtxRef.current && audioCtxRef.current.state === "running") remove();
+    };
+    const remove = () => {
+      document.removeEventListener("pointerdown", unlock, true);
+      document.removeEventListener("keydown", unlock, true);
+      document.removeEventListener("touchstart", unlock, true);
+    };
+    document.addEventListener("pointerdown", unlock, true);
+    document.addEventListener("keydown", unlock, true);
+    document.addEventListener("touchstart", unlock, true);
+    return remove;
+  }, []);
+
   // Greet on load (the character is free-standing and always present). The
   // guard lives inside the timer so React's dev double-mount can't cancel it.
   useEffect(() => {
