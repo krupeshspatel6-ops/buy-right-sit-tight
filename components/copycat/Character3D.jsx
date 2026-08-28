@@ -1,15 +1,17 @@
 "use client";
 
-import { Suspense, useEffect, useMemo } from "react";
+import { Suspense, useEffect } from "react";
 import { Canvas } from "@react-three/fiber";
 import OurGuyMixamo from "./OurGuyMixamo";
-import { loadAvatar } from "./avatar";
+import { DEFAULT_AVATAR } from "./avatar";
 
 // The real Copycat 3D character on a transparent canvas — idles, and moves its
 // mouth while `expressionRef.current.talking` is true. Same character as
 // copycat.tools, rendered in the book's corner.
 export default function Character3D({ expressionRef }) {
-  const avatar = useMemo(() => loadAvatar(), []);
+  // Copycat's classic look (fixed, not the random per-visitor avatar), so the
+  // character always matches the canonical copycat.tools guy.
+  const avatar = DEFAULT_AVATAR;
   // Nudge r3f's resize once mounted (fiber v9 + React 19 can otherwise leave the
   // canvas at its default 300x150 until the first window resize).
   useEffect(() => {

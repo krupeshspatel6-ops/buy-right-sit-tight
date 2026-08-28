@@ -49,11 +49,30 @@ export default function Buddy() {
   const storyIdx = useRef(0);
   const voiceRef = useRef(true);
   const greeted = useRef(false);
-  // Drives the 3D character's mouth: true → it's moving its lips.
-  const expressionRef = useRef({ talking: false, emotion: "neutral" });
+  // Drives the 3D character's mouth: talking + open-amount (0..1).
+  const expressionRef = useRef({ talking: false, emotion: "neutral", open: 0 });
+  const neuralAvailRef = useRef<boolean | null>(null); // null = not tried; false = not configured
+  const interactedRef = useRef(false); // neural voice needs a user gesture
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const rafRef = useRef(0);
 
-  const speak = useCallback((raw: string) => {
-    if (!voiceRef.current || typeof window === "undefined" || !window.speechSynthesis) return;
+  const stopAudio = useCallback(() => {
+    cancelAnimationFrame(rafRef.current);
+    if (audioRef.current) {
+      try {
+        audioRef.current.pause();
+      } catch {
+        /* ignore */
+      }
+      audioRef.current = null;
+    }
+    expressionRef.current.talking = false;
+    expressionRef.current.open = 0;
+  }, []);
+
+  const speakBrowser = useCallback((raw: string) => {
+    if (typeof window === "undefined" || !window.speechSynthesis) return;
     const spoken = stripEmoji(raw);
     if (!spoken) return;
     window.speechSynthesis.cancel();
@@ -69,10 +88,74 @@ export default function Buddy() {
     window.speechSynthesis.speak(u);
   }, []);
 
+  // Copycat's neural voice with real lip-sync from the audio amplitude.
+  const speakNeural = useCallback(
+    async (raw: string) => {
+      const spoken = stripEmoji(raw);
+      if (!spoken) return;
+      stopAudio();
+      try {
+        const res = await fetch("/api/tts", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ text: spoken }),
+        });
+        if (!res.ok) {
+          if (res.status === 503) neuralAvailRef.current = false; // not configured → stop trying
+          speakBrowser(raw);
+          return;
+        }
+        neuralAvailRef.current = true;
+        const url = URL.createObjectURL(await res.blob());
+        const audio = new Audio(url);
+        audioRef.current = audio;
+        const Ctx =
+          window.AudioContext ||
+          (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+        const ctx = audioCtxRef.current || new Ctx();
+        audioCtxRef.current = ctx;
+        if (ctx.state === "suspended") await ctx.resume();
+        const source = ctx.createMediaElementSource(audio);
+        const analyser = ctx.createAnalyser();
+        analyser.fftSize = 256;
+        source.connect(analyser);
+        analyser.connect(ctx.destination);
+        const data = new Uint8Array(analyser.frequencyBinCount);
+        const loop = () => {
+          analyser.getByteFrequencyData(data);
+          let sum = 0;
+          for (let i = 0; i < data.length; i++) sum += data[i];
+          expressionRef.current.open = Math.min(1, sum / data.length / 80);
+          expressionRef.current.talking = true;
+          rafRef.current = requestAnimationFrame(loop);
+        };
+        audio.onended = () => {
+          stopAudio();
+          URL.revokeObjectURL(url);
+        };
+        expressionRef.current.talking = true;
+        await audio.play();
+        loop();
+      } catch {
+        speakBrowser(raw);
+      }
+    },
+    [speakBrowser, stopAudio]
+  );
+
+  const speak = useCallback(
+    (raw: string) => {
+      if (!voiceRef.current) return;
+      if (neuralAvailRef.current !== false && interactedRef.current) speakNeural(raw);
+      else speakBrowser(raw);
+    },
+    [speakNeural, speakBrowser]
+  );
+
   const cancelVoice = useCallback(() => {
-    expressionRef.current.talking = false;
+    stopAudio();
     if (typeof window !== "undefined" && window.speechSynthesis) window.speechSynthesis.cancel();
-  }, []);
+  }, [stopAudio]);
 
   // Say a single line: set it as the target (types out) and speak it.
   const say = useCallback(
@@ -124,6 +207,7 @@ export default function Buddy() {
   }, [cancelVoice]);
 
   const tellStory = useCallback(() => {
+    interactedRef.current = true;
     setAsking(false);
     setTalking(true);
     storyIdx.current = 0;
@@ -148,6 +232,7 @@ export default function Buddy() {
 
   async function ask(e?: React.FormEvent) {
     e?.preventDefault();
+    interactedRef.current = true;
     const q = question.trim();
     if (!q || thinking) return;
     if (/^\s*stop\b/i.test(q)) {
@@ -182,10 +267,12 @@ export default function Buddy() {
   }
 
   function toggleVoice() {
+    interactedRef.current = true;
     const next = !voiceRef.current;
     voiceRef.current = next;
     setVoice(next);
-    if (!next) cancelVoice();
+    if (next) speak(target || WELCOME_FIRST);
+    else cancelVoice();
   }
 
   // Stop speech when the route changes.
@@ -221,7 +308,7 @@ export default function Buddy() {
       {/* speech bubble on top of the buddy — holds what he says AND the buttons */}
       <div
         className="relative mb-2 w-full whitespace-normal break-words rounded-2xl border border-wall-dark bg-white/95 px-4 py-3 text-sm leading-relaxed shadow-lg"
-        style={{ pointerEvents: "auto" }}
+        style={{ pointerEvents: "auto", transform: "translate(34px, 40px)" }}
       >
         {(thinking || text) && (
           <div className="mb-2">
