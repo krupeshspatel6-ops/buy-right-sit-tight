@@ -6,6 +6,10 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
+import dynamic from "next/dynamic";
+
+// Heavy 3D — only load it when the buddy actually opens, never on the server.
+const Character3D = dynamic(() => import("@/components/copycat/Character3D"), { ssr: false });
 
 const WELCOME_FIRST =
   "Hi — I'm Krupesh! 👋 I'm 15, and I'm learning to invest with my own money, in public. Welcome to my book.";
@@ -45,6 +49,8 @@ export default function Buddy() {
   const storyIdx = useRef(0);
   const voiceRef = useRef(true);
   const greeted = useRef(false);
+  // Drives the 3D character's mouth: true → it's moving its lips.
+  const expressionRef = useRef({ talking: false, emotion: "neutral" });
 
   const speak = useCallback((raw: string) => {
     if (!voiceRef.current || typeof window === "undefined" || !window.speechSynthesis) return;
@@ -54,10 +60,17 @@ export default function Buddy() {
     const u = new SpeechSynthesisUtterance(spoken);
     u.lang = "en-US";
     u.rate = 0.98;
+    u.onstart = () => {
+      expressionRef.current.talking = true;
+    };
+    u.onend = () => {
+      expressionRef.current.talking = false;
+    };
     window.speechSynthesis.speak(u);
   }, []);
 
   const cancelVoice = useCallback(() => {
+    expressionRef.current.talking = false;
     if (typeof window !== "undefined" && window.speechSynthesis) window.speechSynthesis.cancel();
   }, []);
 
@@ -66,6 +79,7 @@ export default function Buddy() {
     (line: string) => {
       setTarget(line);
       setText("");
+      expressionRef.current.talking = true; // move the mouth even when muted
       speak(line);
     },
     [speak]
@@ -73,7 +87,11 @@ export default function Buddy() {
 
   // Typewriter effect toward `target`.
   useEffect(() => {
-    if (text.length >= target.length) return;
+    if (text.length >= target.length) {
+      // Done typing. If muted, there's no speech-end event, so stop the mouth here.
+      if (!voiceRef.current) expressionRef.current.talking = false;
+      return;
+    }
     const t = setTimeout(() => setText(target.slice(0, text.length + 1)), TYPE_MS);
     return () => clearTimeout(t);
   }, [text, target]);
@@ -173,17 +191,18 @@ export default function Buddy() {
   return (
     <div className="fixed bottom-4 right-4 z-50 print:hidden">
       {open ? (
-        <div className="w-[300px] max-w-[calc(100vw-2rem)] rounded-2xl border border-wall-dark bg-white shadow-xl">
-          {/* header */}
-          <div className="flex items-center gap-2 border-b border-wall px-3 py-2">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/buddy.svg" alt="" className="h-8 w-8 rounded-full" />
-            <span className="text-sm font-semibold">Krupesh&apos;s buddy</span>
-            <div className="ml-auto flex items-center gap-1">
+        <div className="w-[320px] max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border border-wall-dark bg-white shadow-xl">
+          {/* the 3D character */}
+          <div className="relative h-[220px] w-full bg-gradient-to-b from-wall to-wall-dark/40">
+            <Character3D expressionRef={expressionRef} />
+            <span className="absolute left-3 top-2 text-xs font-semibold text-ink-soft">
+              Krupesh&apos;s buddy
+            </span>
+            <div className="absolute right-2 top-2 flex items-center gap-1">
               <button
                 onClick={toggleVoice}
                 title={voice ? "Mute" : "Unmute"}
-                className="grid h-7 w-7 place-items-center rounded-full text-sm hover:bg-wall-dark/40"
+                className="grid h-7 w-7 place-items-center rounded-full bg-white/80 text-sm hover:bg-white"
               >
                 {voice ? "🔊" : "🔈"}
               </button>
@@ -193,7 +212,7 @@ export default function Buddy() {
                   setOpen(false);
                 }}
                 title="Close"
-                className="grid h-7 w-7 place-items-center rounded-full text-sm hover:bg-wall-dark/40"
+                className="grid h-7 w-7 place-items-center rounded-full bg-white/80 text-sm hover:bg-white"
               >
                 ✕
               </button>
