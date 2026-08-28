@@ -209,8 +209,6 @@ export default function Buddy() {
     );
   }
 
-  const speaking = thinking || text.length > 0;
-
   return (
     // Free-standing: the character stands on the page (transparent, no card),
     // anchored to the bottom. The bubble stacks directly above its head. The
@@ -220,47 +218,33 @@ export default function Buddy() {
       className="fixed bottom-0 left-2 z-50 flex flex-col items-center print:hidden"
       style={{ width: 280, pointerEvents: "none" }}
     >
-      {/* speech bubble — sits on top of the buddy, text wraps */}
-      {speaking && (
-        <div
-          className="relative mb-2 w-full whitespace-normal break-words rounded-2xl border border-wall-dark bg-white/95 px-4 py-3 text-sm leading-relaxed shadow-lg"
-          style={{ pointerEvents: "auto" }}
-        >
-          {thinking ? (
-            <span className="text-ink-soft">Thinking…</span>
-          ) : (
-            <span>
-              {text}
-              {text.length < target.length && <span className="animate-pulse">▍</span>}
-            </span>
-          )}
-          {/* tail pointing down to the character */}
-          <span
-            aria-hidden
-            className="absolute -bottom-[7px] left-1/2 h-3.5 w-3.5 -translate-x-1/2 rotate-45 border-b border-r border-wall-dark bg-white/95"
-          />
-        </div>
-      )}
+      {/* speech bubble on top of the buddy — holds what he says AND the buttons */}
+      <div
+        className="relative mb-2 w-full whitespace-normal break-words rounded-2xl border border-wall-dark bg-white/95 px-4 py-3 text-sm leading-relaxed shadow-lg"
+        style={{ pointerEvents: "auto" }}
+      >
+        {(thinking || text) && (
+          <div className="mb-2">
+            {thinking ? (
+              <span className="text-ink-soft">Thinking…</span>
+            ) : (
+              <span>
+                {text}
+                {text.length < target.length && <span className="animate-pulse">▍</span>}
+              </span>
+            )}
+          </div>
+        )}
 
-      <div className="relative" style={{ width: 280, height: 480 }}>
-        {/* the free-standing 3D character */}
-        <div className="absolute inset-0" style={{ pointerEvents: "none" }}>
-          <Character3D expressionRef={expressionRef} />
-        </div>
-
-        {/* controls, floating at the character's feet */}
-        <div
-          className="absolute bottom-1 left-1/2 flex -translate-x-1/2 flex-col items-center gap-1.5"
-          style={{ pointerEvents: "auto" }}
-        >
-          {asking ? (
-            <form onSubmit={ask} className="flex gap-1.5 rounded-full bg-white/95 p-1 shadow-md">
+        {asking ? (
+          <div className="flex flex-col gap-1.5">
+            <form onSubmit={ask} className="flex gap-1.5">
               <input
                 autoFocus
                 value={question}
                 onChange={(e) => setQuestion(e.target.value)}
                 placeholder="Ask about the book…"
-                className="w-[150px] min-w-0 rounded-full px-3 py-1 text-sm outline-none"
+                className="min-w-0 flex-1 rounded-full border border-wall-dark px-3 py-1 text-sm outline-none focus:border-tape"
               />
               <button
                 type="submit"
@@ -270,41 +254,52 @@ export default function Buddy() {
                 Ask
               </button>
             </form>
-          ) : (
-            <div className="flex flex-wrap justify-center gap-1.5">
-              <button
-                onClick={tellStory}
-                className="rounded-full border border-tape bg-white/95 px-3 py-1 text-xs font-semibold text-tape shadow-sm"
-              >
-                📖 Story
-              </button>
-              <button
-                onClick={() => {
-                  setAsking(true);
-                  stop();
-                }}
-                className="rounded-full border border-tape bg-white/95 px-3 py-1 text-xs font-semibold text-tape shadow-sm"
-              >
-                💬 Ask
-              </button>
-              {talking && (
-                <button
-                  onClick={stop}
-                  className="rounded-full border border-loss bg-white/95 px-3 py-1 text-xs font-semibold text-loss shadow-sm"
-                >
-                  ⏹ Stop
-                </button>
-              )}
-            </div>
-          )}
-          {asking && (
             <button
               onClick={() => setAsking(false)}
-              className="rounded-full bg-white/90 px-2 text-xs text-ink-soft underline"
+              className="self-start text-xs text-ink-soft underline"
             >
               ← back
             </button>
-          )}
+          </div>
+        ) : (
+          <div className="flex flex-wrap gap-1.5">
+            <button
+              onClick={tellStory}
+              className="rounded-full border border-tape px-3 py-1 text-xs font-semibold text-tape"
+            >
+              📖 Story
+            </button>
+            <button
+              onClick={() => {
+                setAsking(true);
+                stop();
+              }}
+              className="rounded-full border border-tape px-3 py-1 text-xs font-semibold text-tape"
+            >
+              💬 Ask
+            </button>
+            {talking && (
+              <button
+                onClick={stop}
+                className="rounded-full border border-loss px-3 py-1 text-xs font-semibold text-loss"
+              >
+                ⏹ Stop
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* tail pointing down to the character */}
+        <span
+          aria-hidden
+          className="absolute -bottom-[7px] left-1/2 h-3.5 w-3.5 -translate-x-1/2 rotate-45 border-b border-r border-wall-dark bg-white/95"
+        />
+      </div>
+
+      <div className="relative" style={{ width: 280, height: 480 }}>
+        {/* the free-standing 3D character */}
+        <div className="absolute inset-0" style={{ pointerEvents: "none" }}>
+          <Character3D expressionRef={expressionRef} />
         </div>
 
         {/* tiny mute + dismiss, top-right of the character */}
