@@ -72,13 +72,13 @@ export default function BookReader({
     <div className="flex justify-center gap-8 px-4">
       {ledger && (
         <aside className="hidden xl:block w-64 shrink-0">
-          <div className="sticky top-10 max-h-[84vh] overflow-y-auto pr-1">{ledger}</div>
+          <div className="sticky top-10 max-h-[72vh] overflow-y-auto pr-1">{ledger}</div>
         </aside>
       )}
       <div className="book-stage w-full max-w-[960px]">
         <div
           key={index}
-          className={`book-page relative h-[84vh] overflow-y-auto px-8 py-12 sm:px-14 ${
+          className={`book-page relative h-[72vh] overflow-y-auto px-8 py-8 sm:px-14 ${
             turn === "next" ? "page-turn-next" : turn === "prev" ? "page-turn-prev" : ""
           }`}
         >
@@ -126,7 +126,7 @@ export default function BookReader({
 
       {sideToc && sideToc.length > 0 && (
         <aside className="hidden xl:block w-64 shrink-0">
-          <div className="sticky top-10 flex max-h-[84vh] flex-col">
+          <div className="sticky top-10 flex max-h-[72vh] flex-col">
             <h3 className="text-xs uppercase tracking-widest text-ink-soft mb-3">
               In this book
             </h3>

@@ -31,14 +31,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <body className="min-h-screen antialiased">
         {children}
-        <footer className="mx-auto max-w-3xl px-6 py-10 text-sm text-ink-soft border-t border-wall-dark mt-16">
+        <footer className="mx-auto max-w-4xl px-6 py-3 text-center text-xs leading-snug text-ink-soft border-t border-wall-dark mt-3">
           <p>
-            This is a personal learning journal written by a 15-year-old
-            beginner — not investment advice. I write about stocks I buy with my
-            own saved money, through a custodian account, purely to learn.
-            Nothing here is a recommendation to buy or sell any security, and I
-            may well be wrong about all of it. Do your own research or talk to a
-            licensed advisor.
+            A 15-year-old&apos;s personal learning journal — <b>not investment advice</b>.
+            He buys stocks with his own saved money (custodian account) purely to learn;
+            nothing here is a recommendation, and he may be wrong about all of it. Do your
+            own research or talk to a licensed advisor.
           </p>
         </footer>
         <Buddy />

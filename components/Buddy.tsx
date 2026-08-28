@@ -99,6 +99,7 @@ export default function Buddy() {
   const lineDoneRef = useRef<(() => void) | null>(null); // fires when a spoken line ends
   const doneTimerRef = useRef(0); // fallback timer if speech-end never fires
   const danceTimerRef = useRef(0); // stops the dance burst
+  const narrationTokenRef = useRef(0); // invalidates a running narration on stop
 
   const stopAudio = useCallback(() => {
     cancelAnimationFrame(rafRef.current);
@@ -322,6 +323,7 @@ export default function Buddy() {
 
   // Stop everything (the "stop talking" button).
   const stop = useCallback(() => {
+    narrationTokenRef.current++; // invalidate any running narration
     window.clearTimeout(doneTimerRef.current);
     window.clearTimeout(danceTimerRef.current);
     lineDoneRef.current = null;
@@ -349,9 +351,12 @@ export default function Buddy() {
       scriptRef.current = script;
       setTalking(true);
       danceBurst();
+      const token = ++narrationTokenRef.current;
       const sayLine = (i: number) => {
+        if (narrationTokenRef.current !== token) return; // stopped or superseded
         storyIdx.current = i;
         say(script[i], () => {
+          if (narrationTokenRef.current !== token) return; // stopped mid-line
           if (i + 1 < script.length) sayLine(i + 1);
           else setTalking(false);
         });

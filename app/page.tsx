@@ -151,7 +151,7 @@ export default async function Home() {
   pages.push(
     <div
       key="cover"
-      className="-mx-8 -my-12 sm:-mx-14 flex h-[84vh] flex-col overflow-hidden"
+      className="-mx-8 -my-8 sm:-mx-14 flex h-[72vh] flex-col overflow-hidden"
     >
       {/* full-bleed illustration — the wall paints itself, 1% per chapter */}
       <div className="relative flex-none overflow-hidden rounded-tl-[4px] rounded-tr-[10px]">
@@ -498,7 +498,7 @@ export default async function Home() {
   );
 
   return (
-    <main className="py-10 sm:py-14">
+    <main className="py-4 sm:py-6">
       <BookReader pages={pages} sideToc={sideToc} ledger={ledger} />
     </main>
   );
