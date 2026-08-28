@@ -96,19 +96,22 @@ export default function Buddy() {
     return () => clearTimeout(t);
   }, [text, target]);
 
-  // Greet on load (the character is free-standing and always present).
+  // Greet on load (the character is free-standing and always present). The
+  // guard lives inside the timer so React's dev double-mount can't cancel it.
   useEffect(() => {
-    if (hidden || greeted.current) return;
-    greeted.current = true;
-    let returning = false;
-    try {
-      returning = Boolean(JSON.parse(localStorage.getItem(STORE_KEY) || "null"));
-      localStorage.setItem(STORE_KEY, JSON.stringify({ at: Date.now() }));
-    } catch {
-      /* ignore */
-    }
-    // small delay so the bubble appears just after the page settles
-    const t = setTimeout(() => say(returning ? WELCOME_BACK : WELCOME_FIRST), 900);
+    if (hidden) return;
+    const t = setTimeout(() => {
+      if (greeted.current) return;
+      greeted.current = true;
+      let returning = false;
+      try {
+        returning = Boolean(JSON.parse(localStorage.getItem(STORE_KEY) || "null"));
+        localStorage.setItem(STORE_KEY, JSON.stringify({ at: Date.now() }));
+      } catch {
+        /* ignore */
+      }
+      say(returning ? WELCOME_BACK : WELCOME_FIRST);
+    }, 900);
     return () => clearTimeout(t);
   }, [hidden, say]);
 
@@ -209,36 +212,37 @@ export default function Buddy() {
   const speaking = thinking || text.length > 0;
 
   return (
-    // Free-standing: the character stands on the page (transparent, no card).
-    // The wrapper ignores pointer events so the page stays clickable; the
-    // bubble and controls opt back in.
+    // Free-standing: the character stands on the page (transparent, no card),
+    // anchored to the bottom. The bubble stacks directly above its head. The
+    // wrapper ignores pointer events so the page stays clickable; the bubble
+    // and controls opt back in.
     <div
-      className="fixed bottom-0 left-2 z-50 print:hidden"
-      style={{ pointerEvents: "none" }}
+      className="fixed bottom-0 left-2 z-50 flex flex-col items-center print:hidden"
+      style={{ width: 280, pointerEvents: "none" }}
     >
-      <div className="relative" style={{ width: 210, height: 400 }}>
-        {/* speech bubble, floating above the character's head */}
-        {speaking && (
-          <div
-            className="absolute left-1/2 w-[240px] max-w-[70vw] -translate-x-1/2 rounded-2xl border border-wall-dark bg-white/95 px-4 py-3 text-sm leading-relaxed shadow-lg"
-            style={{ bottom: 300, pointerEvents: "auto" }}
-          >
-            {thinking ? (
-              <span className="text-ink-soft">Thinking…</span>
-            ) : (
-              <span>
-                {text}
-                {text.length < target.length && <span className="animate-pulse">▍</span>}
-              </span>
-            )}
-            {/* tail pointing down to the character */}
-            <span
-              aria-hidden
-              className="absolute -bottom-[7px] left-10 h-3.5 w-3.5 rotate-45 border-b border-r border-wall-dark bg-white/95"
-            />
-          </div>
-        )}
+      {/* speech bubble — sits on top of the buddy, text wraps */}
+      {speaking && (
+        <div
+          className="relative mb-2 w-full whitespace-normal break-words rounded-2xl border border-wall-dark bg-white/95 px-4 py-3 text-sm leading-relaxed shadow-lg"
+          style={{ pointerEvents: "auto" }}
+        >
+          {thinking ? (
+            <span className="text-ink-soft">Thinking…</span>
+          ) : (
+            <span>
+              {text}
+              {text.length < target.length && <span className="animate-pulse">▍</span>}
+            </span>
+          )}
+          {/* tail pointing down to the character */}
+          <span
+            aria-hidden
+            className="absolute -bottom-[7px] left-1/2 h-3.5 w-3.5 -translate-x-1/2 rotate-45 border-b border-r border-wall-dark bg-white/95"
+          />
+        </div>
+      )}
 
+      <div className="relative" style={{ width: 280, height: 480 }}>
         {/* the free-standing 3D character */}
         <div className="absolute inset-0" style={{ pointerEvents: "none" }}>
           <Character3D expressionRef={expressionRef} />
