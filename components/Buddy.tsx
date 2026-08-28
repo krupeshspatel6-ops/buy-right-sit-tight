@@ -97,14 +97,15 @@ export default function Buddy() {
   const neuralAvailRef = useRef<boolean | null>(null); // null = not tried; false = not configured
   const interactedRef = useRef(false); // neural voice needs a user gesture
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const audioCtxRef = useRef<AudioContext | null>(null);
   const rafRef = useRef(0);
+  const speakGenRef = useRef(0); // bumped on every new speak/stop; cancels in-flight audio
   const lineDoneRef = useRef<(() => void) | null>(null); // fires when a spoken line ends
   const doneTimerRef = useRef(0); // fallback timer if speech-end never fires
   const danceTimerRef = useRef(0); // stops the dance burst
   const narrationTokenRef = useRef(0); // invalidates a running narration on stop
 
   const stopAudio = useCallback(() => {
+    speakGenRef.current++; // cancel any in-flight fetch + playback loop
     cancelAnimationFrame(rafRef.current);
     if (audioRef.current) {
       try {
@@ -140,48 +141,41 @@ export default function Buddy() {
     window.speechSynthesis.speak(u);
   }, []);
 
-  // Copycat's neural voice with real lip-sync from the audio amplitude.
+  // Copycat's neural voice. Plays the audio element DIRECTLY (no Web Audio
+  // routing) so it's robust; the mouth flaps while it plays, and the text is
+  // revealed in time with the audio (caption sync).
   const speakNeural = useCallback(
     async (raw: string) => {
       const spoken = stripEmoji(raw);
       if (!spoken) return;
       stopAudio();
-      setSpeaking(true); // stopAudio cleared it; we're about to speak
+      setSpeaking(true);
+      const gen = ++speakGenRef.current; // this speak's ticket
       try {
         const res = await fetch("/api/tts", {
           method: "POST",
           headers: { "content-type": "application/json" },
           body: JSON.stringify({ text: spoken }),
         });
+        if (gen !== speakGenRef.current) return; // stopped/superseded while fetching
         if (!res.ok) {
-          if (res.status === 503) neuralAvailRef.current = false; // not configured → stop trying
-          setCaptionOn(false); // no audio to sync to → fixed-rate typing
+          if (res.status === 503) neuralAvailRef.current = false; // not configured
+          setCaptionOn(false);
           speakBrowser(raw);
           return;
         }
         neuralAvailRef.current = true;
-        const url = URL.createObjectURL(await res.blob());
+        const blob = await res.blob();
+        if (gen !== speakGenRef.current) return; // stopped while reading blob
+        const url = URL.createObjectURL(blob);
         const audio = new Audio(url);
         audioRef.current = audio;
-        const Ctx =
-          window.AudioContext ||
-          (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-        const ctx = audioCtxRef.current || new Ctx();
-        audioCtxRef.current = ctx;
-        if (ctx.state === "suspended") await ctx.resume();
-        const source = ctx.createMediaElementSource(audio);
-        const analyser = ctx.createAnalyser();
-        analyser.fftSize = 256;
-        source.connect(analyser);
-        analyser.connect(ctx.destination);
-        const data = new Uint8Array(analyser.frequencyBinCount);
+        let phase = 0;
         const loop = () => {
-          analyser.getByteFrequencyData(data);
-          let sum = 0;
-          for (let i = 0; i < data.length; i++) sum += data[i];
-          expressionRef.current.open = Math.min(1, sum / data.length / 80);
+          if (gen !== speakGenRef.current) return; // stopped
+          phase += 0.4;
+          expressionRef.current.open = 0.2 + 0.35 * Math.abs(Math.sin(phase));
           expressionRef.current.talking = true;
-          // caption sync: reveal the text in time with the audio
           const dur = audio.duration;
           if (dur && isFinite(dur) && dur > 0) {
             const frac = Math.min(1, audio.currentTime / dur);
@@ -191,7 +185,7 @@ export default function Buddy() {
           rafRef.current = requestAnimationFrame(loop);
         };
         audio.onended = () => {
-          setText(raw); // ensure the full line is shown
+          setText(raw);
           setCaptionOn(false);
           stopAudio();
           URL.revokeObjectURL(url);
@@ -268,34 +262,6 @@ export default function Buddy() {
     const t = setTimeout(() => setText(target.slice(0, text.length + 1)), TYPE_MS);
     return () => clearTimeout(t);
   }, [text, target, captionOn]);
-
-  // Unlock Web Audio on the first real gesture. The neural voice routes through
-  // an AudioContext (for lip-sync), and a context can only be resumed inside a
-  // user gesture — otherwise it stays suspended and no sound plays, even though
-  // playback "succeeds". Capture phase so it runs before anything else.
-  useEffect(() => {
-    const unlock = () => {
-      try {
-        const Ctx =
-          window.AudioContext ||
-          (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-        if (!audioCtxRef.current) audioCtxRef.current = new Ctx();
-        if (audioCtxRef.current.state === "suspended") audioCtxRef.current.resume();
-      } catch {
-        /* ignore */
-      }
-      if (audioCtxRef.current && audioCtxRef.current.state === "running") remove();
-    };
-    const remove = () => {
-      document.removeEventListener("pointerdown", unlock, true);
-      document.removeEventListener("keydown", unlock, true);
-      document.removeEventListener("touchstart", unlock, true);
-    };
-    document.addEventListener("pointerdown", unlock, true);
-    document.addEventListener("keydown", unlock, true);
-    document.addEventListener("touchstart", unlock, true);
-    return remove;
-  }, []);
 
   // Greet on load (the character is free-standing and always present). The
   // guard lives inside the timer so React's dev double-mount can't cancel it.
@@ -451,19 +417,11 @@ export default function Buddy() {
     else cancelVoice();
   }
 
-  // The "tap to hear me" pill: unlock audio and voice the greeting right now.
+  // The "tap to hear me" pill: voice the greeting right now. This click is the
+  // user gesture that lets audio.play() run.
   function startGreeting() {
     interactedRef.current = true;
     setShowHint(false);
-    try {
-      const Ctx =
-        window.AudioContext ||
-        (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-      if (!audioCtxRef.current) audioCtxRef.current = new Ctx();
-      if (audioCtxRef.current.state === "suspended") audioCtxRef.current.resume();
-    } catch {
-      /* ignore */
-    }
     if (!greetVoicedRef.current && greetLineRef.current) {
       greetVoicedRef.current = true;
       voiceRef.current = true;
