@@ -37,7 +37,7 @@ function stripEmoji(t: string): string {
 
 export default function Buddy() {
   const pathname = usePathname() || "/";
-  const [open, setOpen] = useState(false);
+  const [hidden, setHidden] = useState(false);
   const [text, setText] = useState(""); // what the buddy is currently "saying" (typed)
   const [target, setTarget] = useState(""); // full text being typed toward
   const [talking, setTalking] = useState(false); // narrating the story
@@ -96,9 +96,9 @@ export default function Buddy() {
     return () => clearTimeout(t);
   }, [text, target]);
 
-  // Greet when first opened.
+  // Greet on load (the character is free-standing and always present).
   useEffect(() => {
-    if (!open || greeted.current) return;
+    if (hidden || greeted.current) return;
     greeted.current = true;
     let returning = false;
     try {
@@ -107,8 +107,10 @@ export default function Buddy() {
     } catch {
       /* ignore */
     }
-    say(returning ? WELCOME_BACK : WELCOME_FIRST);
-  }, [open, say]);
+    // small delay so the bubble appears just after the page settles
+    const t = setTimeout(() => say(returning ? WELCOME_BACK : WELCOME_FIRST), 900);
+    return () => clearTimeout(t);
+  }, [hidden, say]);
 
   // Stop everything (the "stop talking" the user can ask for).
   const stop = useCallback(() => {
@@ -183,44 +185,44 @@ export default function Buddy() {
     if (!next) cancelVoice();
   }
 
-  // Stop speech when the buddy closes or the route changes.
-  useEffect(() => cancelVoice, [cancelVoice, pathname, open]);
+  // Stop speech when the route changes.
+  useEffect(() => cancelVoice, [cancelVoice, pathname]);
 
   if (pathname.startsWith("/admin")) return null;
 
-  return (
-    <div className="fixed bottom-4 right-4 z-50 print:hidden">
-      {open ? (
-        <div className="w-[320px] max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border border-wall-dark bg-white shadow-xl">
-          {/* the 3D character */}
-          <div className="relative h-[220px] w-full bg-gradient-to-b from-wall to-wall-dark/40">
-            <Character3D expressionRef={expressionRef} />
-            <span className="absolute left-3 top-2 text-xs font-semibold text-ink-soft">
-              Krupesh&apos;s buddy
-            </span>
-            <div className="absolute right-2 top-2 flex items-center gap-1">
-              <button
-                onClick={toggleVoice}
-                title={voice ? "Mute" : "Unmute"}
-                className="grid h-7 w-7 place-items-center rounded-full bg-white/80 text-sm hover:bg-white"
-              >
-                {voice ? "🔊" : "🔈"}
-              </button>
-              <button
-                onClick={() => {
-                  stop();
-                  setOpen(false);
-                }}
-                title="Close"
-                className="grid h-7 w-7 place-items-center rounded-full bg-white/80 text-sm hover:bg-white"
-              >
-                ✕
-              </button>
-            </div>
-          </div>
+  // Hidden for the session → a tiny re-summon chip.
+  if (hidden) {
+    return (
+      <button
+        onClick={() => {
+          setHidden(false);
+          greeted.current = false;
+        }}
+        aria-label="Bring the buddy back"
+        className="fixed bottom-3 left-3 z-50 grid h-11 w-11 place-items-center rounded-full border border-wall-dark bg-white text-xl shadow-lg print:hidden"
+      >
+        💬
+      </button>
+    );
+  }
 
-          {/* what the buddy is saying */}
-          <div className="max-h-[45vh] overflow-y-auto px-4 py-3 text-sm leading-relaxed">
+  const speaking = thinking || text.length > 0;
+
+  return (
+    // Free-standing: the character stands on the page (transparent, no card).
+    // The wrapper ignores pointer events so the page stays clickable; the
+    // bubble and controls opt back in.
+    <div
+      className="fixed bottom-0 left-2 z-50 print:hidden"
+      style={{ pointerEvents: "none" }}
+    >
+      <div className="relative" style={{ width: 210, height: 400 }}>
+        {/* speech bubble, floating above the character's head */}
+        {speaking && (
+          <div
+            className="absolute left-1/2 w-[240px] max-w-[70vw] -translate-x-1/2 rounded-2xl border border-wall-dark bg-white/95 px-4 py-3 text-sm leading-relaxed shadow-lg"
+            style={{ bottom: 300, pointerEvents: "auto" }}
+          >
             {thinking ? (
               <span className="text-ink-soft">Thinking…</span>
             ) : (
@@ -229,75 +231,102 @@ export default function Buddy() {
                 {text.length < target.length && <span className="animate-pulse">▍</span>}
               </span>
             )}
+            {/* tail pointing down to the character */}
+            <span
+              aria-hidden
+              className="absolute -bottom-[7px] left-10 h-3.5 w-3.5 rotate-45 border-b border-r border-wall-dark bg-white/95"
+            />
           </div>
+        )}
 
-          {/* controls */}
-          <div className="border-t border-wall px-3 py-2">
-            {asking ? (
-              <form onSubmit={ask} className="flex gap-2">
-                <input
-                  autoFocus
-                  value={question}
-                  onChange={(e) => setQuestion(e.target.value)}
-                  placeholder="Ask about the book…"
-                  className="min-w-0 flex-1 rounded-full border border-wall-dark px-3 py-1.5 text-sm outline-none focus:border-tape"
-                />
-                <button
-                  type="submit"
-                  disabled={thinking}
-                  className="rounded-full bg-tape px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-50"
-                >
-                  Ask
-                </button>
-              </form>
-            ) : (
-              <div className="flex flex-wrap gap-2">
-                <button
-                  onClick={tellStory}
-                  className="rounded-full border border-tape px-3 py-1.5 text-xs font-semibold text-tape"
-                >
-                  📖 Hear the story
-                </button>
-                <button
-                  onClick={() => {
-                    setAsking(true);
-                    stop();
-                  }}
-                  className="rounded-full border border-tape px-3 py-1.5 text-xs font-semibold text-tape"
-                >
-                  💬 Ask about the book
-                </button>
-                {talking && (
-                  <button
-                    onClick={stop}
-                    className="rounded-full border border-loss px-3 py-1.5 text-xs font-semibold text-loss"
-                  >
-                    ⏹ Stop
-                  </button>
-                )}
-              </div>
-            )}
-            {asking && (
-              <button
-                onClick={() => setAsking(false)}
-                className="mt-2 text-xs text-ink-soft underline"
-              >
-                ← back
-              </button>
-            )}
-          </div>
+        {/* the free-standing 3D character */}
+        <div className="absolute inset-0" style={{ pointerEvents: "none" }}>
+          <Character3D expressionRef={expressionRef} />
         </div>
-      ) : (
-        <button
-          onClick={() => setOpen(true)}
-          aria-label="Chat with Krupesh's buddy"
-          className="flex items-center gap-2 rounded-full border border-wall-dark bg-white py-1.5 pl-1.5 pr-4 shadow-lg hover:shadow-xl"
+
+        {/* controls, floating at the character's feet */}
+        <div
+          className="absolute bottom-1 left-1/2 flex -translate-x-1/2 flex-col items-center gap-1.5"
+          style={{ pointerEvents: "auto" }}
         >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/buddy.svg" alt="" className="h-9 w-9 rounded-full" />
-          <span className="text-sm font-semibold">Ask me</span>
-        </button>
-      )}
+          {asking ? (
+            <form onSubmit={ask} className="flex gap-1.5 rounded-full bg-white/95 p-1 shadow-md">
+              <input
+                autoFocus
+                value={question}
+                onChange={(e) => setQuestion(e.target.value)}
+                placeholder="Ask about the book…"
+                className="w-[150px] min-w-0 rounded-full px-3 py-1 text-sm outline-none"
+              />
+              <button
+                type="submit"
+                disabled={thinking}
+                className="rounded-full bg-tape px-3 py-1 text-sm font-semibold text-white disabled:opacity-50"
+              >
+                Ask
+              </button>
+            </form>
+          ) : (
+            <div className="flex flex-wrap justify-center gap-1.5">
+              <button
+                onClick={tellStory}
+                className="rounded-full border border-tape bg-white/95 px-3 py-1 text-xs font-semibold text-tape shadow-sm"
+              >
+                📖 Story
+              </button>
+              <button
+                onClick={() => {
+                  setAsking(true);
+                  stop();
+                }}
+                className="rounded-full border border-tape bg-white/95 px-3 py-1 text-xs font-semibold text-tape shadow-sm"
+              >
+                💬 Ask
+              </button>
+              {talking && (
+                <button
+                  onClick={stop}
+                  className="rounded-full border border-loss bg-white/95 px-3 py-1 text-xs font-semibold text-loss shadow-sm"
+                >
+                  ⏹ Stop
+                </button>
+              )}
+            </div>
+          )}
+          {asking && (
+            <button
+              onClick={() => setAsking(false)}
+              className="rounded-full bg-white/90 px-2 text-xs text-ink-soft underline"
+            >
+              ← back
+            </button>
+          )}
+        </div>
+
+        {/* tiny mute + dismiss, top-right of the character */}
+        <div
+          className="absolute right-0 top-2 flex items-center gap-1"
+          style={{ pointerEvents: "auto" }}
+        >
+          <button
+            onClick={toggleVoice}
+            title={voice ? "Mute" : "Unmute"}
+            className="grid h-7 w-7 place-items-center rounded-full bg-white/80 text-sm hover:bg-white"
+          >
+            {voice ? "🔊" : "🔈"}
+          </button>
+          <button
+            onClick={() => {
+              stop();
+              setHidden(true);
+            }}
+            title="Hide the buddy"
+            className="grid h-7 w-7 place-items-center rounded-full bg-white/80 text-sm hover:bg-white"
+          >
+            ✕
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
