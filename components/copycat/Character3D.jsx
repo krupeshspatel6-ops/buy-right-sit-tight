@@ -3,15 +3,14 @@
 import { Suspense, useEffect } from "react";
 import { Canvas } from "@react-three/fiber";
 import OurGuyMixamo from "./OurGuyMixamo";
-import { DEFAULT_AVATAR } from "./avatar";
+
+// Krupesh's buddy look: magenta cap, green shirt, tan skin, black legs.
+const AVATAR = { skin: "#E7B083", shirt: "#2FB58A", jeans: "#151515", hair: "#B0347A", body: "masc" };
 
 // The real Copycat 3D character on a transparent canvas — idles, and moves its
 // mouth while `expressionRef.current.talking` is true. Same character as
 // copycat.tools, rendered in the book's corner.
-export default function Character3D({ expressionRef }) {
-  // Copycat's classic look (fixed, not the random per-visitor avatar), so the
-  // character always matches the canonical copycat.tools guy.
-  const avatar = DEFAULT_AVATAR;
+export default function Character3D({ expressionRef, dancing = false }) {
   // Nudge r3f's resize once mounted (fiber v9 + React 19 can otherwise leave the
   // canvas at its default 300x150 until the first window resize).
   useEffect(() => {
@@ -30,7 +29,7 @@ export default function Character3D({ expressionRef }) {
       <directionalLight position={[3, 6, 4]} intensity={1.5} />
       <spotLight position={[-4, 5, 2]} angle={0.5} intensity={25} color="#ffd9b0" />
       <Suspense fallback={null}>
-        <OurGuyMixamo mode="idle" avatar={avatar} expressionRef={expressionRef} />
+        <OurGuyMixamo mode={dancing ? "dance" : "idle"} avatar={AVATAR} expressionRef={expressionRef} />
       </Suspense>
     </Canvas>
   );

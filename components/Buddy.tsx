@@ -23,6 +23,17 @@ const STORY = [
   "Nothing here is advice — it's my journey. Buy right, sit tight… and watch the paint dry with me.",
 ];
 
+// "Show me the book" tour — what the platform is, the portfolio balance, and
+// how to get around.
+const TOUR = [
+  "Sure — let me show you around Krupesh's book!",
+  "This is a live book. Every stock Krupesh buys with his own saved money becomes a chapter — timestamped the day it happens, and never edited after.",
+  "See the panel on the left, the ledger? That's the real portfolio: the total value at the end of each market day, each stock's last price, and how it's doing versus the S&P 500.",
+  "The cover reads like a real book — use the arrows or click the page edges to turn pages. The table of contents IS the portfolio: open chapters are what he still holds, closed ones are stocks he sold.",
+  "The wall on the cover fills in 1% per chapter — 100 chapters total, a lifetime punch card. Right now it's still blank, waiting for his first buy.",
+  "That's the tour! Nothing here is advice — it's Krupesh's learning journey. Buy right, sit tight, and watch the paint dry with him.",
+];
+
 const STORE_KEY = "brst_buddy_v1";
 const TYPE_MS = 22;
 
@@ -40,13 +51,16 @@ export default function Buddy() {
   const [hidden, setHidden] = useState(false);
   const [text, setText] = useState(""); // what the buddy is currently "saying" (typed)
   const [target, setTarget] = useState(""); // full text being typed toward
-  const [talking, setTalking] = useState(false); // narrating the story
+  const [talking, setTalking] = useState(false); // narrating a script (story/tour)
+  const [dancing, setDancing] = useState(false); // 3D dance moves while narrating
+  const [speaking, setSpeaking] = useState(false); // any speech active → show Stop
   const [voice, setVoice] = useState(true);
   const [asking, setAsking] = useState(false); // chat input shown
   const [question, setQuestion] = useState("");
   const [thinking, setThinking] = useState(false);
   const [history, setHistory] = useState<ChatMsg[]>([]);
   const storyIdx = useRef(0);
+  const scriptRef = useRef<string[]>(STORY); // the script being narrated (story or tour)
   const voiceRef = useRef(true);
   const greeted = useRef(false);
   // Drives the 3D character's mouth: talking + open-amount (0..1).
@@ -69,6 +83,7 @@ export default function Buddy() {
     }
     expressionRef.current.talking = false;
     expressionRef.current.open = 0;
+    setSpeaking(false);
   }, []);
 
   const speakBrowser = useCallback((raw: string) => {
@@ -81,9 +96,11 @@ export default function Buddy() {
     u.rate = 0.98;
     u.onstart = () => {
       expressionRef.current.talking = true;
+      setSpeaking(true);
     };
     u.onend = () => {
       expressionRef.current.talking = false;
+      setSpeaking(false);
     };
     window.speechSynthesis.speak(u);
   }, []);
@@ -94,6 +111,7 @@ export default function Buddy() {
       const spoken = stripEmoji(raw);
       if (!spoken) return;
       stopAudio();
+      setSpeaking(true); // stopAudio cleared it; we're about to speak
       try {
         const res = await fetch("/api/tts", {
           method: "POST",
@@ -162,6 +180,7 @@ export default function Buddy() {
     (line: string) => {
       setTarget(line);
       setText("");
+      setSpeaking(true);
       expressionRef.current.talking = true; // move the mouth even when muted
       speak(line);
     },
@@ -171,8 +190,11 @@ export default function Buddy() {
   // Typewriter effect toward `target`.
   useEffect(() => {
     if (text.length >= target.length) {
-      // Done typing. If muted, there's no speech-end event, so stop the mouth here.
-      if (!voiceRef.current) expressionRef.current.talking = false;
+      // Done typing. If muted, there's no speech-end event, so stop here.
+      if (!voiceRef.current) {
+        expressionRef.current.talking = false;
+        setSpeaking(false);
+      }
       return;
     }
     const t = setTimeout(() => setText(target.slice(0, text.length + 1)), TYPE_MS);
@@ -198,33 +220,45 @@ export default function Buddy() {
     return () => clearTimeout(t);
   }, [hidden, say]);
 
-  // Stop everything (the "stop talking" the user can ask for).
+  // Stop everything (the "stop talking" button).
   const stop = useCallback(() => {
     setTalking(false);
+    setDancing(false);
+    setSpeaking(false);
     storyIdx.current = 0;
     cancelVoice();
     setTarget((cur) => cur); // freeze current line as-is
   }, [cancelVoice]);
 
-  const tellStory = useCallback(() => {
-    interactedRef.current = true;
-    setAsking(false);
-    setTalking(true);
-    storyIdx.current = 0;
-    say(STORY[0]);
-  }, [say]);
+  // Narrate a script (the story or the book tour), dancing while he does.
+  const narrate = useCallback(
+    (script: string[]) => {
+      interactedRef.current = true;
+      setAsking(false);
+      scriptRef.current = script;
+      storyIdx.current = 0;
+      setTalking(true);
+      setDancing(true);
+      say(script[0]);
+    },
+    [say]
+  );
 
-  // Advance the story once a line finishes typing (if still narrating).
+  const tellStory = useCallback(() => narrate(STORY), [narrate]);
+  const showBook = useCallback(() => narrate(TOUR), [narrate]);
+
+  // Advance the current script once a line finishes typing (if still narrating).
   useEffect(() => {
     if (!talking) return;
     if (text.length < target.length) return;
     const t = setTimeout(() => {
       const next = storyIdx.current + 1;
-      if (next < STORY.length) {
+      if (next < scriptRef.current.length) {
         storyIdx.current = next;
-        say(STORY[next]);
+        say(scriptRef.current[next]);
       } else {
         setTalking(false);
+        setDancing(false);
       }
     }, 1600);
     return () => clearTimeout(t);
@@ -351,6 +385,12 @@ export default function Buddy() {
         ) : (
           <div className="flex flex-wrap gap-1.5">
             <button
+              onClick={showBook}
+              className="rounded-full bg-tape px-3 py-1 text-xs font-semibold text-white"
+            >
+              🏛️ Show me the book
+            </button>
+            <button
               onClick={tellStory}
               className="rounded-full border border-tape px-3 py-1 text-xs font-semibold text-tape"
             >
@@ -365,12 +405,12 @@ export default function Buddy() {
             >
               💬 Ask
             </button>
-            {talking && (
+            {speaking && (
               <button
                 onClick={stop}
                 className="rounded-full border border-loss px-3 py-1 text-xs font-semibold text-loss"
               >
-                ⏹ Stop
+                ⏹ Stop talking
               </button>
             )}
           </div>
@@ -386,7 +426,7 @@ export default function Buddy() {
       <div className="relative" style={{ width: 280, height: 480 }}>
         {/* the free-standing 3D character */}
         <div className="absolute inset-0" style={{ pointerEvents: "none" }}>
-          <Character3D expressionRef={expressionRef} />
+          <Character3D expressionRef={expressionRef} dancing={dancing} />
         </div>
 
         {/* tiny mute + dismiss, top-right of the character */}
