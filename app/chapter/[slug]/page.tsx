@@ -5,6 +5,7 @@ import { getChapter, loadChapters, costBasis, totalShares } from "@/lib/chapters
 import { getChapterPerf } from "@/lib/quotes";
 import { formatFillTime, formatDate } from "@/lib/format";
 import BrandMark from "@/components/BrandMark";
+import { chapterCommitsUrl } from "@/lib/repo";
 
 export const revalidate = 3600;
 
@@ -124,25 +125,44 @@ export default async function ChapterPage({
         </section>
       )}
 
-      {/* Broker record */}
-      {chapter.proofs.length > 0 && (
-        <section className="mt-6">
-          <h2 className="text-xs uppercase tracking-wide text-ink-soft mb-2">
-            Broker record
-          </h2>
-          <div className="flex flex-wrap gap-3">
-            {chapter.proofs.map((p) => (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                key={p}
-                src={p}
-                alt={`Broker record for chapter ${chapter.chapter}`}
-                className="max-h-72 rounded border border-wall-dark bg-white"
-              />
-            ))}
+      {/* Proof — never edited */}
+      <section className="mt-6 rounded-lg border border-wall-dark bg-white p-5">
+        <h2 className="text-sm font-bold uppercase tracking-wide text-ink-soft">
+          Proof — never edited
+        </h2>
+        <p className="mt-2 text-sm text-ink-soft leading-relaxed">
+          This chapter is a file in a public GitHub repository. GitHub stamps the exact
+          time it was committed, the history is public, and it can&apos;t be secretly
+          rewritten. One commit means it was never touched after publication.
+        </p>
+        <a
+          href={chapterCommitsUrl(chapter.slug)}
+          target="_blank"
+          rel="noreferrer"
+          className="mt-3 inline-block text-sm font-semibold text-tape underline"
+        >
+          View the timestamped commit history on GitHub →
+        </a>
+
+        {chapter.proofs.length > 0 && (
+          <div className="mt-4">
+            <div className="text-xs uppercase tracking-wide text-ink-soft mb-2">
+              Broker confirmation (Fidelity custodian account)
+            </div>
+            <div className="flex flex-wrap gap-3">
+              {chapter.proofs.map((p) => (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  key={p}
+                  src={p}
+                  alt={`Broker confirmation for chapter ${chapter.chapter}`}
+                  className="max-h-72 rounded border border-wall-dark bg-white"
+                />
+              ))}
+            </div>
           </div>
-        </section>
-      )}
+        )}
+      </section>
 
       {/* The why */}
       <article

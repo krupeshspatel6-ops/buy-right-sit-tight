@@ -15,6 +15,7 @@ import {
 import { getScoreboard, type Scoreboard } from "@/lib/quotes";
 import { formatFillTime, formatDate } from "@/lib/format";
 import BrandMark from "@/components/BrandMark";
+import { chapterCommitsUrl } from "@/lib/repo";
 
 export const revalidate = 3600;
 
@@ -424,24 +425,37 @@ export default async function Home() {
             </div>
           )}
 
-          {c.proofs.length > 0 && (
-            <div className="mb-5">
-              <h3 className="text-xs uppercase tracking-wide text-ink-soft mb-2">
-                Broker record
-              </h3>
-              <div className="flex flex-wrap gap-3">
-                {c.proofs.map((p) => (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    key={p}
-                    src={p}
-                    alt={`Broker record for chapter ${c.chapter}`}
-                    className="max-h-56 rounded border border-wall-dark"
-                  />
-                ))}
-              </div>
+          <div className="mb-5 rounded-lg border border-wall-dark bg-white px-4 py-3">
+            <div className="text-xs font-bold uppercase tracking-wide text-ink-soft">
+              Proof — never edited
             </div>
-          )}
+            <a
+              href={chapterCommitsUrl(c.slug)}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-1 inline-block text-sm font-semibold text-tape underline"
+            >
+              Timestamped commit history on GitHub →
+            </a>
+            {c.proofs.length > 0 && (
+              <div className="mt-3">
+                <div className="text-xs uppercase tracking-wide text-ink-soft mb-2">
+                  Broker confirmation (Fidelity)
+                </div>
+                <div className="flex flex-wrap gap-3">
+                  {c.proofs.map((p) => (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      key={p}
+                      src={p}
+                      alt={`Broker confirmation for chapter ${c.chapter}`}
+                      className="max-h-56 rounded border border-wall-dark"
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
 
           <article
             className="prose-book"

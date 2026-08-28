@@ -12,15 +12,16 @@ import dynamic from "next/dynamic";
 const Character3D = dynamic(() => import("@/components/copycat/Character3D"), { ssr: false });
 
 const WELCOME_FIRST =
-  "Hi — I'm Krupesh! 👋 I'm 15, and I'm learning to invest with my own money, in public. Welcome to my book.";
-const WELCOME_BACK = "Oh — hey, welcome back! 👋 Good to see you again.";
+  "Hi! 👋 I'm Krupesh's AI assistant. He's 15 and learning to invest in public, with his own money. I can tell you his story, show you around the book, or answer your questions.";
+const WELCOME_BACK =
+  "Oh — hey, welcome back! 👋 Krupesh's AI assistant here. Want the tour, or have a question about the book?";
 
 const STORY = [
-  "Here's how this all started. My dad asked me to pick a stock, and I talked about it like I knew exactly what I was doing. I didn't — I was just acting confident.",
-  "He saw right through it. He told me I was careless because it wasn't my money at stake. So he made me a deal: I'd put in all the money I've saved, and he'd add some, if I got serious about learning.",
-  "So now every stock I buy with my own money becomes a chapter in this book — timestamped the day it happens, and never edited after. A chapter only closes when I sell.",
-  "I'm trying to learn to find good companies, and — the harder part — to just wait. To think like Buffett, Munger, and Pabrai. I'm only getting started.",
-  "Nothing here is advice — it's my journey. Buy right, sit tight… and watch the paint dry with me.",
+  "Here's how it started for Krupesh. His dad asked him to pick a stock, and Krupesh talked about it like he knew exactly what he was doing — but he didn't, he was just acting confident.",
+  "His dad saw right through it, and told him he was careless because it wasn't his money at stake. So they made a deal: Krupesh would put in all the money he'd saved, and his dad would add some, if he got serious about learning.",
+  "So now every stock Krupesh buys with his own money becomes a chapter in this book — timestamped the day it happens, and never edited after. A chapter only closes when he sells.",
+  "He's trying to learn to find good companies, and — the harder part — to just wait. To think like Buffett, Munger, and Pabrai. He's only getting started.",
+  "Nothing here is advice — it's Krupesh's journey. Buy right, sit tight… and watch the paint dry with him.",
 ];
 
 // "Show me the book" tour — what the platform is, the portfolio balance, and
