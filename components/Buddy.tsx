@@ -79,6 +79,7 @@ export default function Buddy() {
   const [dancing, setDancing] = useState(false); // 3D dance moves while narrating
   const [speaking, setSpeaking] = useState(false); // any speech active → show Stop
   const [voice, setVoice] = useState(true);
+  const [showHint, setShowHint] = useState(true); // "tap to hear me" until first interaction
   const [asking, setAsking] = useState(false); // chat input shown
   const [question, setQuestion] = useState("");
   const [thinking, setThinking] = useState(false);
@@ -304,6 +305,7 @@ export default function Buddy() {
   useEffect(() => {
     const onFirst = (e: Event) => {
       interactedRef.current = true;
+      setShowHint(false);
       const buddyEl = document.querySelector(".fixed.bottom-0.left-2");
       const inside = buddyEl && e.target instanceof Node && buddyEl.contains(e.target);
       if (!inside && !greetVoicedRef.current && voiceRef.current && greetLineRef.current) {
@@ -457,6 +459,16 @@ export default function Buddy() {
       className="fixed bottom-0 left-2 z-50 flex flex-col items-center print:hidden"
       style={{ width: 280, pointerEvents: "none" }}
     >
+      {/* one-time nudge: browsers block sound until the first interaction */}
+      {showHint && voice && text.length > 0 && (
+        <div
+          className="mb-1 animate-pulse rounded-full bg-tape px-3 py-1 text-xs font-semibold text-white shadow-md"
+          style={{ pointerEvents: "auto", transform: "translate(34px, 40px)" }}
+        >
+          🔊 tap anywhere to hear me
+        </div>
+      )}
+
       {/* speech bubble on top of the buddy — holds what he says AND the buttons */}
       <div
         className="relative mb-2 w-full whitespace-normal break-words rounded-2xl border border-wall-dark bg-white/95 px-4 py-3 pt-5 text-sm leading-relaxed shadow-lg"
