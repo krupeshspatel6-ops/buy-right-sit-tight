@@ -451,6 +451,27 @@ export default function Buddy() {
     else cancelVoice();
   }
 
+  // The "tap to hear me" pill: unlock audio and voice the greeting right now.
+  function startGreeting() {
+    interactedRef.current = true;
+    setShowHint(false);
+    try {
+      const Ctx =
+        window.AudioContext ||
+        (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      if (!audioCtxRef.current) audioCtxRef.current = new Ctx();
+      if (audioCtxRef.current.state === "suspended") audioCtxRef.current.resume();
+    } catch {
+      /* ignore */
+    }
+    if (!greetVoicedRef.current && greetLineRef.current) {
+      greetVoicedRef.current = true;
+      voiceRef.current = true;
+      setVoice(true);
+      say(greetLineRef.current);
+    }
+  }
+
   // Stop speech when the route changes.
   useEffect(() => cancelVoice, [cancelVoice, pathname]);
 
@@ -483,12 +504,13 @@ export default function Buddy() {
     >
       {/* one-time nudge: browsers block sound until the first interaction */}
       {showHint && voice && greetReady && (
-        <div
+        <button
+          onClick={startGreeting}
           className="mb-1 animate-pulse rounded-full bg-tape px-3 py-1 text-xs font-semibold text-white shadow-md"
           style={{ pointerEvents: "auto", transform: "translate(34px, 40px)" }}
         >
-          🔊 tap anywhere to hear me
-        </div>
+          🔊 tap to hear me
+        </button>
       )}
 
       {/* speech bubble on top of the buddy — holds what he says AND the buttons */}
