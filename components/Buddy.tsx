@@ -80,6 +80,8 @@ export default function Buddy() {
   const [speaking, setSpeaking] = useState(false); // any speech active → show Stop
   const [voice, setVoice] = useState(true);
   const [showHint, setShowHint] = useState(true); // "tap to hear me" until first interaction
+  const [greetReady, setGreetReady] = useState(false); // greeting prepared, waiting for the tap
+  const [captionOn, setCaptionOn] = useState(false); // audio drives the typed text (in sync)
   const [asking, setAsking] = useState(false); // chat input shown
   const [question, setQuestion] = useState("");
   const [thinking, setThinking] = useState(false);
@@ -115,6 +117,7 @@ export default function Buddy() {
     expressionRef.current.talking = false;
     expressionRef.current.open = 0;
     setSpeaking(false);
+    setCaptionOn(false);
   }, []);
 
   const speakBrowser = useCallback((raw: string) => {
@@ -152,6 +155,7 @@ export default function Buddy() {
         });
         if (!res.ok) {
           if (res.status === 503) neuralAvailRef.current = false; // not configured → stop trying
+          setCaptionOn(false); // no audio to sync to → fixed-rate typing
           speakBrowser(raw);
           return;
         }
@@ -177,9 +181,18 @@ export default function Buddy() {
           for (let i = 0; i < data.length; i++) sum += data[i];
           expressionRef.current.open = Math.min(1, sum / data.length / 80);
           expressionRef.current.talking = true;
+          // caption sync: reveal the text in time with the audio
+          const dur = audio.duration;
+          if (dur && isFinite(dur) && dur > 0) {
+            const frac = Math.min(1, audio.currentTime / dur);
+            const n = Math.max(1, Math.ceil(raw.length * frac));
+            setText((prev) => (n > prev.length ? raw.slice(0, n) : prev));
+          }
           rafRef.current = requestAnimationFrame(loop);
         };
         audio.onended = () => {
+          setText(raw); // ensure the full line is shown
+          setCaptionOn(false);
           stopAudio();
           URL.revokeObjectURL(url);
           lineDoneRef.current?.();
@@ -188,6 +201,7 @@ export default function Buddy() {
         await audio.play();
         loop();
       } catch {
+        setCaptionOn(false);
         speakBrowser(raw);
       }
     },
@@ -214,6 +228,9 @@ export default function Buddy() {
       setTarget(line);
       setText("");
       setSpeaking(true);
+      // Will the neural voice drive this line? If so, let the audio type it
+      // (caption sync); otherwise type at the fixed rate.
+      setCaptionOn(voiceRef.current && interactedRef.current && neuralAvailRef.current !== false);
       expressionRef.current.talking = true; // move the mouth even when muted
       window.clearTimeout(doneTimerRef.current);
       let fired = false;
@@ -236,8 +253,10 @@ export default function Buddy() {
     [speak]
   );
 
-  // Typewriter effect toward `target`.
+  // Typewriter effect toward `target`. Skipped when the audio is driving the
+  // text (caption mode) so the words appear in sync with the voice.
   useEffect(() => {
+    if (captionOn) return;
     if (text.length >= target.length) {
       // Done typing. If muted, there's no speech-end event, so stop here.
       if (!voiceRef.current) {
@@ -248,7 +267,7 @@ export default function Buddy() {
     }
     const t = setTimeout(() => setText(target.slice(0, text.length + 1)), TYPE_MS);
     return () => clearTimeout(t);
-  }, [text, target]);
+  }, [text, target, captionOn]);
 
   // Unlock Web Audio on the first real gesture. The neural voice routes through
   // an AudioContext (for lip-sync), and a context can only be resumed inside a
@@ -292,12 +311,14 @@ export default function Buddy() {
       } catch {
         /* ignore */
       }
-      const line = returning ? WELCOME_BACK : WELCOME_FIRST;
-      greetLineRef.current = line;
-      say(line);
-    }, 900);
+      // Prepare the greeting but don't speak/type it yet — it arrives WITH the
+      // voice on the first tap, so text and voice are in sync (browsers block
+      // audio until then anyway).
+      greetLineRef.current = returning ? WELCOME_BACK : WELCOME_FIRST;
+      setGreetReady(true);
+    }, 200);
     return () => clearTimeout(t);
-  }, [hidden, say]);
+  }, [hidden]);
 
   // Browsers block audio until the user interacts. So the moment they first
   // click/tap/press anywhere on the page (outside the buddy's own buttons),
@@ -308,9 +329,10 @@ export default function Buddy() {
       setShowHint(false);
       const buddyEl = document.querySelector(".fixed.bottom-0.left-2");
       const inside = buddyEl && e.target instanceof Node && buddyEl.contains(e.target);
-      if (!inside && !greetVoicedRef.current && voiceRef.current && greetLineRef.current) {
+      // Say the greeting now — it types in sync with the voice (see speakNeural).
+      if (!inside && !greetVoicedRef.current && greetLineRef.current) {
         greetVoicedRef.current = true;
-        speak(greetLineRef.current);
+        say(greetLineRef.current);
       }
       cleanup();
     };
@@ -321,7 +343,7 @@ export default function Buddy() {
     window.addEventListener("pointerdown", onFirst);
     window.addEventListener("keydown", onFirst);
     return cleanup;
-  }, [speak]);
+  }, [say]);
 
   // Stop everything (the "stop talking" button).
   const stop = useCallback(() => {
@@ -460,7 +482,7 @@ export default function Buddy() {
       style={{ width: 280, pointerEvents: "none" }}
     >
       {/* one-time nudge: browsers block sound until the first interaction */}
-      {showHint && voice && text.length > 0 && (
+      {showHint && voice && greetReady && (
         <div
           className="mb-1 animate-pulse rounded-full bg-tape px-3 py-1 text-xs font-semibold text-white shadow-md"
           style={{ pointerEvents: "auto", transform: "translate(34px, 40px)" }}
@@ -495,15 +517,17 @@ export default function Buddy() {
           </button>
         </div>
 
-        {(thinking || text) && (
+        {(thinking || text || speaking) && (
           <div className="mb-2">
             {thinking ? (
               <span className="text-ink-soft">Thinking…</span>
-            ) : (
+            ) : text ? (
               <span>
                 {text}
                 {text.length < target.length && <span className="animate-pulse">▍</span>}
               </span>
+            ) : (
+              <span className="animate-pulse text-ink-soft">…</span>
             )}
           </div>
         )}
