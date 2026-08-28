@@ -63,6 +63,8 @@ export default function Buddy() {
   const scriptRef = useRef<string[]>(STORY); // the script being narrated (story or tour)
   const voiceRef = useRef(true);
   const greeted = useRef(false);
+  const greetLineRef = useRef(""); // the greeting text, to voice on first interaction
+  const greetVoicedRef = useRef(false);
   // Drives the 3D character's mouth: talking + open-amount (0..1).
   const expressionRef = useRef({ talking: false, emotion: "neutral", open: 0 });
   const neuralAvailRef = useRef<boolean | null>(null); // null = not tried; false = not configured
@@ -236,10 +238,35 @@ export default function Buddy() {
       } catch {
         /* ignore */
       }
-      say(returning ? WELCOME_BACK : WELCOME_FIRST);
+      const line = returning ? WELCOME_BACK : WELCOME_FIRST;
+      greetLineRef.current = line;
+      say(line);
     }, 900);
     return () => clearTimeout(t);
   }, [hidden, say]);
+
+  // Browsers block audio until the user interacts. So the moment they first
+  // click/tap/press anywhere on the page (outside the buddy's own buttons),
+  // voice the greeting — that's when he audibly says hi / welcome back.
+  useEffect(() => {
+    const onFirst = (e: Event) => {
+      interactedRef.current = true;
+      const buddyEl = document.querySelector(".fixed.bottom-0.left-2");
+      const inside = buddyEl && e.target instanceof Node && buddyEl.contains(e.target);
+      if (!inside && !greetVoicedRef.current && voiceRef.current && greetLineRef.current) {
+        greetVoicedRef.current = true;
+        speak(greetLineRef.current);
+      }
+      cleanup();
+    };
+    const cleanup = () => {
+      window.removeEventListener("pointerdown", onFirst);
+      window.removeEventListener("keydown", onFirst);
+    };
+    window.addEventListener("pointerdown", onFirst);
+    window.addEventListener("keydown", onFirst);
+    return cleanup;
+  }, [speak]);
 
   // Stop everything (the "stop talking" button).
   const stop = useCallback(() => {
