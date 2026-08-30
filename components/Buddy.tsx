@@ -97,7 +97,13 @@ export default function Buddy() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const rafRef = useRef(0);
   const speakGenRef = useRef(0); // bumped on every new speak/stop; cancels in-flight audio
-  const ttsCache = useRef<Map<string, string>>(new Map()); // spoken text -> audio object URL
+  // spoken text -> a ready-to-play clip: the audio URL plus a precomputed
+  // loudness envelope (so the mouth follows the actual speech and closes on
+  // pauses, instead of flapping nonstop).
+  const ttsCache = useRef<Map<string, { url: string; env: Float32Array | null; winSec: number }>>(
+    new Map()
+  );
+  const decodeCtxRef = useRef<AudioContext | null>(null); // used ONLY to decode audio, never for output
   const lineDoneRef = useRef<(() => void) | null>(null); // fires when a spoken line ends
   const doneTimerRef = useRef(0); // fallback timer if speech-end never fires
   const danceTimerRef = useRef(0); // stops the dance burst
@@ -140,9 +146,61 @@ export default function Buddy() {
     window.speechSynthesis.speak(u);
   }, []);
 
-  // Copycat's neural voice. Plays the audio element DIRECTLY (no Web Audio
-  // routing) so it's robust; the mouth flaps while it plays, and the text is
-  // revealed in time with the audio (caption sync).
+  // Fetch a line's audio and build a ready clip: the object URL + a loudness
+  // envelope sampled every ~40ms. Decoding uses a suspended AudioContext (decode
+  // works while suspended) and the sound is NEVER routed through it — the <audio>
+  // element plays directly — so a blocked/suspended context can't mute anything.
+  const loadClip = useCallback(async (spoken: string) => {
+    const cached = ttsCache.current.get(spoken);
+    if (cached) return cached;
+    const res = await fetch("/api/tts", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ text: spoken }),
+    });
+    if (!res.ok) {
+      if (res.status === 503) neuralAvailRef.current = false;
+      throw new Error(`tts ${res.status}`);
+    }
+    neuralAvailRef.current = true;
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const winSec = 0.04;
+    let env: Float32Array | null = null;
+    try {
+      const Ctx =
+        window.AudioContext ||
+        (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      const ctx = decodeCtxRef.current || (decodeCtxRef.current = new Ctx());
+      const buf = await ctx.decodeAudioData(await blob.arrayBuffer());
+      const ch = buf.getChannelData(0);
+      const win = Math.max(1, Math.floor(buf.sampleRate * winSec));
+      const n = Math.ceil(ch.length / win);
+      const e = new Float32Array(n);
+      let max = 0;
+      for (let i = 0; i < n; i++) {
+        let s = 0;
+        const start = i * win;
+        const end = Math.min(ch.length, start + win);
+        for (let j = start; j < end; j++) s += ch[j] * ch[j];
+        const rms = Math.sqrt(s / Math.max(1, end - start));
+        e[i] = rms;
+        if (rms > max) max = rms;
+      }
+      if (max > 0) for (let i = 0; i < n; i++) e[i] = Math.min(1, (e[i] / max) * 1.25);
+      env = e;
+    } catch {
+      env = null; // no envelope → gentle fallback flap
+    }
+    const clip = { url, env, winSec };
+    ttsCache.current.set(spoken, clip);
+    return clip;
+  }, []);
+
+  // Copycat's neural voice. Plays the <audio> element DIRECTLY, and drives the
+  // mouth from the precomputed loudness envelope so it opens with speech and
+  // CLOSES on pauses (no constant lisping). Text is revealed in time with the
+  // audio (type + talk together).
   const speakNeural = useCallback(
     async (raw: string) => {
       const spoken = stripEmoji(raw);
@@ -151,41 +209,25 @@ export default function Buddy() {
       setSpeaking(true);
       const gen = ++speakGenRef.current; // this speak's ticket
       try {
-        // Use a prefetched/cached clip if we have one (instant start, no network
-        // wait); otherwise fetch it now and cache it for reuse.
-        let url = ttsCache.current.get(spoken) || null;
-        if (!url) {
-          const res = await fetch("/api/tts", {
-            method: "POST",
-            headers: { "content-type": "application/json" },
-            body: JSON.stringify({ text: spoken }),
-          });
-          if (gen !== speakGenRef.current) return; // stopped/superseded while fetching
-          if (!res.ok) {
-            if (res.status === 503) neuralAvailRef.current = false; // not configured
-            setCaptionOn(false);
-            speakBrowser(raw);
-            return;
-          }
-          neuralAvailRef.current = true;
-          const blob = await res.blob();
-          if (gen !== speakGenRef.current) return; // stopped while reading blob
-          url = URL.createObjectURL(blob);
-          ttsCache.current.set(spoken, url);
-        } else {
-          neuralAvailRef.current = true;
-        }
-        const audio = new Audio(url);
+        const clip = await loadClip(spoken);
+        if (gen !== speakGenRef.current) return; // stopped/superseded while loading
+        const audio = new Audio(clip.url);
         audioRef.current = audio;
         let phase = 0;
         const loop = () => {
           if (gen !== speakGenRef.current) return; // stopped
-          phase += 0.4;
-          expressionRef.current.open = 0.2 + 0.35 * Math.abs(Math.sin(phase));
+          const ct = audio.currentTime;
+          if (clip.env && clip.env.length) {
+            const idx = Math.min(clip.env.length - 1, Math.floor(ct / clip.winSec));
+            expressionRef.current.open = clip.env[idx]; // ~0 during silence → mouth shut
+          } else {
+            phase += 0.4;
+            expressionRef.current.open = 0.15 + 0.3 * Math.abs(Math.sin(phase));
+          }
           expressionRef.current.talking = true;
           const dur = audio.duration;
           if (dur && isFinite(dur) && dur > 0) {
-            const frac = Math.min(1, audio.currentTime / dur);
+            const frac = Math.min(1, ct / dur);
             const n = Math.max(1, Math.ceil(raw.length * frac));
             setText((prev) => (n > prev.length ? raw.slice(0, n) : prev));
           }
@@ -195,7 +237,7 @@ export default function Buddy() {
           setText(raw);
           setCaptionOn(false);
           stopAudio();
-          lineDoneRef.current?.(); // URL kept in cache for instant replay
+          lineDoneRef.current?.(); // clip kept in cache for instant replay
         };
         expressionRef.current.talking = true;
         await audio.play();
@@ -205,30 +247,23 @@ export default function Buddy() {
         speakBrowser(raw);
       }
     },
-    [speakBrowser, stopAudio]
+    [speakBrowser, stopAudio, loadClip]
   );
 
-  // Warm the neural clip for a line ahead of time so it starts instantly (no
-  // network wait) when he actually speaks it. Safe to call before any gesture.
-  const prefetchTts = useCallback(async (raw: string) => {
-    const spoken = stripEmoji(raw);
-    if (!spoken || neuralAvailRef.current === false || ttsCache.current.has(spoken)) return;
-    try {
-      const res = await fetch("/api/tts", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ text: spoken }),
-      });
-      if (!res.ok) {
-        if (res.status === 503) neuralAvailRef.current = false;
-        return;
+  // Warm a line's clip (audio + envelope) ahead of time so it starts instantly
+  // when he actually speaks it. Safe to call before any user gesture.
+  const prefetchTts = useCallback(
+    async (raw: string) => {
+      const spoken = stripEmoji(raw);
+      if (!spoken || neuralAvailRef.current === false || ttsCache.current.has(spoken)) return;
+      try {
+        await loadClip(spoken);
+      } catch {
+        /* ignore — we'll just load it on demand */
       }
-      neuralAvailRef.current = true;
-      ttsCache.current.set(spoken, URL.createObjectURL(await res.blob()));
-    } catch {
-      /* ignore — we'll just fetch on demand */
-    }
-  }, []);
+    },
+    [loadClip]
+  );
 
   const speak = useCallback(
     (raw: string) => {
