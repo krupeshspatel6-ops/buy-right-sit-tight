@@ -79,8 +79,6 @@ export default function Buddy() {
   const [dancing, setDancing] = useState(false); // 3D dance moves while narrating
   const [speaking, setSpeaking] = useState(false); // any speech active → show Stop
   const [voice, setVoice] = useState(true);
-  const [showHint, setShowHint] = useState(true); // "tap to hear me" until first interaction
-  const [greetReady, setGreetReady] = useState(false); // greeting prepared, waiting for the tap
   const [captionOn, setCaptionOn] = useState(false); // audio drives the typed text (in sync)
   const [asking, setAsking] = useState(false); // chat input shown
   const [question, setQuestion] = useState("");
@@ -224,8 +222,14 @@ export default function Buddy() {
       setSpeaking(true);
       // Will the neural voice drive this line? If so, let the audio type it
       // (caption sync); otherwise type at the fixed rate.
-      setCaptionOn(voiceRef.current && interactedRef.current && neuralAvailRef.current !== false);
-      expressionRef.current.talking = true; // move the mouth even when muted
+      const caption =
+        voiceRef.current && interactedRef.current && neuralAvailRef.current !== false;
+      setCaptionOn(caption);
+      // Only start the mouth now when WE type the text locally (muted / browser
+      // voice). In neural caption mode the mouth waits for the audio to actually
+      // play — otherwise he "lisps" silently during the ~1s TTS fetch, before any
+      // words or sound arrive.
+      expressionRef.current.talking = !caption;
       window.clearTimeout(doneTimerRef.current);
       let fired = false;
       const fire = () => {
@@ -277,11 +281,12 @@ export default function Buddy() {
       } catch {
         /* ignore */
       }
-      // Prepare the greeting but don't speak/type it yet — it arrives WITH the
-      // voice on the first tap, so text and voice are in sync (browsers block
-      // audio until then anyway).
-      greetLineRef.current = returning ? WELCOME_BACK : WELCOME_FIRST;
-      setGreetReady(true);
+      // Show the greeting text right away (typed out, silent — browsers block
+      // audio until the first click anyway). The voice arrives on the first
+      // interaction, or when they press "Start talking".
+      const line = returning ? WELCOME_BACK : WELCOME_FIRST;
+      greetLineRef.current = line;
+      setTarget(line);
     }, 200);
     return () => clearTimeout(t);
   }, [hidden]);
@@ -292,7 +297,6 @@ export default function Buddy() {
   useEffect(() => {
     const onFirst = (e: Event) => {
       interactedRef.current = true;
-      setShowHint(false);
       const buddyEl = document.querySelector(".fixed.bottom-0.left-2");
       const inside = buddyEl && e.target instanceof Node && buddyEl.contains(e.target);
       // Say the greeting now — it types in sync with the voice (see speakNeural).
@@ -417,17 +421,15 @@ export default function Buddy() {
     else cancelVoice();
   }
 
-  // The "tap to hear me" pill: voice the greeting right now. This click is the
-  // user gesture that lets audio.play() run.
-  function startGreeting() {
+  // "Start talking": this click is the user gesture that unlocks audio, so speak
+  // the greeting out loud right now. If a route change already showed a fresh
+  // greeting, this just voices whatever line is on screen.
+  function startTalking() {
     interactedRef.current = true;
-    setShowHint(false);
-    if (!greetVoicedRef.current && greetLineRef.current) {
-      greetVoicedRef.current = true;
-      voiceRef.current = true;
-      setVoice(true);
-      say(greetLineRef.current);
-    }
+    greetVoicedRef.current = true;
+    voiceRef.current = true;
+    setVoice(true);
+    say(greetLineRef.current || target || WELCOME_FIRST);
   }
 
   // Stop speech when the route changes.
@@ -460,17 +462,6 @@ export default function Buddy() {
       className="fixed bottom-0 left-2 z-50 flex flex-col items-center print:hidden"
       style={{ width: 280, pointerEvents: "none" }}
     >
-      {/* one-time nudge: browsers block sound until the first interaction */}
-      {showHint && voice && greetReady && (
-        <button
-          onClick={startGreeting}
-          className="mb-1 animate-pulse rounded-full bg-tape px-3 py-1 text-xs font-semibold text-white shadow-md"
-          style={{ pointerEvents: "auto", transform: "translate(34px, 40px)" }}
-        >
-          🔊 tap to hear me
-        </button>
-      )}
-
       {/* speech bubble on top of the buddy — holds what he says AND the buttons */}
       <div
         className="relative mb-2 w-full whitespace-normal break-words rounded-2xl border border-wall-dark bg-white/95 px-4 py-3 pt-5 text-sm leading-relaxed shadow-lg"
@@ -539,9 +530,24 @@ export default function Buddy() {
           </div>
         ) : (
           <div className="flex flex-wrap gap-1.5">
+            {speaking ? (
+              <button
+                onClick={stop}
+                className="rounded-full bg-loss px-3 py-1 text-xs font-semibold text-white"
+              >
+                ⏹ Stop talking
+              </button>
+            ) : (
+              <button
+                onClick={startTalking}
+                className="rounded-full bg-tape px-3 py-1 text-xs font-semibold text-white"
+              >
+                ▶ Start talking
+              </button>
+            )}
             <button
               onClick={showBook}
-              className="rounded-full bg-tape px-3 py-1 text-xs font-semibold text-white"
+              className="rounded-full border border-tape px-3 py-1 text-xs font-semibold text-tape"
             >
               🏛️ Show me the book
             </button>
@@ -560,14 +566,6 @@ export default function Buddy() {
             >
               💬 Ask
             </button>
-            {speaking && (
-              <button
-                onClick={stop}
-                className="rounded-full border border-loss px-3 py-1 text-xs font-semibold text-loss"
-              >
-                ⏹ Stop talking
-              </button>
-            )}
           </div>
         )}
 
