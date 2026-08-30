@@ -97,6 +97,7 @@ export default function Buddy() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const rafRef = useRef(0);
   const speakGenRef = useRef(0); // bumped on every new speak/stop; cancels in-flight audio
+  const ttsCache = useRef<Map<string, string>>(new Map()); // spoken text -> audio object URL
   const lineDoneRef = useRef<(() => void) | null>(null); // fires when a spoken line ends
   const doneTimerRef = useRef(0); // fallback timer if speech-end never fires
   const danceTimerRef = useRef(0); // stops the dance burst
@@ -150,22 +151,30 @@ export default function Buddy() {
       setSpeaking(true);
       const gen = ++speakGenRef.current; // this speak's ticket
       try {
-        const res = await fetch("/api/tts", {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({ text: spoken }),
-        });
-        if (gen !== speakGenRef.current) return; // stopped/superseded while fetching
-        if (!res.ok) {
-          if (res.status === 503) neuralAvailRef.current = false; // not configured
-          setCaptionOn(false);
-          speakBrowser(raw);
-          return;
+        // Use a prefetched/cached clip if we have one (instant start, no network
+        // wait); otherwise fetch it now and cache it for reuse.
+        let url = ttsCache.current.get(spoken) || null;
+        if (!url) {
+          const res = await fetch("/api/tts", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ text: spoken }),
+          });
+          if (gen !== speakGenRef.current) return; // stopped/superseded while fetching
+          if (!res.ok) {
+            if (res.status === 503) neuralAvailRef.current = false; // not configured
+            setCaptionOn(false);
+            speakBrowser(raw);
+            return;
+          }
+          neuralAvailRef.current = true;
+          const blob = await res.blob();
+          if (gen !== speakGenRef.current) return; // stopped while reading blob
+          url = URL.createObjectURL(blob);
+          ttsCache.current.set(spoken, url);
+        } else {
+          neuralAvailRef.current = true;
         }
-        neuralAvailRef.current = true;
-        const blob = await res.blob();
-        if (gen !== speakGenRef.current) return; // stopped while reading blob
-        const url = URL.createObjectURL(blob);
         const audio = new Audio(url);
         audioRef.current = audio;
         let phase = 0;
@@ -186,8 +195,7 @@ export default function Buddy() {
           setText(raw);
           setCaptionOn(false);
           stopAudio();
-          URL.revokeObjectURL(url);
-          lineDoneRef.current?.();
+          lineDoneRef.current?.(); // URL kept in cache for instant replay
         };
         expressionRef.current.talking = true;
         await audio.play();
@@ -199,6 +207,28 @@ export default function Buddy() {
     },
     [speakBrowser, stopAudio]
   );
+
+  // Warm the neural clip for a line ahead of time so it starts instantly (no
+  // network wait) when he actually speaks it. Safe to call before any gesture.
+  const prefetchTts = useCallback(async (raw: string) => {
+    const spoken = stripEmoji(raw);
+    if (!spoken || neuralAvailRef.current === false || ttsCache.current.has(spoken)) return;
+    try {
+      const res = await fetch("/api/tts", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ text: spoken }),
+      });
+      if (!res.ok) {
+        if (res.status === 503) neuralAvailRef.current = false;
+        return;
+      }
+      neuralAvailRef.current = true;
+      ttsCache.current.set(spoken, URL.createObjectURL(await res.blob()));
+    } catch {
+      /* ignore — we'll just fetch on demand */
+    }
+  }, []);
 
   const speak = useCallback(
     (raw: string) => {
@@ -287,9 +317,10 @@ export default function Buddy() {
       const line = returning ? WELCOME_BACK : WELCOME_FIRST;
       greetLineRef.current = line;
       setTarget(line);
+      prefetchTts(line); // warm the voice so "Start talking" plays instantly
     }, 200);
     return () => clearTimeout(t);
-  }, [hidden]);
+  }, [hidden, prefetchTts]);
 
   // Browsers block audio until the user interacts. So the moment they first
   // click/tap/press anywhere on the page (outside the buddy's own buttons),
@@ -349,6 +380,7 @@ export default function Buddy() {
       const sayLine = (i: number) => {
         if (narrationTokenRef.current !== token) return; // stopped or superseded
         storyIdx.current = i;
+        if (i + 1 < script.length) prefetchTts(script[i + 1]); // warm the next line
         say(script[i], () => {
           if (narrationTokenRef.current !== token) return; // stopped mid-line
           if (i + 1 < script.length) sayLine(i + 1);
@@ -357,7 +389,7 @@ export default function Buddy() {
       };
       sayLine(0);
     },
-    [say, danceBurst]
+    [say, danceBurst, prefetchTts]
   );
 
   const tellStory = useCallback(() => narrate(STORY), [narrate]);
@@ -459,13 +491,13 @@ export default function Buddy() {
     // wrapper ignores pointer events so the page stays clickable; the bubble
     // and controls opt back in.
     <div
-      className="fixed bottom-0 left-2 z-50 flex flex-col items-center print:hidden"
-      style={{ width: 280, pointerEvents: "none" }}
+      className="fixed bottom-0 left-1 sm:left-2 z-50 flex w-[120px] flex-col items-center print:hidden sm:w-[150px]"
+      style={{ pointerEvents: "none" }}
     >
       {/* speech bubble on top of the buddy — holds what he says AND the buttons */}
       <div
-        className="relative mb-2 w-full whitespace-normal break-words rounded-2xl border border-wall-dark bg-white/95 px-4 py-3 pt-5 text-sm leading-relaxed shadow-lg"
-        style={{ pointerEvents: "auto", transform: "translate(34px, 40px)" }}
+        className="relative mb-2 self-start w-[210px] max-w-[82vw] whitespace-normal break-words rounded-2xl border border-wall-dark bg-white/95 px-4 py-3 pt-5 text-sm leading-relaxed shadow-lg sm:w-[236px]"
+        style={{ pointerEvents: "auto", transform: "translate(8px, 44px)" }}
       >
         {/* sound + close, on top of the popup */}
         <div className="absolute -top-3 right-2 flex items-center gap-1">
@@ -489,7 +521,7 @@ export default function Buddy() {
         </div>
 
         {(thinking || text || speaking) && (
-          <div className="mb-2">
+          <div className="mb-2 max-h-[9rem] overflow-y-auto">
             {thinking ? (
               <span className="text-ink-soft">Thinking…</span>
             ) : text ? (
@@ -576,8 +608,8 @@ export default function Buddy() {
         />
       </div>
 
-      <div className="relative" style={{ width: 280, height: 480 }}>
-        {/* the free-standing 3D character */}
+      <div className="relative h-[206px] w-[120px] sm:h-[257px] sm:w-[150px]">
+        {/* the free-standing 3D character (same 0.583 aspect at every size) */}
         <div className="absolute inset-0" style={{ pointerEvents: "none" }}>
           <Character3D expressionRef={expressionRef} dancing={dancing} />
         </div>
