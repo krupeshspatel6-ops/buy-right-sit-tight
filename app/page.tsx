@@ -15,9 +15,9 @@ import {
 import { getScoreboard, getChapterCandles, type Scoreboard, type ChapterChart } from "@/lib/quotes";
 import { formatFillTime, formatDate } from "@/lib/format";
 import BrandMark from "@/components/BrandMark";
-import { chapterCommitsUrl } from "@/lib/repo";
 import ReadAloudButton from "@/components/ReadAloudButton";
 import CandleChart from "@/components/CandleChart";
+import ProofPanel from "@/components/ProofPanel";
 
 export const revalidate = 3600;
 
@@ -441,35 +441,12 @@ export default async function Home() {
             </div>
           )}
 
-          <div className="mb-5 rounded-xl border border-dashed border-wall-dark bg-white px-4 py-3">
-            <span className="chip chip-muted">Proof — never edited</span>
-            <a
-              href={chapterCommitsUrl(c.slug)}
-              target="_blank"
-              rel="noreferrer"
-              className="font-grotesk mt-2 block text-sm font-bold text-tape underline"
-            >
-              Timestamped commit history on GitHub →
-            </a>
-            {c.proofs.length > 0 && (
-              <div className="mt-3">
-                <div className="text-xs uppercase tracking-wide text-ink-soft mb-2">
-                  Broker confirmation (Fidelity)
-                </div>
-                <div className="flex flex-wrap gap-3">
-                  {c.proofs.map((p) => (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      key={p}
-                      src={p}
-                      alt={`Broker confirmation for chapter ${c.chapter}`}
-                      className="max-h-56 rounded border border-wall-dark"
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
+          <ProofPanel
+            slug={c.slug}
+            ticker={c.ticker}
+            buyDate={firstBuyDate(c)}
+            proofs={c.proofs}
+          />
 
           <div className="mb-3">
             <ReadAloudButton text={`Chapter ${c.chapter}. ${c.title}. ${c.body}`} />

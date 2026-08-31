@@ -61,6 +61,9 @@ export default function AdminEditor({
   const [note, setNote] = useState("");
   const [exitTest, setExitTest] = useState("");
   const [proofs, setProofs] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const [upErr, setUpErr] = useState("");
+  const [proofImgs, setProofImgs] = useState<{ path: string; dataUrl: string }[]>([]);
   const [body, setBody] = useState(BODY_SCAFFOLD);
   const [deploy, setDeploy] = useState(true);
   const [confirming, setConfirming] = useState(false);
@@ -92,6 +95,42 @@ export default function AdminEditor({
       else setAi({ busy: false, text: "", mode, err: data.error || "AI failed." });
     } catch (e) {
       setAi({ busy: false, text: "", mode, err: e instanceof Error ? e.message : "Network error." });
+    }
+  }
+
+  async function onProofFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      setUpErr("That image is over 5 MB — please shrink it first.");
+      return;
+    }
+    setUpErr("");
+    setUploading(true);
+    try {
+      const dataUrl: string = await new Promise((res, rej) => {
+        const r = new FileReader();
+        r.onload = () => res(String(r.result));
+        r.onerror = rej;
+        r.readAsDataURL(file);
+      });
+      const resp = await fetch("/api/admin/upload-proof", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ dataUrl, chapter }),
+      });
+      const data = await resp.json();
+      if (data.ok) {
+        setProofImgs((imgs) => [...imgs, { path: data.path, dataUrl }]);
+        setProofs((p) => (p ? `${p}, ${data.path}` : data.path));
+      } else {
+        setUpErr(data.error || "Upload failed.");
+      }
+    } catch {
+      setUpErr("Upload failed — check your connection and try again.");
+    } finally {
+      setUploading(false);
     }
   }
 
@@ -312,14 +351,53 @@ export default function AdminEditor({
 
           <h2 className={sectionH}>5 · Proof (optional)</h2>
           <label className={label}>
-            Broker fill screenshot(s) in public/proofs/ — comma-separated
+            Upload your broker fill screenshot — redact the account number, balances, and
+            other positions first.
+          </label>
+          <div className="flex flex-wrap items-center gap-3">
+            <label
+              className={`cursor-pointer rounded-full border border-tape px-4 py-2 text-sm font-semibold text-tape ${
+                uploading ? "opacity-50" : "hover:bg-tape/5"
+              }`}
+            >
+              {uploading ? "Uploading…" : "📎 Upload screenshot"}
+              <input
+                type="file"
+                accept="image/png,image/jpeg,image/webp,image/gif"
+                className="hidden"
+                disabled={uploading}
+                onChange={onProofFile}
+              />
+            </label>
+            {upErr && <span className="text-sm text-loss">{upErr}</span>}
+          </div>
+
+          {proofImgs.length > 0 && (
+            <div className="mt-3 flex flex-wrap gap-3">
+              {proofImgs.map((p) => (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  key={p.path}
+                  src={p.dataUrl}
+                  alt="Uploaded broker proof"
+                  className="h-24 rounded border border-wall-dark"
+                />
+              ))}
+            </div>
+          )}
+
+          <label className={`${label} mt-3`}>
+            Attached files (auto-filled by upload; you can also type existing filenames)
           </label>
           <input
             className={field}
             value={proofs}
             onChange={(e) => setProofs(e.target.value)}
-            placeholder="ch01-fill.png"
+            placeholder="/proofs/ch01-….png"
           />
+          <p className="mt-1 text-[11px] text-ink-soft">
+            Uploaded images commit to the public repo and go live when the chapter publishes.
+          </p>
 
           {!canPublish && (
             <p className="mt-4 text-sm text-loss">
