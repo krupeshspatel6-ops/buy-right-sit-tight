@@ -215,7 +215,7 @@ export default async function Home() {
   /* ---- Page: the pledge ---- */
   sideToc.push({ label: "The pledge", pageIndex: pages.length });
   pages.push(
-    <div key="pledge" className="flex h-full min-h-[62vh] flex-col justify-center">
+    <div key="pledge" className="flex min-h-full flex-col justify-center py-2">
       <h2 className="text-2xl font-bold mb-6">The pledge</h2>
       <ol className="space-y-4 prose-book list-decimal pl-5">
         <li>
@@ -249,6 +249,21 @@ export default async function Home() {
           to keep showing up.
         </li>
       </ol>
+
+      <div className="mt-8 border-t border-wall-dark pt-5 text-sm leading-relaxed text-ink-soft">
+        <p>
+          <b className="text-ink">A note as this grows.</b> I&apos;m 15, and I will get
+          things wrong — bad calls, clumsy writing, ideas I later see differently. Those
+          mistakes stay right here on the page; that&apos;s part of the point.
+        </p>
+        <p className="mt-3">
+          The <i>look</i> of this site will keep changing as I learn — the layout, the
+          charts, the tools around it. The one thing that never changes is the record
+          underneath it all: <b className="text-ink">what I bought, at what price, on what
+          day.</b> Those are real, live trades — published as they happen and never edited.
+          Everything else here is just the wrapping around that one honest fact.
+        </p>
+      </div>
     </div>
   );
 

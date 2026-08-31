@@ -27,7 +27,7 @@ const WELCOME_BACK =
 // ---------------------------------------------------------------------------
 const STORY = [
   "Here's the idea behind Krupesh's book. He follows a code — his own set of signals — and when that code lines up, he takes it as a hint that it might be the right time to open a small starter position.",
-  "So he puts in a little of his own saved money to start... and then the hard part begins. He sits tight. And he waits. And waits. And waits some more.",
+  "So he puts in a little of his own money to start... and then the hard part begins. He sits tight. And he waits. And waits. And waits some more.",
   "Every buy he makes becomes a chapter here — timestamped the day it happens, and never edited after. A chapter only closes when he sells, and mostly, he doesn't.",
   "The whole book is really about that waiting — trusting the code, holding the position, and doing nothing while the paint dries. The way Buffett, Munger, and Pabrai talk about.",
   "Nothing here is advice — it's just Krupesh's journey. His code, his signals, his patience. Buy right, sit tight… and watch the paint dry with him.",
@@ -37,7 +37,7 @@ const STORY = [
 // how to get around.
 const TOUR = [
   "Sure — let me show you around Krupesh's book!",
-  "This is a live book. Every stock Krupesh buys with his own saved money becomes a chapter — timestamped the day it happens, and never edited after.",
+  "This is a live book. Every stock Krupesh buys with his own money becomes a chapter — timestamped the day it happens, and never edited after.",
   "See the panel on the left, the ledger? That's the real portfolio. Here's the honest part: for every dollar Krupesh puts in a stock, he puts a real dollar in the S&P 500 the same day — so the ledger shows his picks and the index side by side, real money against real money.",
   "The cover reads like a real book — use the arrows or click the page edges to turn pages. The table of contents IS the portfolio: open chapters are what he still holds, closed ones are stocks he sold.",
   "The wall on the cover keeps getting painted — a new chapter for every buy, with no set number and no finish line. Right now it's still blank, waiting for his first buy.",
