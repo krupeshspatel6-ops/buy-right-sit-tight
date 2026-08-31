@@ -54,8 +54,10 @@ export type ChapterPerf = {
   asOf: string | null; // date (YYYY-MM-DD) of the close behind currentPrice
 };
 
+// The matched S&P 500 side is bought as VOO (Vanguard's low-cost S&P 500 fund).
+// VOO and SPY track the same index; VOO fits the buy-and-hold ethos.
 export async function getChapterPerf(c: Chapter): Promise<ChapterPerf> {
-  const [stock, spy] = await Promise.all([fetchDaily(c.ticker), fetchDaily("spy")]);
+  const [stock, spy] = await Promise.all([fetchDaily(c.ticker), fetchDaily("voo")]);
   const start = firstBuyDate(c);
   const end = c.sell?.date;
 

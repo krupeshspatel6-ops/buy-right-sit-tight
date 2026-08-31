@@ -174,8 +174,8 @@ export default async function Home() {
           {/* the real S&P side, all matched buys together */}
           {scoreboard.spyReturnPct !== null && (
             <div className="rule-dashed font-grotesk flex items-baseline justify-between gap-2 py-2 text-[13px]">
-              <span className="font-bold">S&amp;P 500</span>
-              <span className="text-ink-soft">the match</span>
+              <span className="font-bold">VOO</span>
+              <span className="text-ink-soft">S&amp;P match</span>
               <span
                 className={`font-bold ${
                   scoreboard.spyReturnPct >= 0 ? "text-gain" : "text-loss"
@@ -322,7 +322,7 @@ export default async function Home() {
         </li>
         <li>
           <b>For every dollar I put in a pick, I put a real dollar in the S&amp;P
-          500 the same day.</b> Half my money is always in the index. If I
+          500 (VOO) the same day.</b> Half my money is always in the index. If I
           can&apos;t beat just buying the market, the ledger will say so — in
           real money, right next to my picks.
         </li>

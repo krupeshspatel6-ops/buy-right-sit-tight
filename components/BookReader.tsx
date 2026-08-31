@@ -76,6 +76,42 @@ export default function BookReader({
         </aside>
       )}
       <div className="book-stage w-full max-w-[960px]">
+        {/* Mobile / tablet controls — the ledger + contents sidebars are
+            desktop-only, so surface them here below xl. */}
+        <div className="mb-4 space-y-3 xl:hidden">
+          {sideToc && sideToc.length > 0 && (
+            <div className="flex items-center gap-2">
+              <label
+                htmlFor="brst-jump"
+                className="font-grotesk shrink-0 text-[11px] font-bold uppercase tracking-wider text-ink-soft"
+              >
+                Jump to
+              </label>
+              <select
+                id="brst-jump"
+                value={index}
+                onChange={(e) => jumpTo(Number(e.target.value))}
+                className="min-w-0 flex-1 rounded-lg border border-wall-dark bg-white px-3 py-2 text-sm"
+              >
+                {sideToc.map((t) => (
+                  <option key={t.pageIndex} value={t.pageIndex}>
+                    {t.label}
+                    {t.sub ? ` — ${t.sub}` : ""}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+          {ledger && (
+            <details className="rounded-xl border border-wall-dark bg-white/60 px-4 py-3">
+              <summary className="font-grotesk cursor-pointer list-none text-[11px] font-bold uppercase tracking-wider text-ink-soft">
+                ▾ Live scoreboard — portfolio &amp; S&amp;P
+              </summary>
+              <div className="mt-3">{ledger}</div>
+            </details>
+          )}
+        </div>
+
         <div
           key={index}
           className={`book-page relative h-[76vh] overflow-y-auto px-8 py-8 sm:px-14 ${
@@ -120,7 +156,7 @@ export default function BookReader({
           </button>
         </div>
         <p className="mt-2 text-center text-xs text-ink-soft">
-          Tip: use ← → arrow keys, or click the page edges.
+          Tip: tap the page edges or the buttons — on a keyboard, use ← → arrows.
         </p>
       </div>
 
