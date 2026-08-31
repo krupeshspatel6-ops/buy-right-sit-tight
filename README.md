@@ -9,10 +9,12 @@ no monetization — this exists for credibility, not revenue.
 1. Every real-money buy appears within 24 hours. No exceptions, no deletions.
 2. Chapters are never edited after publication — corrections are appended, dated.
 3. Every chapter states on day one what would trigger a sell (the "exit test").
-4. Scoreboard = cost-weighted return vs SPY over the same windows, always visible.
-5. The book has exactly **100 chapters** — a lifetime punch card. Every buy
+4. Scoreboard = a dollar-matched head-to-head: for every dollar put in a pick,
+   the same dollar in the S&P 500 (SPY) on the same day. Both totals always
+   visible, so it's an honest apples-to-apples compare.
+5. The book has exactly **50 chapters** — a lifetime punch card. Every buy
    spends a slot. A budget, not a quota: no deadline, blank slots are fine.
-   The homepage wall fills 1% per chapter.
+   The homepage wall fills 2% per chapter.
 
 ## The admin editor (local only)
 

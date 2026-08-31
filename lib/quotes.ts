@@ -83,6 +83,12 @@ export async function getChapterPerf(c: Chapter): Promise<ChapterPerf> {
 export type Scoreboard = {
   totalReturnPct: number | null; // cost-weighted across all chapters
   spyReturnPct: number | null; // SPY cost-weighted over the same windows
+  // The dollar-matched head-to-head: every dollar put in a pick is mirrored by
+  // the same dollar in the S&P 500 on the same day. These are the running
+  // totals of both sides (null until at least one chapter can be scored).
+  invested: number; // total dollars put into picks (= same dollars shadowed into SPY)
+  picksValue: number | null; // what the picks are worth now
+  spyValue: number | null; // what the same money in the S&P would be worth now
   chapterPerfs: Map<number, ChapterPerf>;
 };
 
@@ -111,6 +117,11 @@ export async function getScoreboard(chapters: Chapter[]): Promise<Scoreboard> {
   return {
     totalReturnPct: cost > 0 ? ((value - cost) / cost) * 100 : null,
     spyReturnPct: spyCost > 0 ? ((spyValue - spyCost) / spyCost) * 100 : null,
+    invested: cost,
+    picksValue: cost > 0 ? value : null,
+    // Scored on the same dollars/windows as the picks, so the two sides are
+    // directly comparable even when SPY data is missing for some chapters.
+    spyValue: cost > 0 ? spyValue + (cost - spyCost) : null,
     chapterPerfs,
   };
 }

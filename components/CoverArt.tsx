@@ -1,6 +1,6 @@
-// The cover paints itself: the painted region's width tracks how many of
-// the 100 chapters have been opened. At 0 the wall is blank and primed;
-// at 100 the paint reaches the far end of the room where the man sits.
+// The cover paints itself: the painted region's width tracks how much of the
+// wall is painted (percent — 2% per chapter, 50 chapters total). At 0 the wall
+// is blank and primed; at 100 the paint reaches the far end where the man sits.
 
 export default function CoverArt({ progress }: { progress: number }) {
   const p = Math.max(0, Math.min(100, progress));

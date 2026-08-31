@@ -101,6 +101,50 @@ export default async function Home() {
           </p>
         )}
 
+        {scoreboard.invested > 0 &&
+          scoreboard.picksValue !== null &&
+          scoreboard.spyValue !== null && (
+            <div className="mt-3 border-t border-wall pt-3">
+              <p className="text-xs uppercase tracking-wide text-ink-soft">
+                Picks vs the S&amp;P 500
+              </p>
+              <p className="mt-0.5 text-[11px] leading-relaxed text-ink-soft">
+                Every dollar in a pick, the same dollar in the S&amp;P on the same day.
+              </p>
+              <div className="mt-2 space-y-1">
+                <div className="flex items-baseline justify-between gap-2">
+                  <span>My picks</span>
+                  <span
+                    className={`font-bold ${
+                      scoreboard.picksValue >= scoreboard.spyValue ? "text-gain" : "text-loss"
+                    }`}
+                  >
+                    {fmtMoney(scoreboard.picksValue)}
+                  </span>
+                </div>
+                <div className="flex items-baseline justify-between gap-2">
+                  <span>Same money, S&amp;P 500</span>
+                  <span className="font-bold">{fmtMoney(scoreboard.spyValue)}</span>
+                </div>
+                <div className="flex items-baseline justify-between gap-2 text-ink-soft">
+                  <span>Put in</span>
+                  <span>{fmtMoney(scoreboard.invested)}</span>
+                </div>
+              </div>
+              <p className="mt-1.5 text-[11px] font-semibold">
+                {scoreboard.picksValue >= scoreboard.spyValue ? (
+                  <span className="text-gain">
+                    Picks ahead by {fmtMoney(scoreboard.picksValue - scoreboard.spyValue)}
+                  </span>
+                ) : (
+                  <span className="text-loss">
+                    S&amp;P ahead by {fmtMoney(scoreboard.spyValue - scoreboard.picksValue)}
+                  </span>
+                )}
+              </p>
+            </div>
+          )}
+
         {open.length > 0 && (
           <div className="mt-3 border-t border-wall pt-2">
             {openRows.map((r) => (
@@ -153,7 +197,7 @@ export default async function Home() {
       key="cover"
       className="-mx-8 -my-8 sm:-mx-14 flex h-[76vh] flex-col overflow-hidden"
     >
-      {/* full-bleed illustration — the wall paints itself, 1% per chapter */}
+      {/* full-bleed illustration — the wall paints itself, 2% per chapter */}
       <div className="relative flex-none overflow-hidden rounded-tl-[4px] rounded-tr-[10px]">
         {hasPhoto ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -163,14 +207,14 @@ export default async function Home() {
             className="h-[30vh] w-full object-cover object-center"
           />
         ) : (
-          <CoverArt progress={chapters.length} />
+          <CoverArt progress={chapters.length * 2} />
         )}
         <span className="absolute right-5 top-4 inline-flex items-center gap-1.5 rounded-full bg-white/90 px-3 py-1 text-xs font-bold uppercase tracking-widest text-tape shadow-sm">
           <span className="live-dot live-dot-pulse" aria-hidden /> live
         </span>
         {!hasPhoto && (
           <span className="absolute left-5 top-4 rounded-full bg-white/90 px-3 py-1 text-xs uppercase tracking-widest text-ink-soft shadow-sm">
-            wall painted: {Math.min(chapters.length, 100)}%
+            wall painted: {Math.min(chapters.length * 2, 100)}%
           </span>
         )}
       </div>
@@ -198,7 +242,7 @@ export default async function Home() {
         <div>
           <p className="text-sm uppercase tracking-widest text-ink-soft">
             a <span className="live-badge"><span className="live-dot" aria-hidden /> live</span>{" "}
-            book in 100 chapters
+            book in 50 chapters
           </p>
           <p className="mx-auto mt-2 max-w-md text-xs leading-relaxed text-ink-soft">
             begun August 2026 · written in real time, one buy at a time · every
@@ -251,7 +295,7 @@ export default async function Home() {
           future-me can&apos;t quietly rewrite the story.
         </li>
         <li>
-          <b>The book has exactly 100 chapters.</b> A punch card with a hundred
+          <b>The book has exactly 50 chapters.</b> A punch card with fifty
           slots for the rest of my life. Every buy spends one, permanently. A
           budget, not a quota — slots left blank are a feature, not a failure.
         </li>
@@ -272,12 +316,12 @@ export default async function Home() {
       <div className="mb-6">
         <div className="flex items-center justify-between text-sm text-ink-soft mb-2">
           <span className="uppercase tracking-wide">The wall</span>
-          <span>{chapters.length} of 100 chapters opened</span>
+          <span>{chapters.length} of 50 chapters opened</span>
         </div>
         <div className="h-3 rounded-full bg-wall-dark overflow-hidden">
           <div
             className="h-full bg-tape"
-            style={{ width: `${Math.min(chapters.length, 100)}%` }}
+            style={{ width: `${Math.min(chapters.length * 2, 100)}%` }}
           />
         </div>
       </div>
@@ -341,7 +385,7 @@ export default async function Home() {
         <div className="prose-book">
           <p>The wall is primed. The chair is unfolded. The mug is full.</p>
           <p>
-            I have a punch card with one hundred slots in my pocket and the
+            I have a punch card with fifty slots in my pocket and the
             whole market in front of me. The first buy will land on this page
             within twenty-four hours of the fill — real ticker, real price,
             real timestamp, and one honest paragraph about why.

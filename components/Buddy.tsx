@@ -40,7 +40,7 @@ const TOUR = [
   "This is a live book. Every stock Krupesh buys with his own saved money becomes a chapter — timestamped the day it happens, and never edited after.",
   "See the panel on the left, the ledger? That's the real portfolio: the total value at the end of each market day, each stock's last price, and how it's doing versus the S&P 500.",
   "The cover reads like a real book — use the arrows or click the page edges to turn pages. The table of contents IS the portfolio: open chapters are what he still holds, closed ones are stocks he sold.",
-  "The wall on the cover fills in 1% per chapter — 100 chapters total, a lifetime punch card. Right now it's still blank, waiting for his first buy.",
+  "The wall on the cover fills in 2% per chapter — 50 chapters total, a lifetime punch card. Right now it's still blank, waiting for his first buy.",
   "That's the tour! Nothing here is advice — it's Krupesh's learning journey. Buy right, sit tight, and watch the paint dry with him.",
 ];
 
