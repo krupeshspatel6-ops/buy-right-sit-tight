@@ -18,7 +18,8 @@ export async function POST(req: Request) {
 
   const errors: string[] = [];
   const chapter = Number(input.chapter);
-  const ticker = String(input.ticker || "").toUpperCase().replace(/[^A-Z.]/g, "");
+  // Keep hyphens and digits so tickers like BRK-B resolve on the price feed.
+  const ticker = String(input.ticker || "").toUpperCase().replace(/[^A-Z0-9.-]/g, "");
   const price = Number(input.price);
   const shares = Number(input.shares);
   if (!Number.isInteger(chapter) || chapter < 1) errors.push("Chapter number must be a positive integer.");
