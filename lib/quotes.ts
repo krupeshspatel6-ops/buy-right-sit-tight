@@ -4,13 +4,14 @@
 
 import { Chapter, costBasis, firstBuyDate, totalShares } from "./chapters";
 
-type Daily = { date: string; close: number };
+type Daily = { date: string; open: number; high: number; low: number; close: number };
 
 async function fetchDaily(symbol: string): Promise<Daily[]> {
   try {
     const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(
       symbol.toUpperCase()
     )}?range=10y&interval=1d`;
+    // Same URL for perf + candles → Next dedupes the request within a render.
     const res = await fetch(url, {
       headers: { "User-Agent": "Mozilla/5.0" },
       next: { revalidate: 3600 },
@@ -19,18 +20,71 @@ async function fetchDaily(symbol: string): Promise<Daily[]> {
     const json = await res.json();
     const result = json?.chart?.result?.[0];
     const ts: number[] = result?.timestamp ?? [];
-    const closes: Array<number | null> = result?.indicators?.quote?.[0]?.close ?? [];
+    const q = result?.indicators?.quote?.[0] ?? {};
+    const opens: Array<number | null> = q.open ?? [];
+    const highs: Array<number | null> = q.high ?? [];
+    const lows: Array<number | null> = q.low ?? [];
+    const closes: Array<number | null> = q.close ?? [];
     const rows: Daily[] = [];
     for (let i = 0; i < ts.length; i++) {
-      const c = closes[i];
-      if (typeof c === "number" && Number.isFinite(c)) {
-        rows.push({ date: new Date(ts[i] * 1000).toISOString().slice(0, 10), close: c });
+      const o = opens[i], h = highs[i], l = lows[i], c = closes[i];
+      if ([o, h, l, c].every((v) => typeof v === "number" && Number.isFinite(v))) {
+        rows.push({
+          date: new Date(ts[i] * 1000).toISOString().slice(0, 10),
+          open: o as number,
+          high: h as number,
+          low: l as number,
+          close: c as number,
+        });
       }
     }
     return rows;
   } catch {
     return [];
   }
+}
+
+export type Candle = { t: string; o: number; h: number; l: number; c: number };
+export type ChapterChart = {
+  candles: Candle[];
+  buyDate: string;
+  buyPrice: number; // (weighted) cost basis per share
+  sell?: { date: string; price: number };
+};
+
+// OHLC candles for a chapter, from the buy date to the sell date (or today).
+// Long holds are bucketed down to ~70 candles so the chart stays readable.
+export async function getChapterCandles(c: Chapter): Promise<ChapterChart | null> {
+  const rows = await fetchDaily(c.ticker);
+  if (rows.length < 2) return null;
+  const start = firstBuyDate(c).slice(0, 10);
+  const end = c.sell?.date.slice(0, 10);
+  let slice = rows.filter((r) => r.date >= start && (!end || r.date <= end));
+  if (slice.length < 2) return null;
+
+  const MAX = 70;
+  if (slice.length > MAX) {
+    const bucket = Math.ceil(slice.length / MAX);
+    const agg: Daily[] = [];
+    for (let i = 0; i < slice.length; i += bucket) {
+      const g = slice.slice(i, i + bucket);
+      agg.push({
+        date: g[0].date,
+        open: g[0].open,
+        high: Math.max(...g.map((x) => x.high)),
+        low: Math.min(...g.map((x) => x.low)),
+        close: g[g.length - 1].close,
+      });
+    }
+    slice = agg;
+  }
+
+  return {
+    candles: slice.map((r) => ({ t: r.date, o: r.open, h: r.high, l: r.low, c: r.close })),
+    buyDate: start,
+    buyPrice: costBasis(c) / totalShares(c),
+    sell: c.sell ? { date: c.sell.date.slice(0, 10), price: c.sell.price } : undefined,
+  };
 }
 
 function closeOnOrAfter(rows: Daily[], isoDate: string): number | null {

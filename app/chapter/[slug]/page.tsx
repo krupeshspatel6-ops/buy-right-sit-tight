@@ -2,11 +2,12 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { renderMarkdown } from "@/lib/markdown";
 import { getChapter, loadChapters, costBasis, totalShares } from "@/lib/chapters";
-import { getChapterPerf } from "@/lib/quotes";
+import { getChapterPerf, getChapterCandles } from "@/lib/quotes";
 import { formatFillTime, formatDate } from "@/lib/format";
 import BrandMark from "@/components/BrandMark";
 import { chapterCommitsUrl } from "@/lib/repo";
 import ReadAloudButton from "@/components/ReadAloudButton";
+import CandleChart from "@/components/CandleChart";
 
 export const revalidate = 3600;
 
@@ -32,6 +33,7 @@ export default async function ChapterPage({
   if (!chapter) notFound();
 
   const perf = await getChapterPerf(chapter);
+  const chart = await getChapterCandles(chapter);
   const avgCost = costBasis(chapter) / totalShares(chapter);
 
   return (
@@ -115,6 +117,14 @@ export default async function ChapterPage({
           </span>
         </div>
       </section>
+
+      {/* Candlestick chart since the buy */}
+      {chart && (
+        <section className="mt-6">
+          <h2 className="mb-2 text-sm font-bold uppercase tracking-wide text-ink-soft">Since the buy</h2>
+          <CandleChart data={chart} ticker={chapter.ticker} />
+        </section>
+      )}
 
       {/* Exit plan, written at entry */}
       {chapter.exitTest && (

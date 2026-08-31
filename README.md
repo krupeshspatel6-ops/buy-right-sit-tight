@@ -13,9 +13,10 @@ no monetization — this exists for credibility, not revenue.
    pick, a real matched dollar goes into the S&P 500 the same day. Half the
    money is in picks, half in the index; both totals always visible — an
    honest, real-money apples-to-apples compare.
-5. The book has exactly **50 chapters** — a lifetime punch card. Every buy
-   spends a slot. A budget, not a quota: no deadline, blank slots are fine.
-   The homepage wall fills 2% per chapter.
+5. **No fixed number of chapters and no finish line** — a new one opens for
+   every buy, for as long as Krupesh keeps investing. The homepage wall keeps
+   getting painted with each chapter but never quite fills; there's always more
+   wall.
 
 ## The admin editor (local only)
 

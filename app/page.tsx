@@ -12,11 +12,12 @@ import {
   totalShares,
   type Chapter,
 } from "@/lib/chapters";
-import { getScoreboard, type Scoreboard } from "@/lib/quotes";
+import { getScoreboard, getChapterCandles, type Scoreboard, type ChapterChart } from "@/lib/quotes";
 import { formatFillTime, formatDate } from "@/lib/format";
 import BrandMark from "@/components/BrandMark";
 import { chapterCommitsUrl } from "@/lib/repo";
 import ReadAloudButton from "@/components/ReadAloudButton";
+import CandleChart from "@/components/CandleChart";
 
 export const revalidate = 3600;
 
@@ -31,6 +32,12 @@ function PctCell({ v }: { v: number | null }) {
   return <span className={`font-semibold ${cls}`}>{fmtPct(v)}</span>;
 }
 
+// The wall keeps getting painted — one chapter per buy, no fixed number. The
+// fill approaches full but never quite reaches it, so there's always more wall.
+function wallPct(n: number): number {
+  return n <= 0 ? 0 : Math.round((100 * n) / (n + 25));
+}
+
 const fmtDate = formatDate;
 const fmtTimestamp = formatFillTime;
 
@@ -38,6 +45,11 @@ export default async function Home() {
   const chapters = loadChapters();
   const preface = loadPreface();
   const scoreboard = await getScoreboard(chapters);
+  // Candlestick data per chapter (from the buy date). Same Yahoo URL as the
+  // scoreboard, so Next dedupes the requests.
+  const chartList = await Promise.all(chapters.map((c) => getChapterCandles(c)));
+  const charts = new Map<number, ChapterChart | null>();
+  chapters.forEach((c, i) => charts.set(c.chapter, chartList[i]));
   const open = chapters.filter((c) => c.status === "open");
   const closed = chapters.filter((c) => c.status === "closed");
   const hasPhoto = fs.existsSync(path.join(process.cwd(), "public", "sitting.jpg"));
@@ -76,73 +88,19 @@ export default async function Home() {
     .sort()
     .pop();
 
-  const picksAhead =
-    scoreboard.picksValue !== null &&
-    scoreboard.spyValue !== null &&
-    scoreboard.picksValue >= scoreboard.spyValue;
-  const showVs =
-    scoreboard.invested > 0 && scoreboard.picksValue !== null && scoreboard.spyValue !== null;
-  // Real matched: half the money is in picks, half in the S&P, so the portfolio
-  // is worth both sides combined.
-  const combinedValue =
-    scoreboard.picksValue !== null && scoreboard.spyValue !== null
-      ? scoreboard.picksValue + scoreboard.spyValue
-      : null;
-
   const ledger = (
     <div>
       <div className="caption-rule mb-3">The ledger</div>
 
       <div className="stat-card">
         <div className="stat-label">Portfolio value · EOD</div>
-        <div className="stat-num">
-          {combinedValue !== null
-            ? fmtMoney(combinedValue)
-            : portfolioValue !== null
-              ? fmtMoney(portfolioValue)
-              : "—"}
-        </div>
+        <div className="stat-num">{portfolioValue !== null ? fmtMoney(portfolioValue) : "—"}</div>
         <div className="stat-sub">
-          {showVs
-            ? `${fmtMoney(scoreboard.invested)} in picks + the same in the S&P`
+          {open.length > 0
+            ? `${open.length} open position${open.length === 1 ? "" : "s"} · cost ${fmtMoney(investedOpen)}`
             : "waiting for chapter one"}
         </div>
       </div>
-
-      {showVs && scoreboard.picksValue !== null && scoreboard.spyValue !== null && (
-        <div className="mt-4">
-          <div className="caption-rule mb-2">Picks vs the S&amp;P 500</div>
-          <div className="grid grid-cols-2 gap-2">
-            <div className="stat-card !p-3">
-              <div className="stat-label">My picks</div>
-              <div
-                className={`stat-num !mt-1.5 !text-[1.55rem] ${picksAhead ? "text-gain" : "text-loss"}`}
-              >
-                {fmtMoney(scoreboard.picksValue)}
-              </div>
-            </div>
-            <div className="stat-card !p-3">
-              <div className="stat-label">S&amp;P 500</div>
-              <div className="stat-num !mt-1.5 !text-[1.55rem]">{fmtMoney(scoreboard.spyValue)}</div>
-            </div>
-          </div>
-          <p className="font-grotesk mt-2 text-[11px] font-semibold">
-            {picksAhead ? (
-              <span className="text-gain">
-                Picks ahead by {fmtMoney(scoreboard.picksValue - scoreboard.spyValue)}
-              </span>
-            ) : (
-              <span className="text-loss">
-                S&amp;P ahead by {fmtMoney(scoreboard.spyValue - scoreboard.picksValue)}
-              </span>
-            )}
-          </p>
-          <p className="mt-1 text-[11px] leading-relaxed text-ink-soft">
-            For every dollar in a pick, a real dollar in the S&amp;P the same day — half my
-            money in each. {fmtMoney(scoreboard.invested)} a side.
-          </p>
-        </div>
-      )}
 
       {open.length > 0 && (
         <div className="mt-4">
@@ -171,20 +129,6 @@ export default async function Home() {
               </span>
             </div>
           ))}
-          {/* the real S&P side, all matched buys together */}
-          {scoreboard.spyReturnPct !== null && (
-            <div className="rule-dashed font-grotesk flex items-baseline justify-between gap-2 py-2 text-[13px]">
-              <span className="font-bold">VOO</span>
-              <span className="text-ink-soft">S&amp;P match</span>
-              <span
-                className={`font-bold ${
-                  scoreboard.spyReturnPct >= 0 ? "text-gain" : "text-loss"
-                }`}
-              >
-                {`${scoreboard.spyReturnPct > 0 ? "+" : ""}${scoreboard.spyReturnPct.toFixed(1)}%`}
-              </span>
-            </div>
-          )}
         </div>
       )}
 
@@ -233,14 +177,14 @@ export default async function Home() {
             className="h-[30vh] w-full object-cover object-center"
           />
         ) : (
-          <CoverArt progress={chapters.length * 2} />
+          <CoverArt progress={wallPct(chapters.length)} />
         )}
         <span className="absolute right-5 top-4 inline-flex items-center gap-1.5 rounded-full bg-white/90 px-3 py-1 text-xs font-bold uppercase tracking-widest text-tape shadow-sm">
           <span className="live-dot live-dot-pulse" aria-hidden /> live
         </span>
         {!hasPhoto && (
           <span className="absolute left-5 top-4 rounded-full bg-white/90 px-3 py-1 text-xs uppercase tracking-widest text-ink-soft shadow-sm">
-            wall painted: {Math.min(chapters.length * 2, 100)}%
+            wall painted: {wallPct(chapters.length)}%
           </span>
         )}
       </div>
@@ -268,7 +212,7 @@ export default async function Home() {
         <div>
           <p className="text-sm uppercase tracking-widest text-ink-soft">
             a <span className="live-badge"><span className="live-dot" aria-hidden /> live</span>{" "}
-            book in 50 chapters
+            book · one buy at a time
           </p>
           <p className="mx-auto mt-2 max-w-md text-xs leading-relaxed text-ink-soft">
             begun August 2026 · written in real time, one buy at a time · every
@@ -327,9 +271,10 @@ export default async function Home() {
           real money, right next to my picks.
         </li>
         <li>
-          <b>The book has exactly 50 chapters.</b> A punch card with fifty
-          slots for the rest of my life. Every buy spends one, permanently. A
-          budget, not a quota — slots left blank are a feature, not a failure.
+          <b>There is no set number of chapters — and no finish line.</b> A new
+          one opens for every stock I buy, for as long as I keep investing. The
+          wall just keeps getting painted. The point isn&apos;t to fill it; it&apos;s
+          to keep showing up.
         </li>
       </ol>
     </div>
@@ -348,12 +293,14 @@ export default async function Home() {
       <div className="mb-6">
         <div className="flex items-center justify-between text-sm text-ink-soft mb-2">
           <span className="uppercase tracking-wide">The wall</span>
-          <span>{chapters.length} of 50 chapters opened</span>
+          <span>
+            {chapters.length} chapter{chapters.length === 1 ? "" : "s"} · and counting
+          </span>
         </div>
         <div className="h-3 rounded-full bg-wall-dark overflow-hidden">
           <div
             className="h-full bg-tape"
-            style={{ width: `${Math.min(chapters.length * 2, 100)}%` }}
+            style={{ width: `${wallPct(chapters.length)}%` }}
           />
         </div>
       </div>
@@ -402,8 +349,8 @@ export default async function Home() {
         <div className="prose-book">
           <p>The wall is primed. The chair is unfolded. The mug is full.</p>
           <p>
-            I have a punch card with fifty slots in my pocket and the
-            whole market in front of me. The first buy will land on this page
+            I have no quota and no deadline — just the whole market in front of
+            me and a chapter waiting for the first buy. It will land on this page
             within twenty-four hours of the fill — real ticker, real price,
             real timestamp, and one honest paragraph about why.
           </p>
@@ -491,6 +438,14 @@ export default async function Home() {
               <div className="stat-sub">the honest benchmark</div>
             </div>
           </div>
+
+          {/* candlestick chart — the price action since the buy */}
+          {charts.get(c.chapter) && (
+            <div className="mb-6">
+              <div className="caption-rule mb-2">Since the buy</div>
+              <CandleChart data={charts.get(c.chapter)!} ticker={c.ticker} />
+            </div>
+          )}
 
           {c.exitTest && (
             <div className="border-l-4 border-tape pl-4 text-ink-soft mb-5">

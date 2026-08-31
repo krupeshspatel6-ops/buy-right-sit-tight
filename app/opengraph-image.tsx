@@ -50,7 +50,7 @@ export default function OgImage() {
             }}
           >
             <div style={{ width: 14, height: 14, borderRadius: 7, background: "#1e5fbf" }} />
-            LIVE · A BOOK IN 50 CHAPTERS
+            LIVE · ONE BUY AT A TIME
           </div>
           <div
             style={{

@@ -26,6 +26,8 @@ export async function POST(req: Request) {
   if (!Number.isFinite(price) || price <= 0) errors.push("Price must be greater than 0.");
   if (!Number.isFinite(shares) || shares <= 0) errors.push("Shares must be greater than 0.");
   if (!String(input.date || "").trim()) errors.push("Fill date is required.");
+  if (!String(input.exitTest || "").trim())
+    errors.push("The exit plan (what would make you sell) is required — the pledge says every chapter states it on day one.");
   if (!String(input.body || "").trim()) errors.push("Write the 'why' before publishing.");
   if (errors.length) return NextResponse.json({ ok: false, error: errors.join(" ") }, { status: 400 });
 

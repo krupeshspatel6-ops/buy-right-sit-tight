@@ -1,5 +1,6 @@
 // The cover paints itself: the painted region's width tracks how much of the
-// wall is painted (percent — 2% per chapter, 50 chapters total). At 0 the wall
+// wall is painted (a 0–100 percent that keeps growing with each chapter but
+// never quite reaches full — there's always more wall). At 0 the wall
 // is blank and primed; at 100 the paint reaches the far end where the man sits.
 
 export default function CoverArt({ progress }: { progress: number }) {

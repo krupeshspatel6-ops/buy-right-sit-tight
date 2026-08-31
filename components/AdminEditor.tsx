@@ -145,6 +145,17 @@ export default function AdminEditor({
   const label = "block text-xs uppercase tracking-wide text-ink-soft mb-1";
   const field =
     "w-full rounded border border-wall-dark bg-white px-3 py-2 text-sm outline-none focus:border-tape";
+  const sectionH = "mt-6 mb-2 text-sm font-bold text-ink first:mt-0";
+
+  // Everything a chapter must have before it can be published.
+  const missing: string[] = [];
+  if (!ticker.trim()) missing.push("ticker");
+  if (!(priceNum > 0)) missing.push("price");
+  if (!(sharesNum > 0)) missing.push("shares");
+  if (!iso) missing.push("fill date");
+  if (!exitTest.trim()) missing.push("exit plan");
+  if (!body.trim()) missing.push("the why");
+  const canPublish = missing.length === 0;
 
   return (
     <main className="mx-auto max-w-[1400px] px-6 py-8">
@@ -166,13 +177,28 @@ export default function AdminEditor({
       <div className="mt-6 grid gap-8 lg:grid-cols-2">
         {/* ---------- editor ---------- */}
         <section>
+          {/* what each chapter needs from you */}
+          <div className="rounded-lg border border-wall-dark bg-white px-4 py-3">
+            <div className="text-xs font-bold uppercase tracking-wide text-ink-soft">
+              What each chapter needs
+            </div>
+            <ul className="mt-1.5 list-disc space-y-0.5 pl-5 text-[13px] text-ink-soft">
+              <li><b className="text-ink">The stock</b> — ticker, company, a chapter title</li>
+              <li><b className="text-ink">The buy</b> — fill date &amp; time, price, shares, straight from your broker</li>
+              <li><b className="text-ink">The exit plan</b> — what would make you sell <span className="font-semibold text-loss">(required)</span></li>
+              <li><b className="text-ink">The why</b> — a few honest paragraphs <span className="font-semibold text-loss">(required)</span></li>
+              <li><b className="text-ink">Proof</b> — a broker fill screenshot (optional)</li>
+            </ul>
+          </div>
+
+          <h2 className={sectionH}>1 · The stock</h2>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className={label}>Chapter #</label>
               <input type="number" className={field} value={chapter} onChange={(e) => setChapter(Number(e.target.value))} />
             </div>
             <div>
-              <label className={label}>Ticker</label>
+              <label className={label}>Ticker *</label>
               <input className={field} value={ticker} onChange={(e) => setTicker(e.target.value.toUpperCase())} placeholder="AAPL" />
             </div>
             <div>
@@ -191,35 +217,44 @@ export default function AdminEditor({
               <label className={label}>…or company domain (auto logo)</label>
               <input className={field} value={domain} onChange={(e) => setDomain(e.target.value)} placeholder="apple.com" />
             </div>
+          </div>
+
+          <h2 className={sectionH}>2 · The buy</h2>
+          <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className={label}>Price / share</label>
-              <input className={field} value={price} onChange={(e) => setPrice(e.target.value)} placeholder="226.50" inputMode="decimal" />
-            </div>
-            <div>
-              <label className={label}>Shares</label>
-              <input className={field} value={shares} onChange={(e) => setShares(e.target.value)} placeholder="10" inputMode="decimal" />
-            </div>
-            <div>
-              <label className={label}>Fill date &amp; time</label>
+              <label className={label}>Fill date &amp; time *</label>
               <input type="datetime-local" className={field} value={when} onChange={(e) => setWhen(e.target.value)} />
             </div>
             <div>
               <label className={label}>Buy note (optional)</label>
               <input className={field} value={note} onChange={(e) => setNote(e.target.value)} placeholder="initial buy" />
             </div>
-            <div className="col-span-2">
-              <label className={label}>Exit plan — what would make you sell?</label>
-              <textarea className={`${field} min-h-[70px]`} value={exitTest} onChange={(e) => setExitTest(e.target.value)} placeholder="I will sell if… (be specific; you can write a few lines)" />
+            <div>
+              <label className={label}>Price / share *</label>
+              <input className={field} value={price} onChange={(e) => setPrice(e.target.value)} placeholder="226.50" inputMode="decimal" />
             </div>
-            <div className="col-span-2">
-              <label className={label}>Broker proof image(s) in public/proofs/ (optional, comma-separated)</label>
-              <input className={field} value={proofs} onChange={(e) => setProofs(e.target.value)} placeholder="ch01-fill.png" />
+            <div>
+              <label className={label}>Shares *</label>
+              <input className={field} value={shares} onChange={(e) => setShares(e.target.value)} placeholder="10" inputMode="decimal" />
             </div>
           </div>
 
+          <h2 className={sectionH}>
+            3 · The exit plan <span className="text-loss">*</span>
+          </h2>
+          <label className={label}>What would make you sell? Written on day one — the pledge requires it.</label>
+          <textarea
+            className={`${field} min-h-[80px]`}
+            value={exitTest}
+            onChange={(e) => setExitTest(e.target.value)}
+            placeholder="I will sell if… (be specific — e.g. 'if membership renewal rates fall below 90% for two straight years')"
+          />
+
           <div className="mt-3">
             <div className="mb-1 flex items-center justify-between">
-              <label className={label + " mb-0"}>The why (Markdown)</label>
+              <label className={sectionH + " !mt-0 mb-0"}>
+                4 · The why <span className="text-loss">*</span> <span className="font-normal text-ink-soft">(Markdown)</span>
+              </label>
               <div className="flex gap-2">
                 <button
                   onClick={() => askAI("questions")}
@@ -275,14 +310,32 @@ export default function AdminEditor({
             )}
           </div>
 
-          <div className="mt-4 flex flex-wrap items-center gap-4">
+          <h2 className={sectionH}>5 · Proof (optional)</h2>
+          <label className={label}>
+            Broker fill screenshot(s) in public/proofs/ — comma-separated
+          </label>
+          <input
+            className={field}
+            value={proofs}
+            onChange={(e) => setProofs(e.target.value)}
+            placeholder="ch01-fill.png"
+          />
+
+          {!canPublish && (
+            <p className="mt-4 text-sm text-loss">
+              Still needed before publishing: <b>{missing.join(", ")}</b>.
+            </p>
+          )}
+
+          <div className="mt-3 flex flex-wrap items-center gap-4">
             <label className="flex items-center gap-2 text-sm">
               <input type="checkbox" checked={deploy} onChange={(e) => setDeploy(e.target.checked)} />
               Deploy live after publishing
             </label>
             <button
               onClick={() => setConfirming(true)}
-              disabled={busy}
+              disabled={busy || !canPublish}
+              title={canPublish ? "" : `Add: ${missing.join(", ")}`}
               className="rounded-full px-5 py-2 text-sm font-semibold text-white disabled:opacity-50"
               style={{ backgroundColor: "#F96302" }}
             >
