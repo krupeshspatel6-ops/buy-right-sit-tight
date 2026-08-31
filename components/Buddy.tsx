@@ -12,9 +12,9 @@ import dynamic from "next/dynamic";
 const Character3D = dynamic(() => import("@/components/copycat/Character3D"), { ssr: false });
 
 const WELCOME_FIRST =
-  "Hi! 👋 I'm Krupesh's AI assistant. He's 15 and learning to invest in public, with his own money. I can tell you his story, show you around the book, or answer your questions.";
+  "Hi! 👋 I'm Krupesh's AI assistant. He's 15, learning to invest in public with his own money. Take the tour, or ask me anything!";
 const WELCOME_BACK =
-  "Oh — hey, welcome back! 👋 Krupesh's AI assistant here. Want the tour, or have a question about the book?";
+  "Welcome back! 👋 Krupesh's AI assistant here — take the tour, or ask me anything about the book.";
 
 const STORY = [
   "Here's how it started for Krupesh. His dad asked him to pick a stock, and Krupesh talked about it like he knew exactly what he was doing — but he didn't, he was just acting confident.",
@@ -526,7 +526,7 @@ export default function Buddy() {
     // wrapper ignores pointer events so the page stays clickable; the bubble
     // and controls opt back in.
     <div
-      className="fixed bottom-0 left-1 sm:left-2 z-50 flex w-[clamp(111px,18.1vh,175px)] flex-col items-center print:hidden"
+      className="fixed bottom-0 left-1 sm:left-2 z-50 flex w-[clamp(93px,15.7vh,169px)] flex-col items-center print:hidden"
       style={{ pointerEvents: "none" }}
     >
       {/* speech bubble on top of the buddy — holds what he says AND the buttons */}
@@ -596,43 +596,50 @@ export default function Buddy() {
             </button>
           </div>
         ) : (
-          <div className="flex flex-wrap gap-1.5">
+          <div className="flex flex-col gap-1.5">
+            {/* Two tidy rows — never wraps into a tall stack that hits the
+                ledger: primary action on top, three compact actions below. */}
             {speaking ? (
               <button
                 onClick={stop}
-                className="rounded-full bg-loss px-3 py-1 text-xs font-semibold text-white"
+                className="w-full rounded-full bg-loss px-3 py-1.5 text-xs font-semibold text-white"
               >
                 ⏹ Stop talking
               </button>
             ) : (
               <button
                 onClick={startTalking}
-                className="rounded-full bg-tape px-3 py-1 text-xs font-semibold text-white"
+                className="w-full rounded-full bg-tape px-3 py-1.5 text-xs font-semibold text-white"
               >
                 ▶ Start talking
               </button>
             )}
-            <button
-              onClick={showBook}
-              className="rounded-full border border-tape px-3 py-1 text-xs font-semibold text-tape"
-            >
-              🏛️ Show me the book
-            </button>
-            <button
-              onClick={tellStory}
-              className="rounded-full border border-tape px-3 py-1 text-xs font-semibold text-tape"
-            >
-              📖 Story
-            </button>
-            <button
-              onClick={() => {
-                setAsking(true);
-                stop();
-              }}
-              className="rounded-full border border-tape px-3 py-1 text-xs font-semibold text-tape"
-            >
-              💬 Ask
-            </button>
+            <div className="flex gap-1.5">
+              <button
+                onClick={showBook}
+                title="Take me on a tour of the book"
+                className="flex-1 rounded-full border border-tape px-2 py-1 text-xs font-semibold text-tape"
+              >
+                🏛️ Tour
+              </button>
+              <button
+                onClick={tellStory}
+                title="Tell the story behind the book"
+                className="flex-1 rounded-full border border-tape px-2 py-1 text-xs font-semibold text-tape"
+              >
+                📖 Story
+              </button>
+              <button
+                onClick={() => {
+                  setAsking(true);
+                  stop();
+                }}
+                title="Ask a question about the book"
+                className="flex-1 rounded-full border border-tape px-2 py-1 text-xs font-semibold text-tape"
+              >
+                💬 Ask
+              </button>
+            </div>
           </div>
         )}
 
@@ -643,7 +650,7 @@ export default function Buddy() {
         />
       </div>
 
-      <div className="relative h-[clamp(190px,31vh,300px)] w-[clamp(111px,18.1vh,175px)]">
+      <div className="relative h-[clamp(160px,27vh,290px)] w-[clamp(93px,15.7vh,169px)]">
         {/* the free-standing 3D character (same 0.583 aspect at every size) */}
         <div className="absolute inset-0" style={{ pointerEvents: "none" }}>
           <Character3D expressionRef={expressionRef} dancing={dancing} />
