@@ -22,6 +22,35 @@ export function chapterSlug(chapter: number, ticker: string): string {
   return `${String(chapter).padStart(2, "0")}-${t}`;
 }
 
+export type AddOnBuy = { date: string; price: number; shares: number; note?: string };
+
+// Insert an add-on buy into the `buys:` list WITHOUT touching any existing line
+// — the original entries stay byte-identical; we only add new indented lines.
+export function appendBuyToFile(original: string, buy: AddOnBuy): string {
+  const lines = original.split("\n");
+  const buysIdx = lines.findIndex((l) => l.trimEnd() === "buys:");
+  if (buysIdx === -1) return original;
+  // The buys block runs until the next non-indented, non-blank line (proofs:/exitTest:).
+  let end = buysIdx + 1;
+  while (end < lines.length && (lines[end].startsWith("  ") || lines[end].trim() === "")) end++;
+  // Skip back over any trailing blank lines so the entry sits with the others.
+  while (end > buysIdx + 1 && lines[end - 1].trim() === "") end--;
+  const entry = [
+    `  - date: "${buy.date}"`,
+    `    price: ${buy.price}`,
+    `    shares: ${buy.shares}`,
+    ...(buy.note ? [`    note: ${JSON.stringify(buy.note)}`] : []),
+  ];
+  lines.splice(end, 0, ...entry);
+  return lines.join("\n");
+}
+
+// Append a dated update to the bottom of the record — never edits what's above.
+export function appendNoteToFile(original: string, note: string, dateLabel: string): string {
+  const block = `\n**${dateLabel}** — ${note.trim()}\n`;
+  return `${original.replace(/\s+$/, "")}\n${block}`;
+}
+
 export function buildChapterFile(i: ChapterFileInput): string {
   const proofs = (i.proofs ?? []).filter(Boolean);
   return [

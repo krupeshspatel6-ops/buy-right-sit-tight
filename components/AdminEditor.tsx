@@ -64,6 +64,17 @@ export default function AdminEditor({
   const [uploading, setUploading] = useState(false);
   const [upErr, setUpErr] = useState("");
   const [proofImgs, setProofImgs] = useState<{ path: string; dataUrl: string }[]>([]);
+
+  // --- Add to an already-published chapter (append-only) ---
+  const [apSlug, setApSlug] = useState("");
+  const [apWhen, setApWhen] = useState(nowLocalInput());
+  const [apPrice, setApPrice] = useState("");
+  const [apShares, setApShares] = useState("");
+  const [apBuyNote, setApBuyNote] = useState("added on the way down");
+  const [apNote, setApNote] = useState("");
+  const [apStatus, setApStatus] = useState<{ kind: "idle" | "busy" | "ok" | "err"; msg?: string }>(
+    { kind: "idle" }
+  );
   const [body, setBody] = useState(BODY_SCAFFOLD);
   const [deploy, setDeploy] = useState(true);
   const [confirming, setConfirming] = useState(false);
@@ -95,6 +106,52 @@ export default function AdminEditor({
       else setAi({ busy: false, text: "", mode, err: data.error || "AI failed." });
     } catch (e) {
       setAi({ busy: false, text: "", mode, err: e instanceof Error ? e.message : "Network error." });
+    }
+  }
+
+  function slugOf(ch: number, tk: string) {
+    return `${pad(ch)}-${tk.toLowerCase().replace(/[^a-z0-9]/g, "")}`;
+  }
+
+  async function appendToChapter() {
+    if (!apSlug) {
+      setApStatus({ kind: "err", msg: "Pick a chapter first." });
+      return;
+    }
+    const price = Number(apPrice);
+    const shares = Number(apShares);
+    const hasBuy = price > 0 && shares > 0;
+    if (!hasBuy && !apNote.trim()) {
+      setApStatus({ kind: "err", msg: "Add an add-on buy, a note, or both." });
+      return;
+    }
+    setApStatus({ kind: "busy", msg: "Appending…" });
+    try {
+      const resp = await fetch("/api/admin/append", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          slug: apSlug,
+          buy: hasBuy
+            ? { date: toISOWithOffset(apWhen), price, shares, note: apBuyNote }
+            : undefined,
+          note: apNote.trim() || undefined,
+        }),
+      });
+      const data = await resp.json();
+      if (data.ok) {
+        setApStatus({
+          kind: "ok",
+          msg: `Appended ${data.appended.join(" + ")} to ${apSlug}. The original text was not touched.`,
+        });
+        setApPrice("");
+        setApShares("");
+        setApNote("");
+      } else {
+        setApStatus({ kind: "err", msg: data.error || "Append failed." });
+      }
+    } catch (err) {
+      setApStatus({ kind: "err", msg: err instanceof Error ? err.message : "Network error." });
     }
   }
 
@@ -478,6 +535,80 @@ export default function AdminEditor({
                   </div>
                 ))}
               </div>
+            </div>
+          )}
+
+          {/* ---- Add to an already-published chapter (append-only) ---- */}
+          {existing.length > 0 && (
+            <div className="mt-8 rounded-xl border border-tape/40 bg-tape/5 p-4">
+              <h3 className="text-sm font-bold text-ink">Add to a published chapter</h3>
+              <p className="mt-1 text-[13px] leading-relaxed text-ink-soft">
+                Bought more of a stock you already own, or want to add a dated update? This
+                only <b>appends</b> — it can never change a word of what&apos;s already
+                published.
+              </p>
+
+              <label className={`${label} mt-3`}>Which chapter</label>
+              <select
+                className={field}
+                value={apSlug}
+                onChange={(e) => setApSlug(e.target.value)}
+              >
+                <option value="">Choose a chapter…</option>
+                {existing.map((c) => (
+                  <option key={c.chapter} value={slugOf(c.chapter, c.ticker)}>
+                    Ch. {c.chapter} · {c.ticker} — {c.title}
+                  </option>
+                ))}
+              </select>
+
+              <div className="mt-4 text-xs font-bold uppercase tracking-wide text-ink-soft">
+                Add-on buy (optional)
+              </div>
+              <div className="mt-1 grid grid-cols-2 gap-3">
+                <div>
+                  <label className={label}>Fill date &amp; time</label>
+                  <input type="datetime-local" className={field} value={apWhen} onChange={(e) => setApWhen(e.target.value)} />
+                </div>
+                <div>
+                  <label className={label}>Buy note</label>
+                  <input className={field} value={apBuyNote} onChange={(e) => setApBuyNote(e.target.value)} placeholder="added on the way down" />
+                </div>
+                <div>
+                  <label className={label}>Price / share</label>
+                  <input className={field} value={apPrice} onChange={(e) => setApPrice(e.target.value)} placeholder="480.00" inputMode="decimal" />
+                </div>
+                <div>
+                  <label className={label}>Shares</label>
+                  <input className={field} value={apShares} onChange={(e) => setApShares(e.target.value)} placeholder="1.0" inputMode="decimal" />
+                </div>
+              </div>
+
+              <label className={`${label} mt-4`}>Dated note / update (optional, Markdown)</label>
+              <textarea
+                className={`${field} min-h-[80px]`}
+                value={apNote}
+                onChange={(e) => setApNote(e.target.value)}
+                placeholder="e.g. Q1 2027 check: thesis intact because… — or why I added more today."
+              />
+
+              <button
+                onClick={appendToChapter}
+                disabled={apStatus.kind === "busy"}
+                className="mt-3 rounded-full bg-tape px-5 py-2 text-sm font-semibold text-white disabled:opacity-50"
+              >
+                {apStatus.kind === "busy" ? "Appending…" : "Append to this chapter"}
+              </button>
+
+              {apStatus.kind !== "idle" && (
+                <p
+                  className={`mt-3 text-sm ${
+                    apStatus.kind === "err" ? "text-loss" : apStatus.kind === "ok" ? "text-gain" : "text-ink-soft"
+                  }`}
+                >
+                  {apStatus.msg}
+                </p>
+              )}
             </div>
           )}
         </section>
