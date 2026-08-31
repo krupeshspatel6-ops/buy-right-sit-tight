@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import Link from "next/link";
-import { marked } from "marked";
+import { renderMarkdown } from "@/lib/markdown";
 import BookReader, { type SideTocEntry } from "@/components/BookReader";
 import CoverArt from "@/components/CoverArt";
 import {
@@ -290,7 +290,7 @@ export default async function Home() {
         <h2 className="text-2xl font-bold mb-6">Why I&apos;m writing this</h2>
         <article
           className="prose-book"
-          dangerouslySetInnerHTML={{ __html: marked.parse(preface) as string }}
+          dangerouslySetInnerHTML={{ __html: renderMarkdown(preface) }}
         />
       </div>
     );
@@ -534,7 +534,7 @@ export default async function Home() {
           </div>
           <article
             className="prose-book"
-            dangerouslySetInnerHTML={{ __html: marked.parse(c.body) as string }}
+            dangerouslySetInnerHTML={{ __html: renderMarkdown(c.body) }}
           />
           <p className="mt-6 text-sm">
             <Link href={`/chapter/${c.slug}`} className="text-tape underline">

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { loadChapters, loadPreface } from "@/lib/chapters";
+import { getClientIp, ipRateLimit } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -46,6 +47,14 @@ export async function POST(req: Request) {
   }
   if (!process.env.ANTHROPIC_API_KEY) {
     return NextResponse.json({ ok: false, error: "Q&A isn't configured yet." }, { status: 503 });
+  }
+
+  // Per-IP ceiling (survives cookie-clearing), generous for shared IPs.
+  if (!ipRateLimit(`ask:${getClientIp(req)}`, 60, 3_600_000)) {
+    return NextResponse.json(
+      { ok: false, error: "That's a lot of questions! Give the buddy a short break." },
+      { status: 429 }
+    );
   }
 
   // Soft per-browser rate limit (cheap deterrent; the real cost guards are the

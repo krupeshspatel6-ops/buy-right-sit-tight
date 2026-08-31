@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { marked } from "marked";
+import { renderMarkdown } from "@/lib/markdown";
 import { getChapter, loadChapters, costBasis, totalShares } from "@/lib/chapters";
 import { getChapterPerf } from "@/lib/quotes";
 import { formatFillTime, formatDate } from "@/lib/format";
@@ -171,7 +171,7 @@ export default async function ChapterPage({
       </div>
       <article
         className="prose-book mt-4"
-        dangerouslySetInnerHTML={{ __html: marked.parse(chapter.body) as string }}
+        dangerouslySetInnerHTML={{ __html: renderMarkdown(chapter.body) }}
       />
     </main>
   );

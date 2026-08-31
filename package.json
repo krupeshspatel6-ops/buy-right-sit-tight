@@ -12,6 +12,7 @@
     "@anthropic-ai/sdk": "^0.119.0",
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.6.1",
+    "@types/sanitize-html": "^2.16.1",
     "@vercel/analytics": "^2.0.1",
     "gray-matter": "^4.0.3",
     "jose": "^6.2.9",
@@ -19,6 +20,7 @@
     "next": "^16.0.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "sanitize-html": "^2.17.7",
     "three": "^0.185.1"
   },
   "devDependencies": {

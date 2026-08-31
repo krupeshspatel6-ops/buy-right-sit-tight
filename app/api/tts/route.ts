@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { getClientIp, ipRateLimit } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -10,6 +11,11 @@ export const maxDuration = 60;
 export async function POST(req: Request) {
   if (!process.env.OPENAI_API_KEY) {
     return NextResponse.json({ ok: false, error: "voice not configured" }, { status: 503 });
+  }
+
+  // Per-IP ceiling (survives cookie-clearing), generous for shared IPs.
+  if (!ipRateLimit(`tts:${getClientIp(req)}`, 200, 3_600_000)) {
+    return NextResponse.json({ ok: false, error: "voice rate limit" }, { status: 429 });
   }
 
   const cookie = req.headers.get("cookie") || "";
