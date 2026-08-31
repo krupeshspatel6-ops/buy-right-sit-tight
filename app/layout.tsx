@@ -43,6 +43,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-screen antialiased">
         {children}
         <footer className="mx-auto max-w-4xl px-6 py-3 text-center text-xs leading-snug text-ink-soft border-t border-wall-dark mt-3">
+          <p className="mb-2">
+            Want to reach Krupesh?{" "}
+            <a href="mailto:hello@buyrightsittight.com" className="font-semibold text-tape underline">
+              hello@buyrightsittight.com
+            </a>{" "}
+            — a parent reads this inbox first and moderates it (Krupesh is 15), so replies may
+            take a few days, and not every message gets one.
+          </p>
           <p>
             Krupesh is 15, and this is his personal learning journal — <b>not investment
             advice</b>. He buys real stocks in a custodian account to learn, and he will get
