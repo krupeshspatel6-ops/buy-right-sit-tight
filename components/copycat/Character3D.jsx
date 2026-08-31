@@ -50,7 +50,9 @@ export default function Character3D({ expressionRef, dancing = false }) {
       camera={{ position: [0, 0.1, 5.5], fov: 32 }}
       dpr={[1, 2]}
       resize={{ scroll: false }}
-      style={{ width: "100%", height: "100%", background: "transparent" }}
+      // pointer-events:none so the character never intercepts clicks meant for
+      // the speech-bubble buttons that overlap it.
+      style={{ width: "100%", height: "100%", background: "transparent", pointerEvents: "none" }}
     >
       <ambientLight intensity={0.95} />
       <directionalLight position={[3, 6, 4]} intensity={1.5} />

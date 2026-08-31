@@ -538,9 +538,11 @@ export default function Buddy() {
       className="fixed bottom-0 left-1 sm:left-2 z-50 flex w-[clamp(93px,15.7vh,169px)] flex-col items-center print:hidden"
       style={{ pointerEvents: "none" }}
     >
-      {/* speech bubble on top of the buddy — holds what he says AND the buttons */}
+      {/* speech bubble on top of the buddy — holds what he says AND the buttons.
+          z-10 keeps it above the character so its buttons stay visible AND
+          clickable where they overlap the character's head. */}
       <div
-        className="relative mb-2 self-start w-[210px] max-w-[82vw] whitespace-normal break-words rounded-2xl border border-wall-dark bg-white/95 px-4 py-3 pt-5 text-sm leading-relaxed shadow-lg sm:w-[236px]"
+        className="relative z-10 mb-2 self-start w-[210px] max-w-[82vw] whitespace-normal break-words rounded-2xl border border-wall-dark bg-white/95 px-4 py-3 pt-5 text-sm leading-relaxed shadow-lg sm:w-[236px]"
         style={{ pointerEvents: "auto", transform: "translate(8px, 44px)" }}
       >
         {/* sound + close, on top of the popup */}
@@ -598,7 +600,10 @@ export default function Buddy() {
               </button>
             </form>
             <button
-              onClick={() => setAsking(false)}
+              onClick={() => {
+                stop();
+                setAsking(false);
+              }}
               className="self-start text-xs text-ink-soft underline"
             >
               ← back
