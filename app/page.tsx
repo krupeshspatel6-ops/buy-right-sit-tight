@@ -151,7 +151,7 @@ export default async function Home() {
   pages.push(
     <div
       key="cover"
-      className="-mx-8 -my-8 sm:-mx-14 flex h-[72vh] flex-col overflow-hidden"
+      className="-mx-8 -my-8 sm:-mx-14 flex h-full flex-col overflow-hidden"
     >
       {/* full-bleed illustration — the wall paints itself, 1% per chapter */}
       <div className="relative flex-none overflow-hidden rounded-tl-[4px] rounded-tr-[10px]">
@@ -229,7 +229,7 @@ export default async function Home() {
   /* ---- Page: the pledge ---- */
   sideToc.push({ label: "The pledge", pageIndex: pages.length });
   pages.push(
-    <div key="pledge" className="flex h-full min-h-[62vh] flex-col justify-center">
+    <div key="pledge" className="flex h-full min-h-0 flex-col justify-center">
       <h2 className="text-2xl font-bold mb-6">The pledge</h2>
       <ol className="space-y-4 prose-book list-decimal pl-5">
         <li>
@@ -333,7 +333,7 @@ export default async function Home() {
       pageIndex: pages.length,
     });
     pages.push(
-      <div key="waiting" className="flex h-full min-h-[62vh] flex-col justify-center">
+      <div key="waiting" className="flex h-full min-h-0 flex-col justify-center">
         <p className="text-sm uppercase tracking-widest text-ink-soft">Chapter One</p>
         <h2 className="text-3xl font-bold mt-2 mb-8 italic text-ink-soft">
           (waiting for the first buy)
@@ -480,7 +480,7 @@ export default async function Home() {
   pages.push(
     <div
       key="back-cover"
-      className="flex h-full min-h-[62vh] flex-col items-center justify-center text-center"
+      className="flex h-full min-h-0 flex-col items-center justify-center text-center"
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
@@ -498,9 +498,17 @@ export default async function Home() {
   );
 
   return (
-    <main className="py-4 sm:py-6">
-      <BookReader pages={pages} sideToc={sideToc} ledger={ledger} />
-    </main>
+    // Locked to exactly one screen — the window never scrolls, at any size.
+    // The book fills the space between the top and a compact disclaimer.
+    <div className="flex h-[100dvh] flex-col overflow-hidden">
+      <main className="min-h-0 flex-1 py-3">
+        <BookReader pages={pages} sideToc={sideToc} ledger={ledger} />
+      </main>
+      <footer className="flex-none border-t border-wall-dark px-4 py-1.5 text-center text-[11px] leading-snug text-ink-soft">
+        A 15-year-old&apos;s learning journal — <b>not investment advice</b>. He invests his
+        own saved money to learn, and may be wrong about all of it.
+      </footer>
+    </div>
   );
 }
 

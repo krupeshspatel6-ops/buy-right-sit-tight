@@ -16,12 +16,21 @@ const WELCOME_FIRST =
 const WELCOME_BACK =
   "Welcome back! 👋 Krupesh's AI assistant here — take the tour, or ask me anything about the book.";
 
+// --- Previous story (kept in case we want to revert) -----------------------
+// const STORY = [
+//   "Here's how it started for Krupesh. His dad asked him to pick a stock, and Krupesh talked about it like he knew exactly what he was doing — but he didn't, he was just acting confident.",
+//   "His dad saw right through it, and told him he was careless because it wasn't his money at stake. So they made a deal: Krupesh would put in all the money he'd saved, and his dad would add some, if he got serious about learning.",
+//   "So now every stock Krupesh buys with his own money becomes a chapter in this book — timestamped the day it happens, and never edited after. A chapter only closes when he sells.",
+//   "He's trying to learn to find good companies, and — the harder part — to just wait. To think like Buffett, Munger, and Pabrai. He's only getting started.",
+//   "Nothing here is advice — it's Krupesh's journey. Buy right, sit tight… and watch the paint dry with him.",
+// ];
+// ---------------------------------------------------------------------------
 const STORY = [
-  "Here's how it started for Krupesh. His dad asked him to pick a stock, and Krupesh talked about it like he knew exactly what he was doing — but he didn't, he was just acting confident.",
-  "His dad saw right through it, and told him he was careless because it wasn't his money at stake. So they made a deal: Krupesh would put in all the money he'd saved, and his dad would add some, if he got serious about learning.",
-  "So now every stock Krupesh buys with his own money becomes a chapter in this book — timestamped the day it happens, and never edited after. A chapter only closes when he sells.",
-  "He's trying to learn to find good companies, and — the harder part — to just wait. To think like Buffett, Munger, and Pabrai. He's only getting started.",
-  "Nothing here is advice — it's Krupesh's journey. Buy right, sit tight… and watch the paint dry with him.",
+  "Here's the idea behind Krupesh's book. He follows a code — his own set of signals — and when that code lines up, he takes it as a hint that it might be the right time to open a small starter position.",
+  "So he puts in a little of his own saved money to start... and then the hard part begins. He sits tight. And he waits. And waits. And waits some more.",
+  "Every buy he makes becomes a chapter here — timestamped the day it happens, and never edited after. A chapter only closes when he sells, and mostly, he doesn't.",
+  "The whole book is really about that waiting — trusting the code, holding the position, and doing nothing while the paint dries. The way Buffett, Munger, and Pabrai talk about.",
+  "Nothing here is advice — it's just Krupesh's journey. His code, his signals, his patience. Buy right, sit tight… and watch the paint dry with him.",
 ];
 
 // "Show me the book" tour — what the platform is, the portfolio balance, and
@@ -602,14 +611,14 @@ export default function Buddy() {
             {speaking ? (
               <button
                 onClick={stop}
-                className="w-full rounded-full bg-loss px-3 py-1.5 text-xs font-semibold text-white"
+                className="w-full whitespace-nowrap rounded-full bg-loss px-3 py-1.5 text-xs font-semibold text-white"
               >
                 ⏹ Stop talking
               </button>
             ) : (
               <button
                 onClick={startTalking}
-                className="w-full rounded-full bg-tape px-3 py-1.5 text-xs font-semibold text-white"
+                className="w-full whitespace-nowrap rounded-full bg-tape px-3 py-1.5 text-xs font-semibold text-white"
               >
                 ▶ Start talking
               </button>
@@ -618,14 +627,14 @@ export default function Buddy() {
               <button
                 onClick={showBook}
                 title="Take me on a tour of the book"
-                className="flex-1 rounded-full border border-tape px-2 py-1 text-xs font-semibold text-tape"
+                className="min-w-0 flex-1 whitespace-nowrap rounded-full border border-tape px-1.5 py-1 text-[11px] font-semibold text-tape"
               >
                 🏛️ Tour
               </button>
               <button
                 onClick={tellStory}
                 title="Tell the story behind the book"
-                className="flex-1 rounded-full border border-tape px-2 py-1 text-xs font-semibold text-tape"
+                className="min-w-0 flex-1 whitespace-nowrap rounded-full border border-tape px-1.5 py-1 text-[11px] font-semibold text-tape"
               >
                 📖 Story
               </button>
@@ -635,7 +644,7 @@ export default function Buddy() {
                   stop();
                 }}
                 title="Ask a question about the book"
-                className="flex-1 rounded-full border border-tape px-2 py-1 text-xs font-semibold text-tape"
+                className="min-w-0 flex-1 whitespace-nowrap rounded-full border border-tape px-1.5 py-1 text-[11px] font-semibold text-tape"
               >
                 💬 Ask
               </button>

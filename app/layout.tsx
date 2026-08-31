@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Analytics } from "@vercel/analytics/next";
 import Buddy from "@/components/Buddy";
+import SiteFooter from "@/components/SiteFooter";
 import "./globals.css";
 
 const TITLE = "Buy Right Sit Tight — watch the paint dry.";
@@ -31,14 +32,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <body className="min-h-screen antialiased">
         {children}
-        <footer className="mx-auto max-w-4xl px-6 py-3 text-center text-xs leading-snug text-ink-soft border-t border-wall-dark mt-3">
-          <p>
-            A 15-year-old&apos;s personal learning journal — <b>not investment advice</b>.
-            He buys stocks with his own saved money (custodian account) purely to learn;
-            nothing here is a recommendation, and he may be wrong about all of it. Do your
-            own research or talk to a licensed advisor.
-          </p>
-        </footer>
+        <SiteFooter />
         <Buddy />
         <Analytics />
       </body>
