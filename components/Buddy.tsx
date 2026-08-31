@@ -526,7 +526,7 @@ export default function Buddy() {
     // wrapper ignores pointer events so the page stays clickable; the bubble
     // and controls opt back in.
     <div
-      className="fixed bottom-0 left-1 sm:left-2 z-50 flex w-[120px] flex-col items-center print:hidden sm:w-[150px]"
+      className="fixed bottom-0 left-1 sm:left-2 z-50 flex w-[clamp(111px,18.1vh,175px)] flex-col items-center print:hidden"
       style={{ pointerEvents: "none" }}
     >
       {/* speech bubble on top of the buddy — holds what he says AND the buttons */}
@@ -643,7 +643,7 @@ export default function Buddy() {
         />
       </div>
 
-      <div className="relative h-[206px] w-[120px] sm:h-[257px] sm:w-[150px]">
+      <div className="relative h-[clamp(190px,31vh,300px)] w-[clamp(111px,18.1vh,175px)]">
         {/* the free-standing 3D character (same 0.583 aspect at every size) */}
         <div className="absolute inset-0" style={{ pointerEvents: "none" }}>
           <Character3D expressionRef={expressionRef} dancing={dancing} />
