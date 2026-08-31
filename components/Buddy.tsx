@@ -600,7 +600,7 @@ export default function Buddy() {
     // and controls opt back in.
     <div
       ref={wrapperRef}
-      className="fixed bottom-0 left-1 sm:left-2 z-50 flex w-[clamp(93px,15.7vh,169px)] flex-col items-center print:hidden"
+      className="fixed bottom-0 left-1 sm:left-2 z-50 flex w-[clamp(117px,19.8vh,210px)] flex-col items-center print:hidden"
       style={{
         pointerEvents: "none",
         ...(pos ? { left: pos.x, top: pos.y, right: "auto", bottom: "auto" } : {}),
@@ -753,7 +753,7 @@ export default function Buddy() {
       </div>
       )}
 
-      <div className="relative h-[clamp(160px,27vh,290px)] w-[clamp(93px,15.7vh,169px)]">
+      <div className="relative h-[clamp(200px,34vh,360px)] w-[clamp(117px,19.8vh,210px)]">
         {/* the free-standing 3D character (same 0.583 aspect at every size) */}
         <div className="absolute inset-0" style={{ pointerEvents: "none" }}>
           <Character3D expressionRef={expressionRef} dancing={dancing} />
