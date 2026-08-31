@@ -52,7 +52,7 @@ export default async function ChapterPage({
                 : "bg-wall-dark text-ink-soft"
             }`}
           >
-            {chapter.status === "open" ? "still drying" : "dry"}
+            {chapter.status === "open" ? "drying" : "dried · finished"}
           </span>
         </div>
         <div className="mt-2 flex items-center gap-3">

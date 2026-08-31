@@ -381,22 +381,7 @@ export default async function Home() {
           <p className="mt-2 text-sm">Turn the page.</p>
         </div>
       ) : (
-        <>
-          {open.length > 0 && (
-            <TocSection
-              title={`Still drying — open (${open.length})`}
-              chapters={open}
-              scoreboard={scoreboard}
-            />
-          )}
-          {closed.length > 0 && (
-            <TocSection
-              title={`Dry — closed (${closed.length})`}
-              chapters={closed}
-              scoreboard={scoreboard}
-            />
-          )}
-        </>
+        <TocSection title="The chapters" chapters={chapters} scoreboard={scoreboard} />
       )}
     </div>
   );
@@ -444,7 +429,7 @@ export default async function Home() {
           <div className="chapter-opener mb-6">
             <span className="opener-ghost">{c.chapter}</span>
             <span className="chip chip-solid">
-              Chapter {c.chapter} · {c.status === "open" ? "still drying" : "dry"}
+              Chapter {c.chapter} · {c.status === "open" ? "drying" : "dried · finished"}
             </span>
             <div className="opener-ticker">{c.ticker}</div>
             <div className="mt-2 flex items-center gap-2.5">
@@ -614,7 +599,18 @@ function TocSection({
                 {String(c.chapter).padStart(2, "0")}
               </span>
               <span className="min-w-0 flex-1">
-                <span className="font-grotesk block truncate text-[14px] font-bold">{c.ticker}</span>
+                <span className="font-grotesk flex items-center gap-2 text-[14px] font-bold">
+                  <span className="truncate">{c.ticker}</span>
+                  {c.status === "open" ? (
+                    <span className="font-grotesk shrink-0 rounded-full bg-tape/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-tape">
+                      drying
+                    </span>
+                  ) : (
+                    <span className="font-grotesk shrink-0 rounded-full bg-wall-dark px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-ink-soft">
+                      dried · finished
+                    </span>
+                  )}
+                </span>
                 <span className="font-grotesk block text-[11px] text-ink-soft">
                   {c.company ? `${c.company} · ` : ""}
                   {fmtDate(firstBuyDate(c))}

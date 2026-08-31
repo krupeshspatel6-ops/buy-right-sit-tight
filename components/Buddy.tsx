@@ -82,6 +82,7 @@ function chunkText(raw: string): string[] {
 export default function Buddy() {
   const pathname = usePathname() || "/";
   const [hidden, setHidden] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(true); // bubble open; collapses to just the character
   const [text, setText] = useState(""); // what the buddy is currently "saying" (typed)
   const [target, setTarget] = useState(""); // full text being typed toward
   const [talking, setTalking] = useState(false); // narrating a script (story/tour)
@@ -361,6 +362,9 @@ export default function Buddy() {
       const line = returning ? WELCOME_BACK : WELCOME_FIRST;
       greetLineRef.current = line;
       setTarget(line);
+      // Returning visitors start collapsed (just the character) so the buddy
+      // never sits over the page content; first-timers see the greeting bubble.
+      if (returning) setMenuOpen(false);
       prefetchTts(line); // warm the voice so "Start talking" plays instantly
     }, 200);
     return () => clearTimeout(t);
@@ -538,14 +542,14 @@ export default function Buddy() {
       className="fixed bottom-0 left-1 sm:left-2 z-50 flex w-[clamp(93px,15.7vh,169px)] flex-col items-center print:hidden"
       style={{ pointerEvents: "none" }}
     >
-      {/* speech bubble on top of the buddy — holds what he says AND the buttons.
-          z-10 keeps it above the character so its buttons stay visible AND
-          clickable where they overlap the character's head. */}
+      {/* speech bubble — only when open or actively speaking, so at rest the
+          buddy is just the small character and never covers page content. */}
+      {(menuOpen || speaking || asking || thinking) && (
       <div
         className="relative z-10 mb-2 self-start w-[210px] max-w-[82vw] whitespace-normal break-words rounded-2xl border border-wall-dark bg-white/95 px-4 py-3 pt-5 text-sm leading-relaxed shadow-lg sm:w-[236px]"
         style={{ pointerEvents: "auto", transform: "translate(8px, 44px)" }}
       >
-        {/* sound + close, on top of the popup */}
+        {/* mute, minimize, close — on top of the popup */}
         <div className="absolute -top-3 right-2 flex items-center gap-1">
           <button
             onClick={toggleVoice}
@@ -553,6 +557,16 @@ export default function Buddy() {
             className="grid h-7 w-7 place-items-center rounded-full border border-wall-dark bg-white text-sm shadow-sm hover:bg-wall"
           >
             {voice ? "🔊" : "🔈"}
+          </button>
+          <button
+            onClick={() => {
+              stop();
+              setMenuOpen(false);
+            }}
+            title="Minimize"
+            className="grid h-7 w-7 place-items-center rounded-full border border-wall-dark bg-white text-lg leading-none shadow-sm hover:bg-wall"
+          >
+            –
           </button>
           <button
             onClick={() => {
@@ -663,12 +677,33 @@ export default function Buddy() {
           className="absolute -bottom-[7px] left-1/2 h-3.5 w-3.5 -translate-x-1/2 rotate-45 border-b border-r border-wall-dark bg-white/95"
         />
       </div>
+      )}
 
       <div className="relative h-[clamp(160px,27vh,290px)] w-[clamp(93px,15.7vh,169px)]">
         {/* the free-standing 3D character (same 0.583 aspect at every size) */}
         <div className="absolute inset-0" style={{ pointerEvents: "none" }}>
           <Character3D expressionRef={expressionRef} dancing={dancing} />
         </div>
+        {/* when collapsed, tap the character to reopen the menu */}
+        {!(menuOpen || speaking || asking || thinking) && (
+          <>
+            <button
+              onClick={() => {
+                interactedRef.current = true;
+                setMenuOpen(true);
+              }}
+              aria-label="Open Krupesh's assistant"
+              className="absolute inset-0 z-10 cursor-pointer"
+              style={{ pointerEvents: "auto" }}
+            />
+            <span
+              className="font-grotesk absolute right-0 top-2 z-20 rounded-full border border-wall-dark bg-white px-2 py-0.5 text-[10px] font-bold text-tape shadow-sm"
+              style={{ pointerEvents: "none" }}
+            >
+              💬 chat
+            </span>
+          </>
+        )}
       </div>
     </div>
   );
