@@ -9,7 +9,60 @@
   --color-gain: #1a7f4e;
   --color-loss: #b3372f;
   --font-book: Georgia, "Times New Roman", serif;
+  --font-display: "Anton", Impact, sans-serif;
+  --font-grotesk: "Archivo", system-ui, sans-serif;
 }
+
+/* ---- Editorial layer: bold display type + labels (keeps serif prose) ---- */
+.font-display { font-family: var(--font-display); font-weight: 400; letter-spacing: 0.01em; }
+.font-grotesk { font-family: var(--font-grotesk); }
+
+/* uppercase label chip */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  font-family: var(--font-grotesk);
+  font-weight: 800;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  font-size: 0.68rem;
+  padding: 0.34em 0.75em;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--color-tape) 12%, transparent);
+  color: var(--color-tape);
+}
+.chip-muted { background: #fff; border: 1px solid var(--color-wall-dark); color: var(--color-ink-soft); }
+.chip-solid { background: rgba(255, 255, 255, 0.18); color: #fff; }
+
+/* section caption: small grotesk label with a trailing rule */
+.caption-rule {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  font-family: var(--font-grotesk);
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-size: 0.68rem;
+  color: var(--color-ink-soft);
+}
+.caption-rule::after { content: ""; flex: 1; height: 1px; background: var(--color-wall-dark); }
+
+/* stat card */
+.stat-card { background: var(--color-wall); border: 1px solid var(--color-wall-dark); border-radius: 12px; padding: 1rem 1.1rem; }
+.stat-label { font-family: var(--font-grotesk); font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; font-size: 0.66rem; color: var(--color-ink-soft); }
+.stat-num { font-family: var(--font-display); font-size: 2.3rem; line-height: 1; margin-top: 0.5rem; }
+.stat-sub { font-family: var(--font-grotesk); font-size: 0.72rem; color: var(--color-ink-soft); margin-top: 0.5rem; }
+
+/* blue color-block chapter opener */
+.chapter-opener { position: relative; background: var(--color-tape); color: #eaf1fc; border-radius: 12px; padding: 1.6rem 1.5rem 1.4rem; overflow: hidden; isolation: isolate; }
+.chapter-opener .opener-ghost { position: absolute; right: 0.5rem; top: -0.7rem; font-family: var(--font-display); font-size: 9rem; line-height: 1; color: rgba(255, 255, 255, 0.1); z-index: -1; pointer-events: none; }
+.chapter-opener .opener-ticker { font-family: var(--font-display); font-size: clamp(2.6rem, 9vw, 4.4rem); line-height: 0.92; text-transform: uppercase; color: #fff; margin: 0.5rem 0 0; }
+
+/* hairline-with-dashes row divider */
+.rule-dashed { position: relative; }
+.rule-dashed::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 1px; background: repeating-linear-gradient(90deg, var(--color-wall-dark) 0 6px, transparent 6px 12px); }
 
 body {
   background-color: var(--color-wall);

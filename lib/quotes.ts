@@ -84,11 +84,11 @@ export type Scoreboard = {
   totalReturnPct: number | null; // cost-weighted across all chapters
   spyReturnPct: number | null; // SPY cost-weighted over the same windows
   // The dollar-matched head-to-head: every dollar put in a pick is mirrored by
-  // the same dollar in the S&P 500 on the same day. These are the running
-  // totals of both sides (null until at least one chapter can be scored).
-  invested: number; // total dollars put into picks (= same dollars shadowed into SPY)
+  // a real dollar in the S&P 500 the same day. These are the running totals of
+  // both real sides (null until at least one chapter can be scored).
+  invested: number; // dollars in picks (the same amount is also really in the S&P)
   picksValue: number | null; // what the picks are worth now
-  spyValue: number | null; // what the same money in the S&P would be worth now
+  spyValue: number | null; // what the matched S&P money is worth now
   chapterPerfs: Map<number, ChapterPerf>;
 };
 

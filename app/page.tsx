@@ -76,114 +76,140 @@ export default async function Home() {
     .sort()
     .pop();
 
+  const picksAhead =
+    scoreboard.picksValue !== null &&
+    scoreboard.spyValue !== null &&
+    scoreboard.picksValue >= scoreboard.spyValue;
+  const showVs =
+    scoreboard.invested > 0 && scoreboard.picksValue !== null && scoreboard.spyValue !== null;
+  // Real matched: half the money is in picks, half in the S&P, so the portfolio
+  // is worth both sides combined.
+  const combinedValue =
+    scoreboard.picksValue !== null && scoreboard.spyValue !== null
+      ? scoreboard.picksValue + scoreboard.spyValue
+      : null;
+
   const ledger = (
     <div>
-      <h3 className="mb-3 text-xs uppercase tracking-widest text-ink-soft">The ledger</h3>
-      <div className="rounded-lg bg-white p-4 shadow-sm text-sm">
-        <p className="text-xs uppercase tracking-wide text-ink-soft">
-          Portfolio value · end of day
-        </p>
-        <p className="mt-1 text-2xl font-bold">
-          {portfolioValue !== null ? fmtMoney(portfolioValue) : "—"}
-        </p>
-        {open.length > 0 && (
-          <p className="mt-1 text-xs text-ink-soft">
-            {open.length} open position{open.length === 1 ? "" : "s"} · cost{" "}
-            {fmtMoney(investedOpen)}
-          </p>
-        )}
-        {closed.length > 0 && (
-          <p className="mt-1 text-xs text-ink-soft">
-            Realized ({closed.length} closed):{" "}
-            <span className={realized >= 0 ? "text-gain" : "text-loss"}>
-              {realized >= 0 ? "+" : "−"}{fmtMoney(Math.abs(realized))}
-            </span>
-          </p>
-        )}
+      <div className="caption-rule mb-3">The ledger</div>
 
-        {scoreboard.invested > 0 &&
-          scoreboard.picksValue !== null &&
-          scoreboard.spyValue !== null && (
-            <div className="mt-3 border-t border-wall pt-3">
-              <p className="text-xs uppercase tracking-wide text-ink-soft">
-                Picks vs the S&amp;P 500
-              </p>
-              <p className="mt-0.5 text-[11px] leading-relaxed text-ink-soft">
-                Every dollar in a pick, the same dollar in the S&amp;P on the same day.
-              </p>
-              <div className="mt-2 space-y-1">
-                <div className="flex items-baseline justify-between gap-2">
-                  <span>My picks</span>
-                  <span
-                    className={`font-bold ${
-                      scoreboard.picksValue >= scoreboard.spyValue ? "text-gain" : "text-loss"
-                    }`}
-                  >
-                    {fmtMoney(scoreboard.picksValue)}
-                  </span>
-                </div>
-                <div className="flex items-baseline justify-between gap-2">
-                  <span>Same money, S&amp;P 500</span>
-                  <span className="font-bold">{fmtMoney(scoreboard.spyValue)}</span>
-                </div>
-                <div className="flex items-baseline justify-between gap-2 text-ink-soft">
-                  <span>Put in</span>
-                  <span>{fmtMoney(scoreboard.invested)}</span>
-                </div>
+      <div className="stat-card">
+        <div className="stat-label">Portfolio value · EOD</div>
+        <div className="stat-num">
+          {combinedValue !== null
+            ? fmtMoney(combinedValue)
+            : portfolioValue !== null
+              ? fmtMoney(portfolioValue)
+              : "—"}
+        </div>
+        <div className="stat-sub">
+          {showVs
+            ? `${fmtMoney(scoreboard.invested)} in picks + the same in the S&P`
+            : "waiting for chapter one"}
+        </div>
+      </div>
+
+      {showVs && scoreboard.picksValue !== null && scoreboard.spyValue !== null && (
+        <div className="mt-4">
+          <div className="caption-rule mb-2">Picks vs the S&amp;P 500</div>
+          <div className="grid grid-cols-2 gap-2">
+            <div className="stat-card !p-3">
+              <div className="stat-label">My picks</div>
+              <div
+                className={`stat-num !mt-1.5 !text-[1.55rem] ${picksAhead ? "text-gain" : "text-loss"}`}
+              >
+                {fmtMoney(scoreboard.picksValue)}
               </div>
-              <p className="mt-1.5 text-[11px] font-semibold">
-                {scoreboard.picksValue >= scoreboard.spyValue ? (
-                  <span className="text-gain">
-                    Picks ahead by {fmtMoney(scoreboard.picksValue - scoreboard.spyValue)}
-                  </span>
-                ) : (
-                  <span className="text-loss">
-                    S&amp;P ahead by {fmtMoney(scoreboard.spyValue - scoreboard.picksValue)}
-                  </span>
-                )}
-              </p>
+            </div>
+            <div className="stat-card !p-3">
+              <div className="stat-label">S&amp;P 500</div>
+              <div className="stat-num !mt-1.5 !text-[1.55rem]">{fmtMoney(scoreboard.spyValue)}</div>
+            </div>
+          </div>
+          <p className="font-grotesk mt-2 text-[11px] font-semibold">
+            {picksAhead ? (
+              <span className="text-gain">
+                Picks ahead by {fmtMoney(scoreboard.picksValue - scoreboard.spyValue)}
+              </span>
+            ) : (
+              <span className="text-loss">
+                S&amp;P ahead by {fmtMoney(scoreboard.spyValue - scoreboard.picksValue)}
+              </span>
+            )}
+          </p>
+          <p className="mt-1 text-[11px] leading-relaxed text-ink-soft">
+            For every dollar in a pick, a real dollar in the S&amp;P the same day — half my
+            money in each. {fmtMoney(scoreboard.invested)} a side.
+          </p>
+        </div>
+      )}
+
+      {open.length > 0 && (
+        <div className="mt-4">
+          <div className="caption-rule mb-1">Holdings</div>
+          {openRows.map((r) => (
+            <div
+              key={r.chapter}
+              className="rule-dashed font-grotesk flex items-baseline justify-between gap-2 py-2 text-[13px]"
+            >
+              <span className="font-bold">{r.ticker}</span>
+              <span className="text-ink-soft">
+                {r.lastClose !== null ? fmtMoney(r.lastClose) : "—"}
+              </span>
+              <span
+                className={`font-bold ${
+                  r.returnPct === null
+                    ? "text-ink-soft"
+                    : r.returnPct >= 0
+                      ? "text-gain"
+                      : "text-loss"
+                }`}
+              >
+                {r.returnPct !== null
+                  ? `${r.returnPct > 0 ? "+" : ""}${r.returnPct.toFixed(1)}%`
+                  : "—"}
+              </span>
+            </div>
+          ))}
+          {/* the real S&P side, all matched buys together */}
+          {scoreboard.spyReturnPct !== null && (
+            <div className="rule-dashed font-grotesk flex items-baseline justify-between gap-2 py-2 text-[13px]">
+              <span className="font-bold">S&amp;P 500</span>
+              <span className="text-ink-soft">the match</span>
+              <span
+                className={`font-bold ${
+                  scoreboard.spyReturnPct >= 0 ? "text-gain" : "text-loss"
+                }`}
+              >
+                {`${scoreboard.spyReturnPct > 0 ? "+" : ""}${scoreboard.spyReturnPct.toFixed(1)}%`}
+              </span>
             </div>
           )}
+        </div>
+      )}
 
-        {open.length > 0 && (
-          <div className="mt-3 border-t border-wall pt-2">
-            {openRows.map((r) => (
-              <div key={r.chapter} className="flex items-baseline justify-between gap-2 py-1">
-                <span className="font-bold">{r.ticker}</span>
-                <span className="text-ink-soft">
-                  {r.lastClose !== null ? fmtMoney(r.lastClose) : "—"}
-                </span>
-                <span
-                  className={`font-semibold ${
-                    r.returnPct === null
-                      ? "text-ink-soft"
-                      : r.returnPct >= 0
-                        ? "text-gain"
-                        : "text-loss"
-                  }`}
-                >
-                  {r.returnPct !== null
-                    ? `${r.returnPct > 0 ? "+" : ""}${r.returnPct.toFixed(1)}%`
-                    : "—"}
-                </span>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {open.length === 0 && closed.length === 0 && (
-          <p className="mt-2 text-xs text-ink-soft">
-            No positions yet. The ledger opens with Chapter 1.
-          </p>
-        )}
-
-        <p className="mt-3 border-t border-wall pt-2 text-[11px] leading-relaxed text-ink-soft">
-          {asOf
-            ? `Prices as of ${fmtDate(asOf)} market close.`
-            : "Prices update after each market close."}{" "}
-          Tracked automatically — never typed in by hand.
+      {closed.length > 0 && (
+        <p className="font-grotesk mt-3 text-[12px] text-ink-soft">
+          Realized ({closed.length} closed):{" "}
+          <span className={realized >= 0 ? "text-gain" : "text-loss"}>
+            {realized >= 0 ? "+" : "−"}
+            {fmtMoney(Math.abs(realized))}
+          </span>
         </p>
-      </div>
+      )}
+
+      {open.length === 0 && closed.length === 0 && (
+        <p className="mt-3 text-xs leading-relaxed text-ink-soft">
+          No positions yet. The ledger opens with Chapter 1.
+        </p>
+      )}
+
+      <p className="mt-4 border-t border-wall-dark pt-2 text-[11px] leading-relaxed text-ink-soft">
+        {asOf
+          ? `Prices as of ${fmtDate(asOf)} market close.`
+          : "Prices update after each market close."}{" "}
+        Tracked automatically — never typed in by hand.
+      </p>
     </div>
   );
 
@@ -295,6 +321,12 @@ export default async function Home() {
           future-me can&apos;t quietly rewrite the story.
         </li>
         <li>
+          <b>For every dollar I put in a pick, I put a real dollar in the S&amp;P
+          500 the same day.</b> Half my money is always in the index. If I
+          can&apos;t beat just buying the market, the ledger will say so — in
+          real money, right next to my picks.
+        </li>
+        <li>
           <b>The book has exactly 50 chapters.</b> A punch card with fifty
           slots for the rest of my life. Every buy spends one, permanently. A
           budget, not a quota — slots left blank are a feature, not a failure.
@@ -327,19 +359,19 @@ export default async function Home() {
       </div>
 
       <div className="grid grid-cols-2 gap-3 mb-6">
-        <div className="rounded-lg border border-wall-dark px-4 py-3 text-center">
-          <div className="text-xs text-ink-soft uppercase tracking-wide">The book</div>
-          <div className="text-2xl mt-1">
+        <div className="stat-card">
+          <div className="stat-label">The book</div>
+          <div className="stat-num !text-[2rem]">
             <PctCell v={scoreboard.totalReturnPct} />
           </div>
+          <div className="stat-sub">all picks, cost-weighted</div>
         </div>
-        <div className="rounded-lg border border-wall-dark px-4 py-3 text-center">
-          <div className="text-xs text-ink-soft uppercase tracking-wide">
-            S&amp;P 500, same money, same days
-          </div>
-          <div className="text-2xl mt-1">
+        <div className="stat-card">
+          <div className="stat-label">S&amp;P · same $, same days</div>
+          <div className="stat-num !text-[2rem]">
             <PctCell v={scoreboard.spyReturnPct} />
           </div>
+          <div className="stat-sub">the honest benchmark</div>
         </div>
       </div>
 
@@ -408,58 +440,70 @@ export default async function Home() {
       });
       pages.push(
         <div key={c.slug}>
-          <div className="flex items-center gap-3">
-            <span className="text-sm uppercase tracking-widest text-ink-soft">
-              Chapter {c.chapter}
+          {/* Chapter opener — a color-block "part" page in our blue */}
+          <div className="chapter-opener mb-6">
+            <span className="opener-ghost">{c.chapter}</span>
+            <span className="chip chip-solid">
+              Chapter {c.chapter} · {c.status === "open" ? "still drying" : "dry"}
             </span>
-            <span
-              className={`text-xs px-2 py-0.5 rounded-full font-semibold ${
-                c.status === "open" ? "bg-tape/10 text-tape" : "bg-wall-dark text-ink-soft"
-              }`}
-            >
-              {c.status === "open" ? "still drying" : "dry"}
-            </span>
-          </div>
-          <div className="mt-1 mb-5 flex items-center gap-3">
-            <BrandMark ticker={c.ticker} logo={c.logo} domain={c.domain} size={44} />
-            <h2 className="text-3xl font-bold">
-              {c.company ? `${c.company} (${c.ticker})` : c.ticker} — {c.title}
-            </h2>
+            <div className="opener-ticker">{c.ticker}</div>
+            <div className="mt-2 flex items-center gap-2.5">
+              <BrandMark ticker={c.ticker} logo={c.logo} domain={c.domain} size={28} />
+              <span className="font-grotesk text-[1.05rem] font-semibold" style={{ color: "#dbe7fb" }}>
+                {c.company ? `${c.company} — ${c.title}` : c.title}
+              </span>
+            </div>
           </div>
 
-          <div className="rounded-lg border border-wall-dark overflow-hidden mb-5 text-sm">
+          {/* the buys — hairline rows */}
+          <div className="mb-5">
             {c.buys.map((b, i) => (
               <div
                 key={i}
-                className="flex justify-between px-4 py-2 border-b border-wall last:border-0"
+                className="rule-dashed font-grotesk flex items-baseline justify-between gap-3 py-2.5 text-[13px]"
               >
-                <span>Buy{b.note ? ` — ${b.note}` : ""}</span>
+                <span className="font-bold">Buy{b.note ? ` — ${b.note}` : ""}</span>
                 <span className="text-ink-soft">{fmtTimestamp(b.date)}</span>
-                <span>
+                <span className="font-semibold">
                   ${b.price.toFixed(2)} × {b.shares}
                 </span>
               </div>
             ))}
             {c.sell && (
-              <div className="flex justify-between px-4 py-2 bg-wall/70 font-semibold">
+              <div className="rule-dashed font-grotesk flex items-baseline justify-between gap-3 py-2.5 text-[13px] font-bold">
                 <span>Sold{c.sell.note ? ` — ${c.sell.note}` : ""}</span>
                 <span className="text-ink-soft">{fmtTimestamp(c.sell.date)}</span>
                 <span>${c.sell.price.toFixed(2)}</span>
               </div>
             )}
-            <div className="flex flex-wrap gap-x-5 gap-y-1 px-4 py-2 text-ink-soft border-t border-wall">
-              <span>Avg cost ${avgCost.toFixed(2)}</span>
-              <span>
-                {c.status === "open" ? "Last close" : "Exit"}{" "}
-                {perf?.currentPrice != null ? `$${perf.currentPrice.toFixed(2)}` : "—"}
-                {perf?.asOf ? ` (${fmtDate(perf.asOf)})` : ""}
-              </span>
-              <span>
-                Chapter <PctCell v={perf?.returnPct ?? null} />
-              </span>
-              <span>
-                SPY same window <PctCell v={perf?.spyReturnPct ?? null} />
-              </span>
+          </div>
+
+          {/* this chapter vs the same money in the S&P — stat cards */}
+          <div className="mb-6 grid grid-cols-2 gap-3">
+            <div className="stat-card">
+              <div className="stat-label">This pick</div>
+              <div
+                className={`stat-num !text-[1.9rem] ${
+                  (perf?.returnPct ?? 0) >= (perf?.spyReturnPct ?? 0) ? "text-gain" : "text-loss"
+                }`}
+              >
+                {perf?.returnPct != null
+                  ? `${perf.returnPct > 0 ? "+" : ""}${perf.returnPct.toFixed(1)}%`
+                  : "—"}
+              </div>
+              <div className="stat-sub">
+                avg ${avgCost.toFixed(2)} → ${perf?.currentPrice?.toFixed(2) ?? "—"}
+                {perf?.asOf ? ` · ${fmtDate(perf.asOf)}` : ""}
+              </div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-label">S&amp;P · same $, same days</div>
+              <div className="stat-num !text-[1.9rem]">
+                {perf?.spyReturnPct != null
+                  ? `${perf.spyReturnPct > 0 ? "+" : ""}${perf.spyReturnPct.toFixed(1)}%`
+                  : "—"}
+              </div>
+              <div className="stat-sub">the honest benchmark</div>
             </div>
           </div>
 
@@ -470,15 +514,13 @@ export default async function Home() {
             </div>
           )}
 
-          <div className="mb-5 rounded-lg border border-wall-dark bg-white px-4 py-3">
-            <div className="text-xs font-bold uppercase tracking-wide text-ink-soft">
-              Proof — never edited
-            </div>
+          <div className="mb-5 rounded-xl border border-dashed border-wall-dark bg-white px-4 py-3">
+            <span className="chip chip-muted">Proof — never edited</span>
             <a
               href={chapterCommitsUrl(c.slug)}
               target="_blank"
               rel="noreferrer"
-              className="mt-1 inline-block text-sm font-semibold text-tape underline"
+              className="font-grotesk mt-2 block text-sm font-bold text-tape underline"
             >
               Timestamped commit history on GitHub →
             </a>
@@ -559,20 +601,26 @@ function TocSection({
 }) {
   return (
     <div className="mb-6">
-      <h3 className="text-xs uppercase tracking-wide text-ink-soft mb-2">{title}</h3>
-      <div className="rounded-lg border border-wall-dark overflow-hidden text-sm">
+      <div className="caption-rule mb-1">{title}</div>
+      <div>
         {chapters.map((c) => {
           const perf = scoreboard.chapterPerfs.get(c.chapter);
           return (
             <div
               key={c.slug}
-              className="flex items-center justify-between gap-3 px-4 py-2 border-b border-wall last:border-0"
+              className="rule-dashed flex items-center gap-3 py-2.5"
             >
-              <span className="whitespace-nowrap">
-                Ch. {c.chapter} · <b>{c.ticker}</b>
+              <span className="font-display text-[1.7rem] leading-none text-ink">
+                {String(c.chapter).padStart(2, "0")}
               </span>
-              <span className="text-ink-soft truncate">{fmtDate(firstBuyDate(c))}</span>
-              <span className="whitespace-nowrap">
+              <span className="min-w-0 flex-1">
+                <span className="font-grotesk block truncate text-[14px] font-bold">{c.ticker}</span>
+                <span className="font-grotesk block text-[11px] text-ink-soft">
+                  {c.company ? `${c.company} · ` : ""}
+                  {fmtDate(firstBuyDate(c))}
+                </span>
+              </span>
+              <span className="font-grotesk whitespace-nowrap text-[13px]">
                 <PctCell v={perf?.returnPct ?? null} />{" "}
                 <span className="text-ink-soft">vs</span>{" "}
                 <PctCell v={perf?.spyReturnPct ?? null} />
