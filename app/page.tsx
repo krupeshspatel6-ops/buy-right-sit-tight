@@ -102,35 +102,7 @@ export default async function Home() {
         </div>
       </div>
 
-      {open.length > 0 && (
-        <div className="mt-4">
-          <div className="caption-rule mb-1">Holdings</div>
-          {openRows.map((r) => (
-            <div
-              key={r.chapter}
-              className="rule-dashed font-grotesk flex items-baseline justify-between gap-2 py-2 text-[13px]"
-            >
-              <span className="font-bold">{r.ticker}</span>
-              <span className="text-ink-soft">
-                {r.lastClose !== null ? fmtMoney(r.lastClose) : "—"}
-              </span>
-              <span
-                className={`font-bold ${
-                  r.returnPct === null
-                    ? "text-ink-soft"
-                    : r.returnPct >= 0
-                      ? "text-gain"
-                      : "text-loss"
-                }`}
-              >
-                {r.returnPct !== null
-                  ? `${r.returnPct > 0 ? "+" : ""}${r.returnPct.toFixed(1)}%`
-                  : "—"}
-              </span>
-            </div>
-          ))}
-        </div>
-      )}
+      {/* The holdings themselves are the chapters — see the table of contents. */}
 
       {closed.length > 0 && (
         <p className="font-grotesk mt-3 text-[12px] text-ink-soft">

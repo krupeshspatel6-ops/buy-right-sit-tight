@@ -49,40 +49,60 @@ export type ChapterChart = {
   candles: Candle[];
   buyDate: string;
   buyPrice: number; // (weighted) cost basis per share
+  period: "day" | "week" | "month";
   sell?: { date: string; price: number };
 };
 
+// Which calendar bucket a date falls in, so candles align to real periods:
+// daily (end-of-day) for short/recent holds, then weekly, then monthly as the
+// hold gets longer — so an open chapter's chart stays readable for years.
+function periodKey(date: string, period: "day" | "week" | "month"): string {
+  if (period === "day") return date;
+  if (period === "month") return date.slice(0, 7); // YYYY-MM
+  const d = new Date(date + "T00:00:00Z");
+  const monday = new Date(d);
+  monday.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7)); // back to Monday
+  return monday.toISOString().slice(0, 10);
+}
+
 // OHLC candles for a chapter, from the buy date to the sell date (or today).
-// Long holds are bucketed down to ~70 candles so the chart stays readable.
+// Open chapters extend live: each revalidate pulls fresh end-of-day data, so
+// new candles append on their own.
 export async function getChapterCandles(c: Chapter): Promise<ChapterChart | null> {
   const rows = await fetchDaily(c.ticker);
   if (rows.length < 2) return null;
   const start = firstBuyDate(c).slice(0, 10);
   const end = c.sell?.date.slice(0, 10);
-  let slice = rows.filter((r) => r.date >= start && (!end || r.date <= end));
-  if (slice.length < 2) return null;
+  const daily = rows.filter((r) => r.date >= start && (!end || r.date <= end));
+  if (daily.length < 2) return null;
 
-  const MAX = 70;
-  if (slice.length > MAX) {
-    const bucket = Math.ceil(slice.length / MAX);
-    const agg: Daily[] = [];
-    for (let i = 0; i < slice.length; i += bucket) {
-      const g = slice.slice(i, i + bucket);
-      agg.push({
-        date: g[0].date,
-        open: g[0].open,
-        high: Math.max(...g.map((x) => x.high)),
-        low: Math.min(...g.map((x) => x.low)),
-        close: g[g.length - 1].close,
-      });
+  const spanDays =
+    (Date.parse(daily[daily.length - 1].date) - Date.parse(daily[0].date)) / 86_400_000;
+  const period: "day" | "week" | "month" =
+    spanDays <= 120 ? "day" : spanDays <= 900 ? "week" : "month";
+
+  // group consecutive days into their period, aggregating OHLC
+  const candles: Candle[] = [];
+  let bucketKey = "";
+  for (const r of daily) {
+    const key = periodKey(r.date, period);
+    if (key !== bucketKey) {
+      candles.push({ t: r.date, o: r.open, h: r.high, l: r.low, c: r.close });
+      bucketKey = key;
+    } else {
+      const cur = candles[candles.length - 1];
+      cur.h = Math.max(cur.h, r.high);
+      cur.l = Math.min(cur.l, r.low);
+      cur.c = r.close; // last close in the period
     }
-    slice = agg;
   }
+  if (candles.length < 2) return null;
 
   return {
-    candles: slice.map((r) => ({ t: r.date, o: r.open, h: r.high, l: r.low, c: r.close })),
+    candles,
     buyDate: start,
     buyPrice: costBasis(c) / totalShares(c),
+    period,
     sell: c.sell ? { date: c.sell.date.slice(0, 10), price: c.sell.price } : undefined,
   };
 }

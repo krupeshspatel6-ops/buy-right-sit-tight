@@ -114,9 +114,9 @@ export default function CandleChart({ data, ticker }: { data: ChapterChart; tick
         </text>
       </svg>
       <figcaption className="font-grotesk mt-1 text-[11px] text-ink-soft">
-        {ticker} since the buy · green up days, red down days ·{" "}
+        {ticker} since the buy · each candle = one {data.period} ·{" "}
         <span style={{ color: TAPE }}>dashed line = what I paid</span>
-        {sell ? " · circle = where I sold" : ""}
+        {sell ? " · circle = where I sold" : " · live, updates after each market close"}
       </figcaption>
     </figure>
   );

@@ -112,13 +112,36 @@ export default function BookReader({
           )}
         </div>
 
-        <div
-          key={index}
-          className={`book-page relative h-[76vh] overflow-y-auto px-8 py-8 sm:px-14 ${
-            turn === "next" ? "page-turn-next" : turn === "prev" ? "page-turn-prev" : ""
-          }`}
-        >
-          {pages[index]}
+        <div className="book-frame relative">
+          {/* spiral binding down the left edge — this is a book */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute -left-[9px] bottom-0 top-0 z-20 hidden flex-col justify-around py-6 sm:flex"
+          >
+            {Array.from({ length: 20 }).map((_, i) => (
+              <span
+                key={i}
+                className="h-2.5 w-[26px] rounded-full border-[2.5px] border-ink-soft/45 bg-white/70 shadow-sm"
+              />
+            ))}
+          </div>
+
+          {/* every page carries a live marker (the cover has its own bigger one) */}
+          {index !== 0 && (
+            <div className="pointer-events-none absolute right-3 top-3 z-20">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-tape shadow-sm">
+                <span className="live-dot live-dot-pulse" aria-hidden /> live book
+              </span>
+            </div>
+          )}
+
+          <div
+            key={index}
+            className={`book-page relative h-[76vh] overflow-y-auto px-8 py-8 sm:px-14 sm:pl-16 ${
+              turn === "next" ? "page-turn-next" : turn === "prev" ? "page-turn-prev" : ""
+            }`}
+          >
+            {pages[index]}
           {/* edge click zones */}
           {index > 0 && (
             <button
@@ -134,6 +157,7 @@ export default function BookReader({
               className="absolute inset-y-0 right-0 w-14 cursor-e-resize"
             />
           )}
+          </div>
         </div>
 
         <div className="mt-4 flex items-center justify-between text-sm text-ink-soft">

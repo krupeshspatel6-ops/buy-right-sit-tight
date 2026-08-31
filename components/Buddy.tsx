@@ -83,6 +83,9 @@ export default function Buddy() {
   const pathname = usePathname() || "/";
   const [hidden, setHidden] = useState(false);
   const [menuOpen, setMenuOpen] = useState(true); // bubble open; collapses to just the character
+  const [pos, setPos] = useState<{ x: number; y: number } | null>(null); // drag position; null = anchored bottom-left
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const dragRef = useRef<{ sx: number; sy: number; bx: number; by: number } | null>(null);
   const [text, setText] = useState(""); // what the buddy is currently "saying" (typed)
   const [target, setTarget] = useState(""); // full text being typed toward
   const [talking, setTalking] = useState(false); // narrating a script (story/tour)
@@ -512,6 +515,63 @@ export default function Buddy() {
     say(greetLineRef.current || target || WELCOME_FIRST);
   }
 
+  // Drag the buddy anywhere. Grab a grip, move, and it stays where you drop it
+  // (remembered for next time).
+  function onDragStart(e: React.PointerEvent) {
+    e.preventDefault();
+    const el = wrapperRef.current;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    dragRef.current = { sx: e.clientX, sy: e.clientY, bx: r.left, by: r.top };
+    const clamp = (x: number, y: number) => {
+      const w = el.offsetWidth || 160;
+      const h = el.offsetHeight || 300;
+      return {
+        x: Math.max(4, Math.min(x, window.innerWidth - w - 4)),
+        y: Math.max(4, Math.min(y, window.innerHeight - h - 4)),
+      };
+    };
+    const move = (ev: PointerEvent) => {
+      if (!dragRef.current) return;
+      setPos(
+        clamp(
+          dragRef.current.bx + (ev.clientX - dragRef.current.sx),
+          dragRef.current.by + (ev.clientY - dragRef.current.sy)
+        )
+      );
+    };
+    const up = () => {
+      dragRef.current = null;
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+      setPos((p) => {
+        if (p) {
+          try {
+            localStorage.setItem("brst_buddy_pos", JSON.stringify(p));
+          } catch {
+            /* ignore */
+          }
+        }
+        return p;
+      });
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+  }
+
+  // Restore a saved drag position.
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("brst_buddy_pos");
+      if (raw) {
+        const p = JSON.parse(raw);
+        if (typeof p?.x === "number" && typeof p?.y === "number") setPos(p);
+      }
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
   // Stop speech when the route changes.
   useEffect(() => cancelVoice, [cancelVoice, pathname]);
 
@@ -539,8 +599,12 @@ export default function Buddy() {
     // wrapper ignores pointer events so the page stays clickable; the bubble
     // and controls opt back in.
     <div
+      ref={wrapperRef}
       className="fixed bottom-0 left-1 sm:left-2 z-50 flex w-[clamp(93px,15.7vh,169px)] flex-col items-center print:hidden"
-      style={{ pointerEvents: "none" }}
+      style={{
+        pointerEvents: "none",
+        ...(pos ? { left: pos.x, top: pos.y, right: "auto", bottom: "auto" } : {}),
+      }}
     >
       {/* speech bubble — only when open or actively speaking, so at rest the
           buddy is just the small character and never covers page content. */}
@@ -549,6 +613,16 @@ export default function Buddy() {
         className="relative z-10 mb-2 self-start w-[210px] max-w-[82vw] whitespace-normal break-words rounded-2xl border border-wall-dark bg-white/95 px-4 py-3 pt-5 text-sm leading-relaxed shadow-lg sm:w-[236px]"
         style={{ pointerEvents: "auto", transform: "translate(8px, 44px)" }}
       >
+        {/* drag grip — move the buddy anywhere */}
+        <button
+          onPointerDown={onDragStart}
+          title="Drag me anywhere"
+          aria-label="Drag the buddy"
+          className="absolute -top-3 left-2 grid h-7 w-7 cursor-grab touch-none select-none place-items-center rounded-full border border-wall-dark bg-white text-sm shadow-sm hover:bg-wall active:cursor-grabbing"
+        >
+          ✥
+        </button>
+
         {/* mute, minimize, close — on top of the popup */}
         <div className="absolute -top-3 right-2 flex items-center gap-1">
           <button
@@ -696,12 +770,26 @@ export default function Buddy() {
               className="absolute inset-0 z-10 cursor-pointer"
               style={{ pointerEvents: "auto" }}
             />
-            <span
-              className="font-grotesk absolute right-0 top-2 z-20 rounded-full border border-wall-dark bg-white px-2 py-0.5 text-[10px] font-bold text-tape shadow-sm"
-              style={{ pointerEvents: "none" }}
+            <button
+              onClick={() => {
+                interactedRef.current = true;
+                setMenuOpen(true);
+              }}
+              className="font-grotesk absolute right-0 top-1 z-20 rounded-full border border-wall-dark bg-white px-2 py-0.5 text-[10px] font-bold text-tape shadow-sm"
+              style={{ pointerEvents: "auto" }}
             >
               💬 chat
-            </span>
+            </button>
+            {/* drag grip in the corner when collapsed */}
+            <button
+              onPointerDown={onDragStart}
+              title="Drag me anywhere"
+              aria-label="Drag the buddy"
+              className="absolute left-0 top-1 z-20 grid h-6 w-6 cursor-grab touch-none select-none place-items-center rounded-full border border-wall-dark bg-white text-[11px] shadow-sm active:cursor-grabbing"
+              style={{ pointerEvents: "auto" }}
+            >
+              ✥
+            </button>
           </>
         )}
       </div>
