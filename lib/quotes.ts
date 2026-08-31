@@ -107,64 +107,28 @@ export async function getChapterCandles(c: Chapter): Promise<ChapterChart | null
   };
 }
 
-function closeOnOrAfter(rows: Daily[], isoDate: string): number | null {
-  const day = isoDate.slice(0, 10);
-  const row = rows.find((r) => r.date >= day);
-  return row ? row.close : null;
-}
-
-function closeOnOrBefore(rows: Daily[], isoDate: string): number | null {
-  const day = isoDate.slice(0, 10);
-  for (let i = rows.length - 1; i >= 0; i--) {
-    if (rows[i].date <= day) return rows[i].close;
-  }
-  return null;
-}
-
 export type ChapterPerf = {
   currentPrice: number | null;
   returnPct: number | null; // chapter return since (weighted) cost basis
-  spyReturnPct: number | null; // SPY over the same window
   asOf: string | null; // date (YYYY-MM-DD) of the close behind currentPrice
 };
 
-// The matched S&P 500 side is bought as VOO (Vanguard's low-cost S&P 500 fund).
-// VOO and SPY track the same index; VOO fits the buy-and-hold ethos.
 export async function getChapterPerf(c: Chapter): Promise<ChapterPerf> {
-  const [stock, spy] = await Promise.all([fetchDaily(c.ticker), fetchDaily("voo")]);
-  const start = firstBuyDate(c);
-  const end = c.sell?.date;
-
+  const stock = await fetchDaily(c.ticker);
   const avgCost = costBasis(c) / totalShares(c);
   const lastRow = stock.length ? stock[stock.length - 1] : null;
   const exitPrice = c.sell ? c.sell.price : lastRow ? lastRow.close : null;
   const asOf = c.sell ? c.sell.date.slice(0, 10) : lastRow ? lastRow.date : null;
 
-  const spyStart = closeOnOrAfter(spy, start);
-  const spyEnd = end
-    ? closeOnOrBefore(spy, end)
-    : spy.length
-      ? spy[spy.length - 1].close
-      : null;
-
   return {
     currentPrice: exitPrice,
     returnPct: exitPrice !== null ? ((exitPrice - avgCost) / avgCost) * 100 : null,
-    spyReturnPct:
-      spyStart !== null && spyEnd !== null ? ((spyEnd - spyStart) / spyStart) * 100 : null,
     asOf,
   };
 }
 
 export type Scoreboard = {
   totalReturnPct: number | null; // cost-weighted across all chapters
-  spyReturnPct: number | null; // SPY cost-weighted over the same windows
-  // The dollar-matched head-to-head: every dollar put in a pick is mirrored by
-  // a real dollar in the S&P 500 the same day. These are the running totals of
-  // both real sides (null until at least one chapter can be scored).
-  invested: number; // dollars in picks (the same amount is also really in the S&P)
-  picksValue: number | null; // what the picks are worth now
-  spyValue: number | null; // what the matched S&P money is worth now
   chapterPerfs: Map<number, ChapterPerf>;
 };
 
@@ -175,29 +139,17 @@ export async function getScoreboard(chapters: Chapter[]): Promise<Scoreboard> {
 
   let cost = 0;
   let value = 0;
-  let spyCost = 0;
-  let spyValue = 0;
   chapters.forEach((c, i) => {
     const p = perfs[i];
-    const basis = costBasis(c);
     if (p.returnPct !== null) {
+      const basis = costBasis(c);
       cost += basis;
       value += basis * (1 + p.returnPct / 100);
-    }
-    if (p.spyReturnPct !== null) {
-      spyCost += basis;
-      spyValue += basis * (1 + p.spyReturnPct / 100);
     }
   });
 
   return {
     totalReturnPct: cost > 0 ? ((value - cost) / cost) * 100 : null,
-    spyReturnPct: spyCost > 0 ? ((spyValue - spyCost) / spyCost) * 100 : null,
-    invested: cost,
-    picksValue: cost > 0 ? value : null,
-    // Scored on the same dollars/windows as the picks, so the two sides are
-    // directly comparable even when SPY data is missing for some chapters.
-    spyValue: cost > 0 ? spyValue + (cost - spyCost) : null,
     chapterPerfs,
   };
 }

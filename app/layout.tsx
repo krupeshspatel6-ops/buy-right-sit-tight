@@ -16,7 +16,7 @@ const groteskFont = Archivo({
 
 const TITLE = "Buy Right Sit Tight — watch the paint dry.";
 const DESCRIPTION =
-  "A 15-year-old learning to invest in public. Every stock I buy opens a timestamped chapter, matched dollar-for-dollar against the S&P 500; a chapter only closes when I sell. A learning journal, not advice.";
+  "A 15-year-old learning to invest in public. Every stock I buy opens a timestamped chapter that's never edited; a chapter only closes when I sell. A learning journal, not advice.";
 
 export const metadata: Metadata = {
   title: TITLE,

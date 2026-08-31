@@ -238,12 +238,6 @@ export default async function Home() {
           future-me can&apos;t quietly rewrite the story.
         </li>
         <li>
-          <b>For every dollar I put in a pick, I put a real dollar in the S&amp;P
-          500 (VOO) the same day.</b> Half my money is always in the index. If I
-          can&apos;t beat just buying the market, the ledger will say so — in
-          real money, right next to my picks.
-        </li>
-        <li>
           <b>There is no set number of chapters — and no finish line.</b> A new
           one opens for every stock I buy, for as long as I keep investing. The
           wall just keeps getting painted. The point isn&apos;t to fill it; it&apos;s
@@ -293,20 +287,13 @@ export default async function Home() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 mb-6">
-        <div className="stat-card">
+      <div className="mb-6">
+        <div className="stat-card inline-block">
           <div className="stat-label">The book</div>
           <div className="stat-num !text-[2rem]">
             <PctCell v={scoreboard.totalReturnPct} />
           </div>
           <div className="stat-sub">all picks, cost-weighted</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-label">S&amp;P · same $, same days</div>
-          <div className="stat-num !text-[2rem]">
-            <PctCell v={scoreboard.spyReturnPct} />
-          </div>
-          <div className="stat-sub">the honest benchmark</div>
         </div>
       </div>
 
@@ -398,13 +385,13 @@ export default async function Home() {
             )}
           </div>
 
-          {/* this chapter vs the same money in the S&P — stat cards */}
-          <div className="mb-6 grid grid-cols-2 gap-3">
-            <div className="stat-card">
-              <div className="stat-label">This pick</div>
+          {/* this chapter's return so far */}
+          <div className="mb-6">
+            <div className="stat-card inline-block">
+              <div className="stat-label">This pick, so far</div>
               <div
                 className={`stat-num !text-[1.9rem] ${
-                  (perf?.returnPct ?? 0) >= (perf?.spyReturnPct ?? 0) ? "text-gain" : "text-loss"
+                  (perf?.returnPct ?? 0) >= 0 ? "text-gain" : "text-loss"
                 }`}
               >
                 {perf?.returnPct != null
@@ -415,15 +402,6 @@ export default async function Home() {
                 avg ${avgCost.toFixed(2)} → ${perf?.currentPrice?.toFixed(2) ?? "—"}
                 {perf?.asOf ? ` · ${fmtDate(perf.asOf)}` : ""}
               </div>
-            </div>
-            <div className="stat-card">
-              <div className="stat-label">S&amp;P · same $, same days</div>
-              <div className="stat-num !text-[1.9rem]">
-                {perf?.spyReturnPct != null
-                  ? `${perf.spyReturnPct > 0 ? "+" : ""}${perf.spyReturnPct.toFixed(1)}%`
-                  : "—"}
-              </div>
-              <div className="stat-sub">the honest benchmark</div>
             </div>
           </div>
 
@@ -538,9 +516,7 @@ function TocSection({
                 </span>
               </span>
               <span className="font-grotesk whitespace-nowrap text-[13px]">
-                <PctCell v={perf?.returnPct ?? null} />{" "}
-                <span className="text-ink-soft">vs</span>{" "}
-                <PctCell v={perf?.spyReturnPct ?? null} />
+                <PctCell v={perf?.returnPct ?? null} />
               </span>
             </div>
           );

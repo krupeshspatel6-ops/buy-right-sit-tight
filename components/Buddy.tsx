@@ -38,7 +38,7 @@ const STORY = [
 const TOUR = [
   "Sure — let me show you around Krupesh's book!",
   "This is a live book. Every stock Krupesh buys with his own money becomes a chapter — timestamped the day it happens, and never edited after.",
-  "See the panel on the left, the ledger? That's the real portfolio. Here's the honest part: for every dollar Krupesh puts in a stock, he puts a real dollar in the S&P 500 the same day — so the ledger shows his picks and the index side by side, real money against real money.",
+  "See the panel on the left, the ledger? That's the real portfolio — every open position, its latest price, and how the book is doing overall, tracked automatically and never typed in by hand.",
   "The cover reads like a real book — use the arrows or click the page edges to turn pages. The table of contents IS the portfolio: open chapters are what he still holds, closed ones are stocks he sold.",
   "The wall on the cover keeps getting painted — a new chapter for every buy, with no set number and no finish line. Right now it's still blank, waiting for his first buy.",
   "That's the tour! Nothing here is advice — it's Krupesh's learning journey. Buy right, sit tight, and watch the paint dry with him.",

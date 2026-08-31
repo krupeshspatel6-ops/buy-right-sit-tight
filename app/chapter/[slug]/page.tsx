@@ -110,10 +110,7 @@ export default async function ChapterPage({
             {perf.asOf ? ` (${formatDate(perf.asOf)})` : ""}
           </span>
           <span>
-            Chapter: <b>{fmtPct(perf.returnPct)}</b>
-          </span>
-          <span>
-            SPY same window: <b>{fmtPct(perf.spyReturnPct)}</b>
+            Return so far: <b>{fmtPct(perf.returnPct)}</b>
           </span>
         </div>
       </section>

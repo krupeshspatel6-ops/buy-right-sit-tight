@@ -9,10 +9,8 @@ no monetization — this exists for credibility, not revenue.
 1. Every real-money buy appears within 24 hours. No exceptions, no deletions.
 2. Chapters are never edited after publication — corrections are appended, dated.
 3. Every chapter states on day one what would trigger a sell (the "exit test").
-4. Scoreboard = a real dollar-matched head-to-head: for every dollar put in a
-   pick, a real matched dollar goes into the S&P 500 the same day. Half the
-   money is in picks, half in the index; both totals always visible — an
-   honest, real-money apples-to-apples compare.
+4. Each chapter shows the position's own return so far and a candlestick chart
+   from the buy date — real prices, tracked automatically, never typed by hand.
 5. **No fixed number of chapters and no finish line** — a new one opens for
    every buy, for as long as Krupesh keeps investing. The homepage wall keeps
    getting painted with each chapter but never quite fills; there's always more
