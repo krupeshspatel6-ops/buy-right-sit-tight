@@ -100,3 +100,10 @@ export function totalShares(c: Chapter): number {
 export function firstBuyDate(c: Chapter): string {
   return c.buys.map((b) => b.date).sort()[0];
 }
+
+// The site path to a chapter's OpenTimestamps (.ots) blockchain proof, if one
+// was created at publish time; null otherwise.
+export function chapterOtsUrl(slug: string): string | null {
+  const rel = path.join("public", "proofs", "ots", `${slug}.ots`);
+  return fs.existsSync(path.join(process.cwd(), rel)) ? `/proofs/ots/${slug}.ots` : null;
+}

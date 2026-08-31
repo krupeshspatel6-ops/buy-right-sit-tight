@@ -32,6 +32,9 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  // OpenTimestamps is a CJS lib with native-ish deps — keep it external so it
+  // runs at request time instead of being bundled.
+  serverExternalPackages: ["opentimestamps"],
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },

@@ -8,11 +8,13 @@ export default function ProofPanel({
   ticker,
   buyDate,
   proofs,
+  otsUrl,
 }: {
   slug: string;
   ticker: string;
   buyDate: string;
   proofs: string[];
+  otsUrl?: string | null;
 }) {
   return (
     <div className="mb-6 rounded-xl border border-dashed border-wall-dark bg-white px-5 py-4">
@@ -52,6 +54,26 @@ export default function ProofPanel({
                 />
               ))}
             </div>
+          </li>
+        )}
+        {otsUrl && (
+          <li>
+            <b>Anchored to the Bitcoin blockchain.</b> This chapter&apos;s fingerprint is
+            timestamped with{" "}
+            <a
+              href="https://opentimestamps.org"
+              target="_blank"
+              rel="noreferrer"
+              className="font-grotesk font-bold text-tape underline"
+            >
+              OpenTimestamps
+            </a>{" "}
+            — a timestamp nobody can forge or backdate, not even me. Verify it yourself with
+            the{" "}
+            <a href={otsUrl} className="font-grotesk font-bold text-tape underline">
+              .ots proof
+            </a>{" "}
+            (Bitcoin confirmation settles within about a day of publishing).
           </li>
         )}
       </ol>

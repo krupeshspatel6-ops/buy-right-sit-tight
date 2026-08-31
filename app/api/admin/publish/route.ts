@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { buildChapterFile, chapterSlug, type ChapterFileInput } from "@/lib/chapter-file";
-import { createFileOnGitHub, triggerVercelDeploy } from "@/lib/github";
+import { createFileOnGitHub, createBinaryFileOnGitHub, triggerVercelDeploy } from "@/lib/github";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -61,6 +61,34 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: commit.error }, { status });
   }
 
+  // Best-effort: anchor the chapter's fingerprint to the Bitcoin blockchain via
+  // OpenTimestamps, so the timestamp can't be forged or backdated by anyone —
+  // not GitHub, not Vercel, not even us. If it fails, the GitHub commit time
+  // still stands, so we never block the publish on it.
+  let timestamped = false;
+  try {
+    const otsMod = await import("opentimestamps");
+    const OTS = (otsMod as unknown as { default?: unknown }).default ?? otsMod;
+    const { createHash } = await import("node:crypto");
+    const O = OTS as {
+      DetachedTimestampFile: { fromHash: (op: unknown, hash: Buffer) => { serializeToBytes: () => Uint8Array } };
+      Ops: { OpSHA256: new () => unknown };
+      stamp: (d: unknown) => Promise<void>;
+    };
+    const digest = createHash("sha256").update(Buffer.from(fileText, "utf8")).digest();
+    const detached = O.DetachedTimestampFile.fromHash(new O.Ops.OpSHA256(), digest);
+    await O.stamp(detached);
+    const b64 = Buffer.from(detached.serializeToBytes()).toString("base64");
+    const otsRes = await createBinaryFileOnGitHub(
+      `public/proofs/ots/${slug}.ots`,
+      b64,
+      `Blockchain timestamp (OpenTimestamps) for chapter ${chapter} (${ticker})`
+    );
+    timestamped = otsRes.ok;
+  } catch {
+    /* GitHub's commit timestamp already proves this */
+  }
+
   const deployed = input.deploy !== false ? await triggerVercelDeploy() : false;
-  return NextResponse.json({ ok: true, slug, committed: true, deployed, sha: commit.sha });
+  return NextResponse.json({ ok: true, slug, committed: true, deployed, timestamped, sha: commit.sha });
 }

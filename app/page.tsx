@@ -10,6 +10,7 @@ import {
   costBasis,
   firstBuyDate,
   totalShares,
+  chapterOtsUrl,
   type Chapter,
 } from "@/lib/chapters";
 import { getScoreboard, getChapterCandles, type Scoreboard, type ChapterChart } from "@/lib/quotes";
@@ -446,6 +447,7 @@ export default async function Home() {
             ticker={c.ticker}
             buyDate={firstBuyDate(c)}
             proofs={c.proofs}
+            otsUrl={chapterOtsUrl(c.slug)}
           />
 
           <div className="mb-3">
