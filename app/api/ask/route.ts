@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { loadChapters, loadPreface } from "@/lib/chapters";
+import { entryMeta } from "@/lib/entry-source";
 import { getClientIp, ipRateLimit } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
@@ -15,10 +16,19 @@ function bookContext(): string {
     .map((c) => {
       const buys = c.buys.map((b) => `bought ${b.shares} @ $${b.price} on ${b.date}`).join("; ");
       const sell = c.sell ? ` Sold @ $${c.sell.price} on ${c.sell.date}.` : "";
-      return `Chapter ${c.chapter}: ${c.company || c.ticker} (${c.ticker}) — "${c.title}". Status: ${c.status}. ${buys}.${sell} Exit plan: ${c.exitTest}.\n${c.body}`;
+      const how = c.entry ? ` How the trade started: ${entryMeta(c.entry, c.entryNote).label}.` : "";
+      return `Chapter ${c.chapter}: ${c.company || c.ticker} (${c.ticker}) — "${c.title}". Status: ${c.status}. ${buys}.${sell}${how} Exit plan: ${c.exitTest}.\n${c.body}`;
     })
     .join("\n\n");
-  return `THE STORY (why Krupesh writes this book):\n${preface}\n\nTHE CHAPTERS:\n${
+  const aboutCode =
+    `ABOUT "THE CODE": Many buys start with a signal from a small system Krupesh built ` +
+    `("the code"). When it flags a setup he takes a starter position and opens a chapter. ` +
+    `He keeps HOW it works private. It is an honest experiment, NOT a signal service — it ` +
+    `can be wrong, not every trade comes from it (some are copycat, some his own conviction), ` +
+    `and a signal is never a recommendation. Because every chapter is timestamped and never ` +
+    `edited, the code's calls form a public, tamper-proof track record. There is a page about ` +
+    `it at /the-code.`;
+  return `THE STORY (why Krupesh writes this book):\n${preface}\n\n${aboutCode}\n\nTHE CHAPTERS:\n${
     chapterText || "No chapters yet — Krupesh's first buy hasn't happened."
   }`;
 }

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { marked } from "marked";
 import { formatFillTime } from "@/lib/format";
+import { entryMeta } from "@/lib/entry-source";
 import BrandMark from "@/components/BrandMark";
 
 type Existing = { chapter: number; ticker: string; title: string; status: string };
@@ -55,6 +56,8 @@ export default function AdminEditor({
   const [title, setTitle] = useState("");
   const [logo, setLogo] = useState("");
   const [domain, setDomain] = useState("");
+  const [entry, setEntry] = useState<"code" | "copycat" | "manual">("code");
+  const [entryNote, setEntryNote] = useState("");
   const [when, setWhen] = useState(nowLocalInput());
   const [price, setPrice] = useState("");
   const [shares, setShares] = useState("");
@@ -217,6 +220,8 @@ export default function AdminEditor({
           note,
           proofs: proofs.split(",").map((s) => s.trim()).filter(Boolean).map((f) => (f.startsWith("/") ? f : `/proofs/${f}`)),
           exitTest,
+          entry,
+          entryNote,
           body,
           deploy,
         }),
@@ -281,6 +286,7 @@ export default function AdminEditor({
             <ul className="mt-1.5 list-disc space-y-0.5 pl-5 text-[13px] text-ink-soft">
               <li><b className="text-ink">The stock</b> — ticker, company, a chapter title</li>
               <li><b className="text-ink">The buy</b> — fill date &amp; time, price, shares, straight from your broker</li>
+              <li><b className="text-ink">How it started</b> — code signal, copycat, or your own conviction</li>
               <li><b className="text-ink">The exit plan</b> — what would make you sell <span className="font-semibold text-loss">(required)</span></li>
               <li><b className="text-ink">The why</b> — a few honest paragraphs <span className="font-semibold text-loss">(required)</span></li>
               <li><b className="text-ink">Proof</b> — a broker fill screenshot (optional)</li>
@@ -333,6 +339,43 @@ export default function AdminEditor({
               <label className={label}>Shares *</label>
               <input className={field} value={shares} onChange={(e) => setShares(e.target.value)} placeholder="10" inputMode="decimal" />
             </div>
+          </div>
+
+          <div className="mt-4">
+            <label className={label}>How this trade started</label>
+            <div className="flex flex-wrap gap-2">
+              {([
+                { k: "code", txt: "⚡ Signal from the code" },
+                { k: "copycat", txt: "🧭 Copycat trade" },
+                { k: "manual", txt: "✋ My own conviction" },
+              ] as const).map(({ k, txt }) => (
+                <button
+                  key={k}
+                  type="button"
+                  onClick={() => setEntry(k)}
+                  className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${
+                    entry === k
+                      ? "border-tape bg-tape text-white"
+                      : "border-wall-dark bg-white text-ink-soft hover:border-tape"
+                  }`}
+                >
+                  {txt}
+                </button>
+              ))}
+            </div>
+            {entry === "copycat" && (
+              <input
+                className={`${field} mt-2`}
+                value={entryNote}
+                onChange={(e) => setEntryNote(e.target.value)}
+                placeholder="Who are you copying? e.g. Pabrai"
+              />
+            )}
+            <p className="mt-1 text-[11px] text-ink-soft">
+              This shows as a badge on the chapter and feeds{" "}
+              <span className="font-semibold">“The code”</span> track record. It&apos;s a
+              label on the trade, never a recommendation.
+            </p>
           </div>
 
           <h2 className={sectionH}>
@@ -620,6 +663,9 @@ export default function AdminEditor({
             <div className="flex items-center gap-3">
               <span className="text-sm uppercase tracking-widest text-ink-soft">Chapter {chapter || "—"}</span>
               <span className="rounded-full bg-tape/10 px-2 py-0.5 text-xs font-semibold text-tape">still drying</span>
+              <span className="rounded-full border border-wall-dark px-2 py-0.5 text-xs font-semibold text-ink-soft">
+                {entryMeta(entry, entryNote).emoji} {entryMeta(entry, entryNote).label}
+              </span>
             </div>
             <div className="mt-1 flex items-center gap-3">
               <BrandMark ticker={ticker || "?"} logo={logo} domain={domain} size={40} />

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { buildChapterFile, chapterSlug, type ChapterFileInput } from "@/lib/chapter-file";
 import { createFileOnGitHub, createBinaryFileOnGitHub, triggerVercelDeploy } from "@/lib/github";
+import { isEntryKind } from "@/lib/entry-source";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -30,6 +31,8 @@ export async function POST(req: Request) {
   if (!String(input.exitTest || "").trim())
     errors.push("The exit plan (what would make you sell) is required — the pledge says every chapter states it on day one.");
   if (!String(input.body || "").trim()) errors.push("Write the 'why' before publishing.");
+  const entry = isEntryKind(input.entry) ? input.entry : "manual";
+  const entryNote = entry === "copycat" ? String(input.entryNote || "").trim() : undefined;
   if (errors.length) return NextResponse.json({ ok: false, error: errors.join(" ") }, { status: 400 });
 
   const fileText = buildChapterFile({
@@ -45,6 +48,8 @@ export async function POST(req: Request) {
     note: input.note,
     proofs: input.proofs,
     exitTest: input.exitTest,
+    entry,
+    entryNote,
     body: input.body,
   });
 

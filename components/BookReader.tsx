@@ -105,7 +105,7 @@ export default function BookReader({
           {ledger && (
             <details className="rounded-xl border border-wall-dark bg-white/60 px-4 py-3">
               <summary className="font-grotesk cursor-pointer list-none text-[11px] font-bold uppercase tracking-wider text-ink-soft">
-                ▾ Live scoreboard — portfolio &amp; S&amp;P
+                ▾ Live scoreboard — the portfolio
               </summary>
               <div className="mt-3">{ledger}</div>
             </details>

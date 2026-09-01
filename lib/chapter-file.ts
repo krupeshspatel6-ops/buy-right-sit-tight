@@ -1,6 +1,8 @@
 // Builds a chapter markdown file from structured input — the same format as
 // chapters/_TEMPLATE.md. Shared by the admin publish route.
 
+import type { EntryKind } from "./entry-source";
+
 export type ChapterFileInput = {
   chapter: number;
   title: string;
@@ -14,6 +16,8 @@ export type ChapterFileInput = {
   note?: string;
   proofs?: string[];
   exitTest: string;
+  entry?: EntryKind; // how this trade started
+  entryNote?: string; // e.g. who was copied
   body: string;
 };
 
@@ -61,6 +65,8 @@ export function buildChapterFile(i: ChapterFileInput): string {
     ...(i.company ? [`company: ${JSON.stringify(i.company)}`] : []),
     ...(i.logo ? [`logo: ${JSON.stringify(i.logo)}`] : []),
     ...(i.domain ? [`domain: ${JSON.stringify(i.domain)}`] : []),
+    ...(i.entry ? [`entry: ${i.entry}`] : []),
+    ...(i.entry === "copycat" && i.entryNote ? [`entryNote: ${JSON.stringify(i.entryNote)}`] : []),
     "buys:",
     `  - date: "${i.date}"`,
     `    price: ${i.price}`,

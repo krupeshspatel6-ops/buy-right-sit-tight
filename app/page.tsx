@@ -19,6 +19,8 @@ import BrandMark from "@/components/BrandMark";
 import ReadAloudButton from "@/components/ReadAloudButton";
 import CandleChart from "@/components/CandleChart";
 import ProofPanel from "@/components/ProofPanel";
+import EntryBadge from "@/components/EntryBadge";
+import TheCode from "@/components/TheCode";
 
 export const revalidate = 3600;
 
@@ -53,6 +55,7 @@ export default async function Home() {
   chapters.forEach((c, i) => charts.set(c.chapter, chartList[i]));
   const open = chapters.filter((c) => c.status === "open");
   const closed = chapters.filter((c) => c.status === "closed");
+  const codeCount = chapters.filter((c) => c.entry === "code").length;
   const hasPhoto = fs.existsSync(path.join(process.cwd(), "public", "sitting.jpg"));
   const coverImage = hasPhoto ? "/sitting.jpg" : "/sitting-wide.svg";
 
@@ -262,6 +265,14 @@ export default async function Home() {
     </div>
   );
 
+  /* ---- Page: the code (the engine behind many of the buys) ---- */
+  sideToc.push({ label: "The code", sub: "the engine", pageIndex: pages.length });
+  pages.push(
+    <div key="the-code" className="py-2">
+      <TheCode chapters={chapters} />
+    </div>
+  );
+
   /* ---- Page: table of contents = the portfolio ---- */
   sideToc.push({ label: "Table of contents", sub: "the portfolio", pageIndex: pages.length });
   pages.push(
@@ -296,6 +307,20 @@ export default async function Home() {
           <div className="stat-sub">all picks, cost-weighted</div>
         </div>
       </div>
+
+      {codeCount > 0 && (
+        <p className="mb-6 text-[13px] text-ink-soft">
+          <span aria-hidden>⚡</span>{" "}
+          <b className="text-ink">
+            {codeCount} of {chapters.length}
+          </b>{" "}
+          began as a signal from{" "}
+          <Link href="/the-code" className="text-tape underline">
+            the code
+          </Link>
+          .
+        </p>
+      )}
 
       {chapters.length === 0 ? (
         <div className="rounded-lg border-2 border-dashed border-wall-dark px-6 py-10 text-center text-ink-soft">
@@ -350,9 +375,12 @@ export default async function Home() {
           {/* Chapter opener — a color-block "part" page in our blue */}
           <div className="chapter-opener mb-6">
             <span className="opener-ghost">{c.chapter}</span>
-            <span className="chip chip-solid">
-              Chapter {c.chapter} · {c.status === "open" ? "drying" : "dried · finished"}
-            </span>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="chip chip-solid">
+                Chapter {c.chapter} · {c.status === "open" ? "drying" : "dried · finished"}
+              </span>
+              <EntryBadge kind={c.entry} note={c.entryNote} variant="opener" />
+            </div>
             <div className="opener-ticker">{c.ticker}</div>
             <div className="mt-2 flex items-center gap-2.5">
               <BrandMark ticker={c.ticker} logo={c.logo} domain={c.domain} size={28} />
@@ -509,6 +537,7 @@ function TocSection({
                       dried · finished
                     </span>
                   )}
+                  <EntryBadge kind={c.entry} note={c.entryNote} variant="row" />
                 </span>
                 <span className="font-grotesk block text-[11px] text-ink-soft">
                   {c.company ? `${c.company} · ` : ""}

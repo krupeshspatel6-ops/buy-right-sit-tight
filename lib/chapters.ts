@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import matter from "gray-matter";
+import { isEntryKind, type EntryKind } from "./entry-source";
 
 export type Buy = {
   date: string; // ISO timestamp of the actual fill
@@ -28,10 +29,23 @@ export type Chapter = {
   sell?: Sell;
   exitTest: string;
   proofs: string[]; // paths under /public — broker fill screenshots / statement excerpts
+  entry?: EntryKind; // how the trade started: code signal / copycat / manual
+  entryNote?: string; // refines a copycat ("Pabrai") or adds a short qualifier
   body: string;
 };
 
 const CHAPTERS_DIR = path.join(process.cwd(), "chapters");
+
+// The first chapters were published BEFORE the entry-source field existed. We
+// never edit a published, blockchain-stamped file — so their entry source lives
+// here as read-only metadata, applied only when the file itself doesn't declare
+// one. Every chapter published from now on carries `entry:` in its own sealed
+// frontmatter, so this map does not grow.
+const LEGACY_ENTRY: Record<string, { kind: EntryKind; note?: string }> = {
+  "01-kspi": { kind: "copycat", note: "Pabrai" },
+  "02-brkb": { kind: "code" },
+  "03-msft": { kind: "code" },
+};
 
 // YAML parses ISO timestamps into Date objects; normalize back to strings.
 function isoString(v: unknown): string {
@@ -52,8 +66,12 @@ export function loadChapters(): Chapter[] {
     .map((file) => {
       const raw = fs.readFileSync(path.join(CHAPTERS_DIR, file), "utf8");
       const { data, content } = matter(raw);
+      const slug = file.replace(/\.md$/, "");
+      const legacy = LEGACY_ENTRY[slug];
+      const entry: EntryKind | undefined = isEntryKind(data.entry) ? data.entry : legacy?.kind;
+      const entryNote = data.entryNote ? String(data.entryNote) : legacy?.note;
       const c: Chapter = {
-        slug: file.replace(/\.md$/, ""),
+        slug,
         chapter: Number(data.chapter),
         title: String(data.title ?? ""),
         ticker: String(data.ticker ?? "").toUpperCase(),
@@ -70,6 +88,8 @@ export function loadChapters(): Chapter[] {
           ? { ...(data.sell as Sell), date: isoString((data.sell as Sell).date) }
           : undefined,
         exitTest: String(data.exitTest ?? ""),
+        entry,
+        entryNote,
         body: content.trim(),
       };
       return c;

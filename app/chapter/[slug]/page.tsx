@@ -8,6 +8,7 @@ import BrandMark from "@/components/BrandMark";
 import ReadAloudButton from "@/components/ReadAloudButton";
 import CandleChart from "@/components/CandleChart";
 import ProofPanel from "@/components/ProofPanel";
+import EntryBadge from "@/components/EntryBadge";
 
 export const revalidate = 3600;
 
@@ -56,6 +57,7 @@ export default async function ChapterPage({
           >
             {chapter.status === "open" ? "drying" : "dried · finished"}
           </span>
+          <EntryBadge kind={chapter.entry} note={chapter.entryNote} variant="plain" />
         </div>
         <div className="mt-2 flex items-center gap-3">
           <BrandMark ticker={chapter.ticker} logo={chapter.logo} domain={chapter.domain} size={48} />
