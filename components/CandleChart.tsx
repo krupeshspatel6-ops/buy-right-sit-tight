@@ -44,7 +44,12 @@ export default function CandleChart({ data, ticker }: { data: ChapterChart; tick
   const bodyW = Math.max(1.5, Math.min(slot * 0.62, 11));
   const cx = (i: number) => padL + slot * (i + 0.5);
 
-  // 4 horizontal price gridlines
+  // 4 horizontal price gridlines. Pick label precision from the visible price
+  // WINDOW, not the absolute price — on a ~$5 window around a $500 stock,
+  // whole-dollar labels round unevenly (502, 503, 504, 506, 507…), which reads
+  // as crooked even though the lines are evenly spaced.
+  const range = max - min;
+  const priceDecimals = range >= 50 ? 0 : range >= 10 ? 1 : 2;
   const ticks = 4;
   const gridlines = Array.from({ length: ticks + 1 }, (_, i) => {
     const p = min + ((max - min) * i) / ticks;
@@ -69,7 +74,7 @@ export default function CandleChart({ data, ticker }: { data: ChapterChart; tick
           <g key={i}>
             <line x1={padL} x2={W - padR} y1={g.yy} y2={g.yy} stroke={WALL_DARK} strokeWidth={1} />
             <text x={padL - 6} y={g.yy + 3} textAnchor="end" fontSize={10} fill={INK_SOFT} fontFamily="Archivo, system-ui, sans-serif">
-              ${g.p.toFixed(g.p < 10 ? 2 : 0)}
+              ${g.p.toFixed(priceDecimals)}
             </text>
           </g>
         ))}
