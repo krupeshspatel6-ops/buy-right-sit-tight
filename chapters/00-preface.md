@@ -31,8 +31,8 @@ Mohnish Pabrai** think. I am nowhere close. This is chapter one of trying.
 
 A few things I want to be crystal clear about, because they matter:
 
-- **I am 15 years old.** I can't legally have my own brokerage account, so I
-  invest through a **custodian account with my mom.**
+- **I'm 15 as I start this book.** I can't legally have my own brokerage
+  account yet, so I invest through a **custodian account with my mom.**
 - **The money is mine** — everything I've saved so far. If I don't have
   enough for a stock I really believe in, I borrow from my mom and dad. Right
   now I have enough for about **10 stocks**, if I can ever find 10 worth

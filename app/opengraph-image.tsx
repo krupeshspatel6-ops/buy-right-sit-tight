@@ -70,7 +70,7 @@ export default function OgImage() {
             watch the paint dry.
           </div>
           <div style={{ fontSize: 26, color: "#6b675d", marginTop: 40 }}>
-            A 15-year-old learning to invest in public — with his own money.
+            Started this book at 15 — learning to invest in public, with his own money.
           </div>
           <div style={{ fontSize: 24, color: "#26241f", marginTop: 12, fontWeight: 700 }}>
             being written by Krupesh Patel

@@ -12,7 +12,7 @@ import dynamic from "next/dynamic";
 const Character3D = dynamic(() => import("@/components/copycat/Character3D"), { ssr: false });
 
 const WELCOME_FIRST =
-  "Hi! 👋 I'm Krupesh's AI assistant. He's 15, learning to invest in public with his own money. Take the tour, or ask me anything!";
+  "Hi! 👋 I'm Krupesh's AI assistant. He started this book at 15, learning to invest in public with his own money. Take the tour, or ask me anything!";
 const WELCOME_BACK =
   "Welcome back! 👋 Krupesh's AI assistant here — take the tour, or ask me anything about the book.";
 

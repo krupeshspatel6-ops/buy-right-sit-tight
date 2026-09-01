@@ -8,7 +8,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 const INTRO = [
-  "Hi — I'm Krupesh! 👋 I'm 15 and I'm learning to invest with my own money, in public. New here? Start with my story:",
+  "Hi — I'm Krupesh! 👋 I started this book at 15, learning to invest with my own money, in public. New here? Start with my story:",
 ];
 
 const TYPE_MS = 26; // per character

@@ -16,7 +16,7 @@ const groteskFont = Archivo({
 
 const TITLE = "Buy Right Sit Tight — watch the paint dry.";
 const DESCRIPTION =
-  "A 15-year-old learning to invest in public. Every stock I buy opens a timestamped chapter that's never edited; a chapter only closes when I sell. A learning journal, not advice.";
+  "Krupesh started this book at 15, learning to invest in public. Every stock I buy opens a timestamped chapter that's never edited; a chapter only closes when I sell. A learning journal, not advice.";
 
 export const metadata: Metadata = {
   title: TITLE,
@@ -48,12 +48,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <a href="mailto:hello@buyrightsittight.com" className="font-semibold text-tape underline">
               hello@buyrightsittight.com
             </a>{" "}
-            — a parent reads this inbox first and moderates it (Krupesh is 15), so replies may
+            — a parent reads this inbox first and moderates it (he started this book at 15), so replies may
             take a few days, and not every message gets one.
           </p>
           <p>
-            Krupesh is 15, and this is his personal learning journal — <b>not investment
-            advice</b>. He buys real stocks in a custodian account to learn, and he will get
+            Krupesh started this book at 15, and it&apos;s his personal learning journal —{" "}
+            <b>not investment advice</b>. He buys real stocks in a custodian account to learn,
+            and he will get
             things wrong; those mistakes stay on the page, on purpose. Nothing here is a
             recommendation — do your own research or talk to a licensed advisor.
           </p>

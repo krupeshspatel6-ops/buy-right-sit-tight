@@ -247,9 +247,9 @@ export default async function Home() {
 
       <div className="mt-8 border-t border-wall-dark pt-5 text-sm leading-relaxed text-ink-soft">
         <p>
-          <b className="text-ink">A note as this grows.</b> I&apos;m 15, and I will get
-          things wrong — bad calls, clumsy writing, ideas I later see differently. Those
-          mistakes stay right here on the page; that&apos;s part of the point.
+          <b className="text-ink">A note as this grows.</b> I started this book at 15, and I
+          will get things wrong — bad calls, clumsy writing, ideas I later see differently.
+          Those mistakes stay right here on the page; that&apos;s part of the point.
         </p>
         <p className="mt-3">
           The <i>look</i> of this site will keep changing as I learn — the layout, the
