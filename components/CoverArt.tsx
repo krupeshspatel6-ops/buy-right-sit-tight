@@ -2,10 +2,18 @@
 // wall is painted (a 0–100 percent that keeps growing with each chapter but
 // never quite reaches full — there's always more wall). At 0 the wall
 // is blank and primed; at 100 the paint reaches the far end where the man sits.
+//
+// The SVG is anchored LEFT (preserveAspectRatio="xMinYMid slice"): paint grows
+// from x=0 rightward, so a centered slice would crop off exactly the painted
+// sliver at low percentages (no visible blue). xMin keeps the painted frontier
+// in frame at every progress level; the man (~x1500) stays visible too.
+
+const W = 1500; // canvas width — kept close to the display box so a "slice"
+                // crops little; the man sits ~x1300, the paint grows from x0.
 
 export default function CoverArt({ progress }: { progress: number }) {
   const p = Math.max(0, Math.min(100, progress));
-  const e = (p / 100) * 2200; // painted frontier x-coordinate
+  const e = (p / 100) * W; // painted frontier x-coordinate
 
   const streaks: number[] = [];
   for (let x = 90; x < e - 70; x += 150) streaks.push(x);
@@ -19,14 +27,14 @@ export default function CoverArt({ progress }: { progress: number }) {
 
   return (
     <svg
-      viewBox="0 0 2200 500"
-      preserveAspectRatio="xMidYMid slice"
+      viewBox={`0 0 ${W} 500`}
+      preserveAspectRatio="xMinYMid slice"
       className="h-[30vh] w-full"
       role="img"
       aria-label={`A wide room with a wall ${p} percent painted; far to the right a man sits in a folding chair with a mug, watching the paint dry.`}
     >
       {/* unpainted, primed wall */}
-      <rect x="0" y="0" width="2200" height="400" fill="#f0ebe0" />
+      <rect x="0" y="0" width={W} height="400" fill="#f0ebe0" />
 
       {/* painted (drying) area — grows one percent per chapter */}
       {p > 0 && <path d={paintedPath} fill="#7fa3d1" />}
@@ -44,11 +52,11 @@ export default function CoverArt({ progress }: { progress: number }) {
       ))}
 
       {/* painter's tape along the ceiling line */}
-      <rect x="0" y="6" width="2200" height="13" fill="#e8c86e" />
+      <rect x="0" y="6" width={W} height="13" fill="#e8c86e" />
 
       {/* floor */}
-      <rect x="0" y="400" width="2200" height="100" fill="#d9d2c4" />
-      <rect x="0" y="396" width="2200" height="7" fill="#c4bca9" />
+      <rect x="0" y="400" width={W} height="100" fill="#d9d2c4" />
+      <rect x="0" y="396" width={W} height="7" fill="#c4bca9" />
 
       {/* drop cloth, tray, and resting roller — always ready */}
       <path d="M520 420 L860 420 L895 488 L485 488 Z" fill="#e7e1d3" />
@@ -61,7 +69,7 @@ export default function CoverArt({ progress }: { progress: number }) {
       </g>
 
       {/* the man and his chair, far across the room */}
-      <g transform="translate(950 0)">
+      <g transform="translate(680 0)">
         <g stroke="#2a2a2a" strokeWidth="9" strokeLinecap="round" fill="none">
           <line x1="560" y1="330" x2="640" y2="330" />
           <line x1="566" y1="330" x2="600" y2="398" />
