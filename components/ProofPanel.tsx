@@ -1,5 +1,6 @@
 import { chapterCommitsUrl } from "@/lib/repo";
 import { formatDate } from "@/lib/format";
+import ProofImage from "@/components/ProofImage";
 
 // The independent ways a reader can confirm a chapter is a real, unedited,
 // real-time trade — timestamp proof, the market tape, and the broker slip.
@@ -45,13 +46,7 @@ export default function ProofPanel({
             time, price, and quantity — with account details redacted.
             <div className="mt-3 flex flex-wrap gap-3">
               {proofs.map((p) => (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  key={p}
-                  src={p}
-                  alt={`Broker confirmation for the ${ticker} buy`}
-                  className="max-h-56 rounded border border-wall-dark"
-                />
+                <ProofImage key={p} src={p} alt={`Broker confirmation for the ${ticker} buy`} />
               ))}
             </div>
           </li>
