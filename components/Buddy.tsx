@@ -7,14 +7,15 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import dynamic from "next/dynamic";
+import { useSpeechRecognition } from "@/lib/useSpeechRecognition";
 
 // Heavy 3D — only load it when the buddy actually opens, never on the server.
 const Character3D = dynamic(() => import("@/components/copycat/Character3D"), { ssr: false });
 
 const WELCOME_FIRST =
-  "Hi! 👋 I'm Krupesh's AI assistant. He started this book at 15, learning to invest in public with his own money. Take the tour, or ask me anything!";
+  "Hi! 👋 I'm Krupesh's AI assistant. He started this book at 15, learning to invest in public with his own money. Take the tour, or ask me anything — out loud or by typing!";
 const WELCOME_BACK =
-  "Welcome back! 👋 Krupesh's AI assistant here — take the tour, or ask me anything about the book.";
+  "Welcome back! 👋 Krupesh's AI assistant here — take the tour, or ask me anything about the book, out loud or by typing.";
 
 // --- Previous story (kept in case we want to revert) -----------------------
 // const STORY = [
@@ -459,14 +460,14 @@ export default function Buddy() {
     return () => window.removeEventListener("buddy:read", onRead);
   }, [narrate]);
 
-  async function ask(e?: React.FormEvent) {
-    e?.preventDefault();
+  // The shared question pipeline — used by both the typed form and the mic.
+  // Grounded + guard-railed on the server (/api/ask): on-book only, never advice.
+  async function submitQuestion(raw: string) {
     interactedRef.current = true;
-    const q = question.trim();
+    const q = raw.trim();
     if (!q || thinking) return;
     if (/^\s*stop\b/i.test(q)) {
       stop();
-      setQuestion("");
       say("Okay, I'll stop. Tap a button whenever you want me again.");
       return;
     }
@@ -475,7 +476,6 @@ export default function Buddy() {
     cancelVoice();
     setTarget("");
     setText("");
-    setQuestion("");
     const nextHistory = [...history, { role: "user" as const, content: q }];
     setHistory(nextHistory);
     try {
@@ -494,6 +494,36 @@ export default function Buddy() {
       setThinking(false);
     }
   }
+
+  function ask(e?: React.FormEvent) {
+    e?.preventDefault();
+    const q = question;
+    setQuestion("");
+    submitQuestion(q);
+  }
+
+  // Tap-to-talk voice input. When a phrase lands, it runs the exact same
+  // pipeline as typing, so all the guardrails carry over untouched.
+  const talk = useSpeechRecognition({ onFinal: (t) => submitQuestion(t) });
+
+  // Tap the mic: stop any current speech (so it doesn't hear itself), open the
+  // menu, and start listening.
+  function startListening() {
+    interactedRef.current = true;
+    setAsking(false);
+    stop();
+    setMenuOpen(true);
+    talk.start();
+  }
+
+  const micError =
+    talk.error === "not-allowed" || talk.error === "service-not-allowed"
+      ? "I need mic access to hear you — allow it in your browser, or just type instead."
+      : talk.error === "no-speech"
+        ? "I didn't catch that — tap 🎤 and try again."
+        : talk.error && talk.error !== "aborted"
+          ? "Voice had a hiccup — you can type your question instead."
+          : "";
 
   function toggleVoice() {
     interactedRef.current = true;
@@ -608,7 +638,7 @@ export default function Buddy() {
     >
       {/* speech bubble — only when open or actively speaking, so at rest the
           buddy is just the small character and never covers page content. */}
-      {(menuOpen || speaking || asking || thinking) && (
+      {(menuOpen || speaking || asking || thinking || talk.listening || micError) && (
       <div
         className="relative z-10 mb-2 self-start w-[210px] max-w-[82vw] whitespace-normal break-words rounded-2xl border border-wall-dark bg-white/95 px-4 py-3 pt-5 text-sm leading-relaxed shadow-lg sm:w-[236px]"
         style={{ pointerEvents: "auto", transform: "translate(8px, 44px)" }}
@@ -654,7 +684,14 @@ export default function Buddy() {
           </button>
         </div>
 
-        {(thinking || text || speaking) && (
+        {talk.listening ? (
+          <div className="mb-2 flex items-start gap-2">
+            <span className="mt-0.5 animate-pulse" aria-hidden>🎤</span>
+            <span className={talk.interim ? "" : "text-ink-soft"}>
+              {talk.interim || "Listening… speak now."}
+            </span>
+          </div>
+        ) : (thinking || text || speaking) ? (
           <div className="mb-2 max-h-[9rem] overflow-y-auto">
             {thinking ? (
               <span className="text-ink-soft">Thinking…</span>
@@ -667,9 +704,26 @@ export default function Buddy() {
               <span className="animate-pulse text-ink-soft">…</span>
             )}
           </div>
-        )}
+        ) : micError ? (
+          <div className="mb-2 text-ink-soft">{micError}</div>
+        ) : null}
 
-        {asking ? (
+        {talk.listening ? (
+          <div className="flex flex-col gap-1.5">
+            <button
+              onClick={() => talk.stop()}
+              className="w-full whitespace-nowrap rounded-full bg-tape px-3 py-1.5 text-xs font-semibold text-white"
+            >
+              ⏹ Done — send
+            </button>
+            <button
+              onClick={() => talk.cancel()}
+              className="self-start text-xs text-ink-soft underline"
+            >
+              cancel
+            </button>
+          </div>
+        ) : asking ? (
           <div className="flex flex-col gap-1.5">
             <form onSubmit={ask} className="flex gap-1.5">
               <input
@@ -708,6 +762,14 @@ export default function Buddy() {
               >
                 ⏹ Stop talking
               </button>
+            ) : talk.supported ? (
+              <button
+                onClick={startListening}
+                title="Talk to me out loud — I'll listen and answer"
+                className="w-full whitespace-nowrap rounded-full bg-tape px-3 py-1.5 text-xs font-semibold text-white"
+              >
+                🎤 Talk to me
+              </button>
             ) : (
               <button
                 onClick={startTalking}
@@ -736,10 +798,10 @@ export default function Buddy() {
                   setAsking(true);
                   stop();
                 }}
-                title="Ask a question about the book"
+                title="Type a question about the book"
                 className="min-w-0 flex-1 whitespace-nowrap rounded-full border border-tape px-1.5 py-1 text-[11px] font-semibold text-tape"
               >
-                💬 Ask
+                {talk.supported ? "⌨️ Type" : "💬 Ask"}
               </button>
             </div>
           </div>
