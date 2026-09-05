@@ -85,9 +85,6 @@ export default function Buddy() {
   const pathname = usePathname() || "/";
   const [hidden, setHidden] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false); // panel open; collapses to the launcher
-  const [greetDismissed, setGreetDismissed] = useState(false); // mobile welcome toast
-  const [isMobile, setIsMobile] = useState(false);
-  const isMobileRef = useRef(false);
   const [pos, setPos] = useState<{ x: number; y: number } | null>(null); // drag position; null = anchored bottom-left
   const wrapperRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<{ sx: number; sy: number; bx: number; by: number } | null>(null);
@@ -350,19 +347,6 @@ export default function Buddy() {
     return () => clearTimeout(t);
   }, [text, target, captionOn]);
 
-  // Track viewport so the buddy can use a compact mobile layout (a launcher +
-  // sheet) instead of a big standing character that covers the page on a phone.
-  useEffect(() => {
-    const mq = window.matchMedia("(max-width: 639px)");
-    const apply = () => {
-      isMobileRef.current = mq.matches;
-      setIsMobile(mq.matches);
-    };
-    apply();
-    mq.addEventListener("change", apply);
-    return () => mq.removeEventListener("change", apply);
-  }, []);
-
   // Greet on load (the character is free-standing and always present). The
   // guard lives inside the timer so React's dev double-mount can't cancel it.
   useEffect(() => {
@@ -383,10 +367,11 @@ export default function Buddy() {
       const line = returning ? WELCOME_BACK : WELCOME_FIRST;
       greetLineRef.current = line;
       setTarget(line);
-      // Greet everyone on arrival. On desktop the speech bubble shows the
-      // welcome; on mobile a small toast above the launcher shows it (opening
-      // the full sheet on load would cover the page).
-      setMenuOpen(!isMobileRef.current);
+      // Greet on arrival. Desktop has a side gutter, so the welcome bubble opens
+      // there; phones have no gutter, so start collapsed (the character + a
+      // "Chat with me" tab) to keep the cover clear — tapping opens the same
+      // welcome bubble.
+      setMenuOpen(window.matchMedia("(min-width: 640px)").matches);
       prefetchTts(line); // warm the voice so it plays on first interaction
     }, 200);
     return () => clearTimeout(t);
@@ -801,82 +786,13 @@ export default function Buddy() {
     </div>
   );
 
-  // ------------------------------- Mobile -------------------------------
-  // A compact launcher in the corner that opens a bottom sheet — no big
-  // standing character hogging a phone screen.
-  if (isMobile) {
-    return (
-      <div
-        ref={wrapperRef}
-        className="fixed bottom-4 right-3 z-50 flex flex-col items-end gap-2 print:hidden"
-      >
-        {open ? (
-          <div className="w-[min(92vw,360px)] overflow-hidden rounded-2xl border border-wall-dark bg-white shadow-2xl">
-            <div className="flex items-center gap-2 border-b border-wall-dark bg-wall/40 px-3 py-2">
-              <BuddyAvatar size={30} />
-              <div className="min-w-0 flex-1 leading-tight">
-                <div className="text-xs font-bold">Krupesh&apos;s AI assistant</div>
-                <div className="text-[10px] text-ink-soft">ask about the book — voice or text</div>
-              </div>
-              {chrome}
-            </div>
-            <div className="px-4 py-3 text-sm leading-relaxed">
-              {statusBlock}
-              {controlsBlock}
-            </div>
-          </div>
-        ) : (
-          <>
-            {!greetDismissed && (
-              <div className="relative max-w-[80vw] rounded-2xl rounded-br-sm border border-wall-dark bg-white px-3 py-2 pr-7 text-[13px] leading-snug shadow-lg">
-                <button
-                  onClick={() => {
-                    interactedRef.current = true;
-                    setMenuOpen(true);
-                  }}
-                  className="text-left"
-                >
-                  {greetLineRef.current || WELCOME_FIRST}
-                </button>
-                <button
-                  onClick={() => setGreetDismissed(true)}
-                  aria-label="Dismiss"
-                  className="absolute right-1 top-1 grid h-5 w-5 place-items-center rounded-full text-ink-soft hover:bg-wall"
-                >
-                  ✕
-                </button>
-              </div>
-            )}
-            <button
-              onClick={() => {
-                interactedRef.current = true;
-                setMenuOpen(true);
-              }}
-              aria-label="Chat with Krupesh's assistant"
-              className="relative grid h-14 w-14 place-items-center rounded-full border border-wall-dark bg-white shadow-xl active:scale-95"
-            >
-              <BuddyAvatar size={46} />
-              {!greetDismissed && (
-                <span className="absolute -right-0.5 -top-0.5 flex h-3.5 w-3.5">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-tape opacity-60" />
-                  <span className="relative inline-flex h-3.5 w-3.5 rounded-full border-2 border-white bg-tape" />
-                </span>
-              )}
-            </button>
-          </>
-        )}
-      </div>
-    );
-  }
-
-  // ------------------------------- Desktop ------------------------------
-  // The free-standing 3D character with a speech bubble above its head. The
-  // wrapper ignores pointer events so the page stays clickable; the bubble,
-  // launcher tab, and controls opt back in.
+  // The free-standing 3D character with a speech bubble above its head — the
+  // same buddy on every screen size. The wrapper ignores pointer events so the
+  // page stays clickable; the bubble, launcher tab, and controls opt back in.
   return (
     <div
       ref={wrapperRef}
-      className="group fixed bottom-0 left-1 sm:left-2 z-50 flex w-[clamp(117px,19.8vh,210px)] flex-col items-center print:hidden"
+      className="group fixed bottom-0 left-1 sm:left-2 z-50 flex w-[112px] flex-col items-center print:hidden sm:w-[clamp(117px,19.8vh,210px)]"
       style={{
         pointerEvents: "none",
         ...(pos ? { left: pos.x, top: pos.y, right: "auto", bottom: "auto" } : {}),
@@ -927,7 +843,7 @@ export default function Buddy() {
         </button>
       )}
 
-      <div className="relative h-[clamp(200px,34vh,360px)] w-[clamp(117px,19.8vh,210px)]">
+      <div className="relative h-[192px] w-[112px] sm:h-[clamp(200px,34vh,360px)] sm:w-[clamp(117px,19.8vh,210px)]">
         <div className="absolute inset-0" style={{ pointerEvents: "none" }}>
           <Character3D expressionRef={expressionRef} dancing={dancing} />
         </div>

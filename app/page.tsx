@@ -141,7 +141,7 @@ export default async function Home() {
   pages.push(
     <div
       key="cover"
-      className="-mx-8 -my-8 sm:-mx-14 flex h-[76vh] flex-col overflow-hidden"
+      className="-mx-8 -my-8 sm:-mx-14 flex min-h-[76vh] flex-col"
     >
       {/* full-bleed illustration — the wall paints itself, 2% per chapter */}
       <div className="relative flex-none overflow-hidden rounded-tl-[4px] rounded-tr-[10px]">
@@ -150,7 +150,7 @@ export default async function Home() {
           <img
             src={coverImage}
             alt="The author sits in a folding chair, watching a half-painted wall dry"
-            className="h-[30vh] w-full object-cover object-center"
+            className="h-[22vh] w-full object-cover object-center sm:h-[30vh]"
           />
         ) : (
           <CoverArt progress={wallPct(chapters.length)} />

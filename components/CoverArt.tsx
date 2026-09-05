@@ -29,7 +29,7 @@ export default function CoverArt({ progress }: { progress: number }) {
     <svg
       viewBox={`0 0 ${W} 500`}
       preserveAspectRatio="xMinYMid slice"
-      className="h-[30vh] w-full"
+      className="h-[22vh] w-full sm:h-[30vh]"
       role="img"
       aria-label={`A wide room with a wall ${p} percent painted; far to the right a man sits in a folding chair with a mug, watching the paint dry.`}
     >
