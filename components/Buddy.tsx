@@ -8,6 +8,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import dynamic from "next/dynamic";
 import { useSpeechRecognition } from "@/lib/useSpeechRecognition";
+import BuddyAvatar from "@/components/BuddyAvatar";
 
 // Heavy 3D — only load it when the buddy actually opens, never on the server.
 const Character3D = dynamic(() => import("@/components/copycat/Character3D"), { ssr: false });
@@ -83,7 +84,10 @@ function chunkText(raw: string): string[] {
 export default function Buddy() {
   const pathname = usePathname() || "/";
   const [hidden, setHidden] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(true); // bubble open; collapses to just the character
+  const [menuOpen, setMenuOpen] = useState(false); // panel open; collapses to the launcher
+  const [greetDismissed, setGreetDismissed] = useState(false); // mobile welcome toast
+  const [isMobile, setIsMobile] = useState(false);
+  const isMobileRef = useRef(false);
   const [pos, setPos] = useState<{ x: number; y: number } | null>(null); // drag position; null = anchored bottom-left
   const wrapperRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<{ sx: number; sy: number; bx: number; by: number } | null>(null);
@@ -346,6 +350,19 @@ export default function Buddy() {
     return () => clearTimeout(t);
   }, [text, target, captionOn]);
 
+  // Track viewport so the buddy can use a compact mobile layout (a launcher +
+  // sheet) instead of a big standing character that covers the page on a phone.
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 639px)");
+    const apply = () => {
+      isMobileRef.current = mq.matches;
+      setIsMobile(mq.matches);
+    };
+    apply();
+    mq.addEventListener("change", apply);
+    return () => mq.removeEventListener("change", apply);
+  }, []);
+
   // Greet on load (the character is free-standing and always present). The
   // guard lives inside the timer so React's dev double-mount can't cancel it.
   useEffect(() => {
@@ -366,10 +383,11 @@ export default function Buddy() {
       const line = returning ? WELCOME_BACK : WELCOME_FIRST;
       greetLineRef.current = line;
       setTarget(line);
-      // Returning visitors start collapsed (just the character) so the buddy
-      // never sits over the page content; first-timers see the greeting bubble.
-      if (returning) setMenuOpen(false);
-      prefetchTts(line); // warm the voice so "Start talking" plays instantly
+      // Greet everyone on arrival. On desktop the speech bubble shows the
+      // welcome; on mobile a small toast above the launcher shows it (opening
+      // the full sheet on load would cover the page).
+      setMenuOpen(!isMobileRef.current);
+      prefetchTts(line); // warm the voice so it plays on first interaction
     }, 200);
     return () => clearTimeout(t);
   }, [hidden, prefetchTts]);
@@ -380,7 +398,7 @@ export default function Buddy() {
   useEffect(() => {
     const onFirst = (e: Event) => {
       interactedRef.current = true;
-      const buddyEl = document.querySelector(".fixed.bottom-0.left-2");
+      const buddyEl = wrapperRef.current;
       const inside = buddyEl && e.target instanceof Node && buddyEl.contains(e.target);
       // Say the greeting now — it types in sync with the voice (see speakNeural).
       if (!inside && !greetVoicedRef.current && greetLineRef.current) {
@@ -623,231 +641,314 @@ export default function Buddy() {
     );
   }
 
+  const open = menuOpen || speaking || asking || thinking || talk.listening || Boolean(micError);
+
+  // ---- Shared pieces, used by both the desktop bubble and the mobile sheet ----
+
+  // Mute / minimize / hide.
+  const chrome = (
+    <div className="flex items-center gap-1">
+      <button
+        onClick={toggleVoice}
+        title={voice ? "Mute" : "Unmute"}
+        aria-label={voice ? "Mute" : "Unmute"}
+        className="grid h-7 w-7 place-items-center rounded-full border border-wall-dark bg-white text-sm shadow-sm hover:bg-wall"
+      >
+        {voice ? "🔊" : "🔈"}
+      </button>
+      <button
+        onClick={() => {
+          stop();
+          setMenuOpen(false);
+        }}
+        title="Minimize"
+        aria-label="Minimize"
+        className="grid h-7 w-7 place-items-center rounded-full border border-wall-dark bg-white text-lg leading-none shadow-sm hover:bg-wall"
+      >
+        –
+      </button>
+      <button
+        onClick={() => {
+          stop();
+          setHidden(true);
+        }}
+        title="Hide the buddy"
+        aria-label="Hide the buddy"
+        className="grid h-7 w-7 place-items-center rounded-full border border-wall-dark bg-white text-sm shadow-sm hover:bg-wall"
+      >
+        ✕
+      </button>
+    </div>
+  );
+
+  // The status line: listening → thinking → typed text → mic error.
+  const statusBlock = talk.listening ? (
+    <div className="mb-2 flex items-start gap-2">
+      <span className="mt-0.5 animate-pulse" aria-hidden>🎤</span>
+      <span className={talk.interim ? "" : "text-ink-soft"}>
+        {talk.interim || "Listening… speak now."}
+      </span>
+    </div>
+  ) : thinking || text || speaking ? (
+    <div className="mb-2 max-h-[9rem] overflow-y-auto">
+      {thinking ? (
+        <span className="text-ink-soft">Thinking…</span>
+      ) : text ? (
+        <span>
+          {text}
+          {text.length < target.length && <span className="animate-pulse">▍</span>}
+        </span>
+      ) : (
+        <span className="animate-pulse text-ink-soft">…</span>
+      )}
+    </div>
+  ) : micError ? (
+    <div className="mb-2 text-ink-soft">{micError}</div>
+  ) : null;
+
+  // The action controls: listening → typing → the menu.
+  const controlsBlock = talk.listening ? (
+    <div className="flex flex-col gap-1.5">
+      <button
+        onClick={() => talk.stop()}
+        className="w-full whitespace-nowrap rounded-full bg-tape px-3 py-1.5 text-xs font-semibold text-white"
+      >
+        ⏹ Done — send
+      </button>
+      <button onClick={() => talk.cancel()} className="self-start text-xs text-ink-soft underline">
+        cancel
+      </button>
+    </div>
+  ) : asking ? (
+    <div className="flex flex-col gap-1.5">
+      <form onSubmit={ask} className="flex gap-1.5">
+        <input
+          autoFocus
+          value={question}
+          onChange={(e) => setQuestion(e.target.value)}
+          placeholder="Ask about the book…"
+          className="min-w-0 flex-1 rounded-full border border-wall-dark px-3 py-1 text-sm outline-none focus:border-tape"
+        />
+        <button
+          type="submit"
+          disabled={thinking}
+          className="rounded-full bg-tape px-3 py-1 text-sm font-semibold text-white disabled:opacity-50"
+        >
+          Ask
+        </button>
+      </form>
+      <button
+        onClick={() => {
+          stop();
+          setAsking(false);
+        }}
+        className="self-start text-xs text-ink-soft underline"
+      >
+        ← back
+      </button>
+    </div>
+  ) : (
+    <div className="flex flex-col gap-1.5">
+      {speaking ? (
+        <button
+          onClick={stop}
+          className="w-full whitespace-nowrap rounded-full bg-loss px-3 py-1.5 text-xs font-semibold text-white"
+        >
+          ⏹ Stop talking
+        </button>
+      ) : talk.supported ? (
+        <button
+          onClick={startListening}
+          title="Talk to me out loud — I'll listen and answer"
+          className="w-full whitespace-nowrap rounded-full bg-tape px-3 py-2 text-xs font-semibold text-white"
+        >
+          🎤 Talk to me
+        </button>
+      ) : (
+        <button
+          onClick={startTalking}
+          className="w-full whitespace-nowrap rounded-full bg-tape px-3 py-2 text-xs font-semibold text-white"
+        >
+          ▶ Start talking
+        </button>
+      )}
+      <div className="flex gap-1.5">
+        <button
+          onClick={showBook}
+          title="Take me on a tour of the book"
+          className="min-w-0 flex-1 whitespace-nowrap rounded-full border border-tape px-1.5 py-1.5 text-[11px] font-semibold text-tape hover:bg-tape/5"
+        >
+          🏛️ Tour
+        </button>
+        <button
+          onClick={tellStory}
+          title="Tell the story behind the book"
+          className="min-w-0 flex-1 whitespace-nowrap rounded-full border border-tape px-1.5 py-1.5 text-[11px] font-semibold text-tape hover:bg-tape/5"
+        >
+          📖 Story
+        </button>
+        <button
+          onClick={() => {
+            setAsking(true);
+            stop();
+          }}
+          title="Type a question about the book"
+          className="min-w-0 flex-1 whitespace-nowrap rounded-full border border-tape px-1.5 py-1.5 text-[11px] font-semibold text-tape hover:bg-tape/5"
+        >
+          {talk.supported ? "⌨️ Type" : "💬 Ask"}
+        </button>
+      </div>
+    </div>
+  );
+
+  // ------------------------------- Mobile -------------------------------
+  // A compact launcher in the corner that opens a bottom sheet — no big
+  // standing character hogging a phone screen.
+  if (isMobile) {
+    return (
+      <div
+        ref={wrapperRef}
+        className="fixed bottom-4 right-3 z-50 flex flex-col items-end gap-2 print:hidden"
+      >
+        {open ? (
+          <div className="w-[min(92vw,360px)] overflow-hidden rounded-2xl border border-wall-dark bg-white shadow-2xl">
+            <div className="flex items-center gap-2 border-b border-wall-dark bg-wall/40 px-3 py-2">
+              <BuddyAvatar size={30} />
+              <div className="min-w-0 flex-1 leading-tight">
+                <div className="text-xs font-bold">Krupesh&apos;s AI assistant</div>
+                <div className="text-[10px] text-ink-soft">ask about the book — voice or text</div>
+              </div>
+              {chrome}
+            </div>
+            <div className="px-4 py-3 text-sm leading-relaxed">
+              {statusBlock}
+              {controlsBlock}
+            </div>
+          </div>
+        ) : (
+          <>
+            {!greetDismissed && (
+              <div className="relative max-w-[80vw] rounded-2xl rounded-br-sm border border-wall-dark bg-white px-3 py-2 pr-7 text-[13px] leading-snug shadow-lg">
+                <button
+                  onClick={() => {
+                    interactedRef.current = true;
+                    setMenuOpen(true);
+                  }}
+                  className="text-left"
+                >
+                  {greetLineRef.current || WELCOME_FIRST}
+                </button>
+                <button
+                  onClick={() => setGreetDismissed(true)}
+                  aria-label="Dismiss"
+                  className="absolute right-1 top-1 grid h-5 w-5 place-items-center rounded-full text-ink-soft hover:bg-wall"
+                >
+                  ✕
+                </button>
+              </div>
+            )}
+            <button
+              onClick={() => {
+                interactedRef.current = true;
+                setMenuOpen(true);
+              }}
+              aria-label="Chat with Krupesh's assistant"
+              className="relative grid h-14 w-14 place-items-center rounded-full border border-wall-dark bg-white shadow-xl active:scale-95"
+            >
+              <BuddyAvatar size={46} />
+              {!greetDismissed && (
+                <span className="absolute -right-0.5 -top-0.5 flex h-3.5 w-3.5">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-tape opacity-60" />
+                  <span className="relative inline-flex h-3.5 w-3.5 rounded-full border-2 border-white bg-tape" />
+                </span>
+              )}
+            </button>
+          </>
+        )}
+      </div>
+    );
+  }
+
+  // ------------------------------- Desktop ------------------------------
+  // The free-standing 3D character with a speech bubble above its head. The
+  // wrapper ignores pointer events so the page stays clickable; the bubble,
+  // launcher tab, and controls opt back in.
   return (
-    // Free-standing: the character stands on the page (transparent, no card),
-    // anchored to the bottom. The bubble stacks directly above its head. The
-    // wrapper ignores pointer events so the page stays clickable; the bubble
-    // and controls opt back in.
     <div
       ref={wrapperRef}
-      className="fixed bottom-0 left-1 sm:left-2 z-50 flex w-[clamp(117px,19.8vh,210px)] flex-col items-center print:hidden"
+      className="group fixed bottom-0 left-1 sm:left-2 z-50 flex w-[clamp(117px,19.8vh,210px)] flex-col items-center print:hidden"
       style={{
         pointerEvents: "none",
         ...(pos ? { left: pos.x, top: pos.y, right: "auto", bottom: "auto" } : {}),
       }}
     >
-      {/* speech bubble — only when open or actively speaking, so at rest the
-          buddy is just the small character and never covers page content. */}
-      {(menuOpen || speaking || asking || thinking || talk.listening || micError) && (
-      <div
-        className="relative z-10 mb-2 self-start w-[210px] max-w-[82vw] whitespace-normal break-words rounded-2xl border border-wall-dark bg-white/95 px-4 py-3 pt-5 text-sm leading-relaxed shadow-lg sm:w-[236px]"
-        style={{ pointerEvents: "auto", transform: "translate(8px, 44px)" }}
-      >
-        {/* drag grip — move the buddy anywhere */}
-        <button
-          onPointerDown={onDragStart}
-          title="Drag me anywhere"
-          aria-label="Drag the buddy"
-          className="absolute -top-3 left-2 grid h-7 w-7 cursor-grab touch-none select-none place-items-center rounded-full border border-wall-dark bg-white text-sm shadow-sm hover:bg-wall active:cursor-grabbing"
+      {open ? (
+        <div
+          className="relative z-10 mb-2 self-start w-[210px] max-w-[82vw] whitespace-normal break-words rounded-2xl border border-wall-dark bg-white/95 px-4 py-3 pt-5 text-sm leading-relaxed shadow-lg sm:w-[236px]"
+          style={{ pointerEvents: "auto", transform: "translate(8px, 44px)" }}
         >
-          ✥
-        </button>
+          <button
+            onPointerDown={onDragStart}
+            title="Drag me anywhere"
+            aria-label="Drag the buddy"
+            className="absolute -top-3 left-2 grid h-7 w-7 cursor-grab touch-none select-none place-items-center rounded-full border border-wall-dark bg-white text-sm shadow-sm hover:bg-wall active:cursor-grabbing"
+          >
+            ✥
+          </button>
+          <div className="absolute -top-3 right-2">{chrome}</div>
 
-        {/* mute, minimize, close — on top of the popup */}
-        <div className="absolute -top-3 right-2 flex items-center gap-1">
-          <button
-            onClick={toggleVoice}
-            title={voice ? "Mute" : "Unmute"}
-            className="grid h-7 w-7 place-items-center rounded-full border border-wall-dark bg-white text-sm shadow-sm hover:bg-wall"
-          >
-            {voice ? "🔊" : "🔈"}
-          </button>
-          <button
-            onClick={() => {
-              stop();
-              setMenuOpen(false);
-            }}
-            title="Minimize"
-            className="grid h-7 w-7 place-items-center rounded-full border border-wall-dark bg-white text-lg leading-none shadow-sm hover:bg-wall"
-          >
-            –
-          </button>
-          <button
-            onClick={() => {
-              stop();
-              setHidden(true);
-            }}
-            title="Hide the buddy"
-            className="grid h-7 w-7 place-items-center rounded-full border border-wall-dark bg-white text-sm shadow-sm hover:bg-wall"
-          >
-            ✕
-          </button>
+          {statusBlock}
+          {controlsBlock}
+
+          {/* tail pointing down to the character */}
+          <span
+            aria-hidden
+            className="absolute -bottom-[7px] left-1/2 h-3.5 w-3.5 -translate-x-1/2 rotate-45 border-b border-r border-wall-dark bg-white/95"
+          />
         </div>
-
-        {talk.listening ? (
-          <div className="mb-2 flex items-start gap-2">
-            <span className="mt-0.5 animate-pulse" aria-hidden>🎤</span>
-            <span className={talk.interim ? "" : "text-ink-soft"}>
-              {talk.interim || "Listening… speak now."}
-            </span>
-          </div>
-        ) : (thinking || text || speaking) ? (
-          <div className="mb-2 max-h-[9rem] overflow-y-auto">
-            {thinking ? (
-              <span className="text-ink-soft">Thinking…</span>
-            ) : text ? (
-              <span>
-                {text}
-                {text.length < target.length && <span className="animate-pulse">▍</span>}
-              </span>
-            ) : (
-              <span className="animate-pulse text-ink-soft">…</span>
-            )}
-          </div>
-        ) : micError ? (
-          <div className="mb-2 text-ink-soft">{micError}</div>
-        ) : null}
-
-        {talk.listening ? (
-          <div className="flex flex-col gap-1.5">
-            <button
-              onClick={() => talk.stop()}
-              className="w-full whitespace-nowrap rounded-full bg-tape px-3 py-1.5 text-xs font-semibold text-white"
-            >
-              ⏹ Done — send
-            </button>
-            <button
-              onClick={() => talk.cancel()}
-              className="self-start text-xs text-ink-soft underline"
-            >
-              cancel
-            </button>
-          </div>
-        ) : asking ? (
-          <div className="flex flex-col gap-1.5">
-            <form onSubmit={ask} className="flex gap-1.5">
-              <input
-                autoFocus
-                value={question}
-                onChange={(e) => setQuestion(e.target.value)}
-                placeholder="Ask about the book…"
-                className="min-w-0 flex-1 rounded-full border border-wall-dark px-3 py-1 text-sm outline-none focus:border-tape"
-              />
-              <button
-                type="submit"
-                disabled={thinking}
-                className="rounded-full bg-tape px-3 py-1 text-sm font-semibold text-white disabled:opacity-50"
-              >
-                Ask
-              </button>
-            </form>
-            <button
-              onClick={() => {
-                stop();
-                setAsking(false);
-              }}
-              className="self-start text-xs text-ink-soft underline"
-            >
-              ← back
-            </button>
-          </div>
-        ) : (
-          <div className="flex flex-col gap-1.5">
-            {/* Two tidy rows — never wraps into a tall stack that hits the
-                ledger: primary action on top, three compact actions below. */}
-            {speaking ? (
-              <button
-                onClick={stop}
-                className="w-full whitespace-nowrap rounded-full bg-loss px-3 py-1.5 text-xs font-semibold text-white"
-              >
-                ⏹ Stop talking
-              </button>
-            ) : talk.supported ? (
-              <button
-                onClick={startListening}
-                title="Talk to me out loud — I'll listen and answer"
-                className="w-full whitespace-nowrap rounded-full bg-tape px-3 py-1.5 text-xs font-semibold text-white"
-              >
-                🎤 Talk to me
-              </button>
-            ) : (
-              <button
-                onClick={startTalking}
-                className="w-full whitespace-nowrap rounded-full bg-tape px-3 py-1.5 text-xs font-semibold text-white"
-              >
-                ▶ Start talking
-              </button>
-            )}
-            <div className="flex gap-1.5">
-              <button
-                onClick={showBook}
-                title="Take me on a tour of the book"
-                className="min-w-0 flex-1 whitespace-nowrap rounded-full border border-tape px-1.5 py-1 text-[11px] font-semibold text-tape"
-              >
-                🏛️ Tour
-              </button>
-              <button
-                onClick={tellStory}
-                title="Tell the story behind the book"
-                className="min-w-0 flex-1 whitespace-nowrap rounded-full border border-tape px-1.5 py-1 text-[11px] font-semibold text-tape"
-              >
-                📖 Story
-              </button>
-              <button
-                onClick={() => {
-                  setAsking(true);
-                  stop();
-                }}
-                title="Type a question about the book"
-                className="min-w-0 flex-1 whitespace-nowrap rounded-full border border-tape px-1.5 py-1 text-[11px] font-semibold text-tape"
-              >
-                {talk.supported ? "⌨️ Type" : "💬 Ask"}
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* tail pointing down to the character */}
-        <span
-          aria-hidden
-          className="absolute -bottom-[7px] left-1/2 h-3.5 w-3.5 -translate-x-1/2 rotate-45 border-b border-r border-wall-dark bg-white/95"
-        />
-      </div>
+      ) : (
+        // Collapsed: one tidy "Chat with me" tab sitting where the bubble does,
+        // so it reads as the character speaking — not floating chrome.
+        <button
+          onClick={() => {
+            interactedRef.current = true;
+            setMenuOpen(true);
+          }}
+          aria-label="Chat with Krupesh's assistant"
+          className="relative z-10 mb-2 inline-flex self-start items-center gap-1.5 rounded-full border border-wall-dark bg-white px-3 py-1.5 text-[12px] font-semibold text-tape shadow-lg hover:bg-wall"
+          style={{ pointerEvents: "auto", transform: "translate(8px, 44px)" }}
+        >
+          <BuddyAvatar size={20} />
+          Chat with me
+          <span
+            aria-hidden
+            className="absolute -bottom-[6px] left-6 h-3 w-3 rotate-45 border-b border-r border-wall-dark bg-white"
+          />
+        </button>
       )}
 
       <div className="relative h-[clamp(200px,34vh,360px)] w-[clamp(117px,19.8vh,210px)]">
-        {/* the free-standing 3D character (same 0.583 aspect at every size) */}
         <div className="absolute inset-0" style={{ pointerEvents: "none" }}>
           <Character3D expressionRef={expressionRef} dancing={dancing} />
         </div>
-        {/* when collapsed, tap the character to reopen the menu */}
-        {!(menuOpen || speaking || asking || thinking) && (
+        {!open && (
           <>
+            {/* tap the character to open */}
             <button
               onClick={() => {
                 interactedRef.current = true;
                 setMenuOpen(true);
               }}
               aria-label="Open Krupesh's assistant"
-              className="absolute inset-0 z-10 cursor-pointer"
+              className="absolute inset-0 z-[5] cursor-pointer"
               style={{ pointerEvents: "auto" }}
             />
-            <button
-              onClick={() => {
-                interactedRef.current = true;
-                setMenuOpen(true);
-              }}
-              className="font-grotesk absolute right-0 top-1 z-20 rounded-full border border-wall-dark bg-white px-2 py-0.5 text-[10px] font-bold text-tape shadow-sm"
-              style={{ pointerEvents: "auto" }}
-            >
-              💬 chat
-            </button>
-            {/* drag grip in the corner when collapsed */}
+            {/* drag handle — only appears on hover so it isn't visual clutter */}
             <button
               onPointerDown={onDragStart}
               title="Drag me anywhere"
               aria-label="Drag the buddy"
-              className="absolute left-0 top-1 z-20 grid h-6 w-6 cursor-grab touch-none select-none place-items-center rounded-full border border-wall-dark bg-white text-[11px] shadow-sm active:cursor-grabbing"
+              className="absolute left-0 top-2 z-20 grid h-6 w-6 cursor-grab touch-none select-none place-items-center rounded-full border border-wall-dark bg-white/90 text-[11px] opacity-0 shadow-sm transition-opacity group-hover:opacity-100 active:cursor-grabbing"
               style={{ pointerEvents: "auto" }}
             >
               ✥
