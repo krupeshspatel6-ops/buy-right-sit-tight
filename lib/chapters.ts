@@ -127,3 +127,22 @@ export function chapterOtsUrl(slug: string): string | null {
   const rel = path.join("public", "proofs", "ots", `${slug}.ots`);
   return fs.existsSync(path.join(process.cwd(), rel)) ? `/proofs/ots/${slug}.ots` : null;
 }
+
+// Once a chapter's timestamp confirms on Bitcoin, a small sidecar records the
+// block it landed in (written by the OTS upgrade job). Present = confirmed;
+// absent = still pending (settles ~a day after publishing).
+export type BitcoinProof = { block: number; hash: string; time: number };
+export function chapterBitcoinProof(slug: string): BitcoinProof | null {
+  const rel = path.join("public", "proofs", "ots", `${slug}.btc.json`);
+  const abs = path.join(process.cwd(), rel);
+  if (!fs.existsSync(abs)) return null;
+  try {
+    const j = JSON.parse(fs.readFileSync(abs, "utf8"));
+    if (typeof j.block === "number" && typeof j.hash === "string" && typeof j.time === "number") {
+      return j as BitcoinProof;
+    }
+  } catch {
+    /* fall through */
+  }
+  return null;
+}

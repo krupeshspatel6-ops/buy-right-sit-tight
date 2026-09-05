@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { renderMarkdown } from "@/lib/markdown";
-import { getChapter, loadChapters, costBasis, totalShares, firstBuyDate, chapterOtsUrl } from "@/lib/chapters";
+import { getChapter, loadChapters, costBasis, totalShares, firstBuyDate, chapterOtsUrl, chapterBitcoinProof } from "@/lib/chapters";
 import { getChapterPerf, getChapterCandles } from "@/lib/quotes";
 import { formatFillTime, formatDate } from "@/lib/format";
 import BrandMark from "@/components/BrandMark";
@@ -143,6 +143,7 @@ export default async function ChapterPage({
           buyDate={firstBuyDate(chapter)}
           proofs={chapter.proofs}
           otsUrl={chapterOtsUrl(chapter.slug)}
+          btc={chapterBitcoinProof(chapter.slug)}
         />
       </div>
 

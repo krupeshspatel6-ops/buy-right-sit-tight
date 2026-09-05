@@ -151,6 +151,63 @@ export async function createBinaryFileOnGitHub(
   return { ok: false, error: `GitHub API ${res.status}: ${t.slice(0, 200)}`, code: "api" };
 }
 
+// Read a binary file's base64 content + blob sha (for upgrading .ots proofs).
+export async function getBinaryFileFromGitHub(
+  relPath: string
+): Promise<{ ok: true; base64: string; sha: string } | { ok: false; error: string; missing?: boolean }> {
+  const token = process.env.GITHUB_TOKEN;
+  const repo = process.env.GITHUB_REPO || "krupeshspatel6-ops/buy-right-sit-tight";
+  const branch = process.env.GITHUB_BRANCH || "main";
+  if (!token) return { ok: false, error: "GITHUB_TOKEN is not set." };
+  const encodedPath = relPath.split("/").map(encodeURIComponent).join("/");
+  const url = `https://api.github.com/repos/${repo}/contents/${encodedPath}?ref=${branch}`;
+  const res = await fetch(url, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: "application/vnd.github+json",
+      "User-Agent": "brst-admin",
+      "X-GitHub-Api-Version": "2022-11-28",
+    },
+    cache: "no-store",
+  });
+  if (res.status === 404) return { ok: false, error: "not found", missing: true };
+  if (!res.ok) return { ok: false, error: `GitHub API ${res.status}` };
+  const j = await res.json();
+  return { ok: true, base64: String(j.content || "").replace(/\n/g, ""), sha: j.sha };
+}
+
+// Update an existing binary file (base64) — requires the current blob sha.
+export async function updateBinaryFileOnGitHub(
+  relPath: string,
+  base64: string,
+  sha: string,
+  message: string
+): Promise<CommitResult> {
+  const token = process.env.GITHUB_TOKEN;
+  const repo = process.env.GITHUB_REPO || "krupeshspatel6-ops/buy-right-sit-tight";
+  const branch = process.env.GITHUB_BRANCH || "main";
+  if (!token) return { ok: false, error: "GITHUB_TOKEN is not set.", code: "config" };
+  const encodedPath = relPath.split("/").map(encodeURIComponent).join("/");
+  const url = `https://api.github.com/repos/${repo}/contents/${encodedPath}`;
+  const res = await fetch(url, {
+    method: "PUT",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: "application/vnd.github+json",
+      "Content-Type": "application/json",
+      "User-Agent": "brst-admin",
+      "X-GitHub-Api-Version": "2022-11-28",
+    },
+    body: JSON.stringify({ message, content: base64, sha, branch }),
+  });
+  if (res.status === 200) {
+    const j = await res.json().catch(() => ({}));
+    return { ok: true, sha: j?.commit?.sha };
+  }
+  const t = await res.text().catch(() => "");
+  return { ok: false, error: `GitHub API ${res.status}: ${t.slice(0, 200)}`, code: "api" };
+}
+
 // After committing, trigger a production deploy so the change goes live.
 export async function triggerVercelDeploy(): Promise<boolean> {
   const hook = process.env.VERCEL_DEPLOY_HOOK_URL;

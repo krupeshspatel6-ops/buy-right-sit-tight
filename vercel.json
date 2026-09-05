@@ -1,0 +1,5 @@
+{
+  "crons": [
+    { "path": "/api/cron/upgrade-ots", "schedule": "0 6 * * *" }
+  ]
+}

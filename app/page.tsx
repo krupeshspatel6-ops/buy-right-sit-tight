@@ -11,6 +11,7 @@ import {
   firstBuyDate,
   totalShares,
   chapterOtsUrl,
+  chapterBitcoinProof,
   type Chapter,
 } from "@/lib/chapters";
 import { getScoreboard, getChapterCandles, type Scoreboard, type ChapterChart } from "@/lib/quotes";
@@ -454,6 +455,7 @@ export default async function Home() {
             buyDate={firstBuyDate(c)}
             proofs={c.proofs}
             otsUrl={chapterOtsUrl(c.slug)}
+            btc={chapterBitcoinProof(c.slug)}
           />
 
           <div className="mb-3">
