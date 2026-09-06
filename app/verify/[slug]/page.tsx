@@ -161,6 +161,12 @@ export default async function VerifyPage({ params }: { params: Promise<{ slug: s
             <b className="text-ink">{fmtTime(v.blockTime)}</b> — the blockchain&apos;s own clock,
             which no one can rewind. So this chapter provably existed by then.
           </p>
+          <p className="mt-2 rounded-md bg-wall/50 px-3 py-2 text-[12px] text-ink-soft">
+            <b className="text-ink">A note on the time:</b> we show it in <b>UTC</b> — the fixed,
+            universal clock used for proofs. A block explorer like mempool.space usually shows
+            the same moment in <i>your</i> local timezone, so the clock time can look a few hours
+            different. It&apos;s the exact same instant.
+          </p>
         </li>
       </ol>
 
