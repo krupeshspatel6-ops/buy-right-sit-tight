@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { chapterCommitsUrl, chapterFileUrl } from "@/lib/repo";
 import { formatDate } from "@/lib/format";
 import ProofImage from "@/components/ProofImage";
@@ -59,7 +60,7 @@ export default function ProofPanel({
             <b>Anchored to the Bitcoin blockchain.</b>{" "}
             {btc ? (
               <>
-                This chapter&apos;s fingerprint was written into{" "}
+                This chapter&apos;s fingerprint is locked into{" "}
                 <a
                   href={`https://mempool.space/block/${btc.hash}`}
                   target="_blank"
@@ -68,34 +69,38 @@ export default function ProofPanel({
                 >
                   Bitcoin block #{btc.block.toLocaleString("en-US")} ↗
                 </a>{" "}
-                on {formatDate(new Date(btc.time * 1000).toISOString())} — a timestamp nobody
-                can forge or backdate, not even me. Click through to see the real block. To
-                check it end-to-end, run the{" "}
-                <a
-                  href={otsUrl}
-                  className="font-grotesk font-bold text-tape underline"
-                >
-                  .ots proof
-                </a>{" "}
-                against the{" "}
-                <a
-                  href={chapterFileUrl(slug)}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="font-grotesk font-bold text-tape underline"
-                >
-                  original chapter file
-                </a>{" "}
-                (drag both into{" "}
-                <a
-                  href="https://opentimestamps.org"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="font-grotesk font-bold text-tape underline"
-                >
-                  opentimestamps.org
-                </a>
-                ).
+                ({formatDate(new Date(btc.time * 1000).toISOString())}) — a timestamp nobody can
+                forge or backdate, not even me.
+                <span className="mt-2 block">
+                  <Link
+                    href={`/verify/${slug}`}
+                    className="font-grotesk font-bold text-tape underline"
+                  >
+                    ✅ See this proof checked for you, step by step →
+                  </Link>
+                </span>
+                <span className="mt-1 block text-[12px] text-ink-soft">
+                  Prefer to do it yourself? Grab the{" "}
+                  <a href={otsUrl} className="underline">.ots proof</a> and the{" "}
+                  <a
+                    href={chapterFileUrl(slug)}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="underline"
+                  >
+                    chapter file
+                  </a>{" "}
+                  and drop both into{" "}
+                  <a
+                    href="https://opentimestamps.org"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="underline"
+                  >
+                    opentimestamps.org
+                  </a>
+                  .
+                </span>
               </>
             ) : (
               <>
