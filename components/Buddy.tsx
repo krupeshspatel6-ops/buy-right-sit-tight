@@ -353,10 +353,13 @@ export default function Buddy() {
     return () => clearTimeout(t);
   }, [text, target, captionOn]);
 
-  // Track viewport: phones get a compact corner launcher + bottom sheet so the
-  // buddy never sits over the book; desktop gets the free-standing character.
+  // Track viewport. The free-standing desktop character lives in the side
+  // gutter — but that gutter (the ledger/contents sidebars) only exists at xl
+  // (≥1280px). Below that there's NO gutter, so the character + its bubble would
+  // sit on top of the book. So we use the compact corner-launcher + bottom-sheet
+  // treatment for everything under xl, not just phones.
   useEffect(() => {
-    const mq = window.matchMedia("(max-width: 639px)");
+    const mq = window.matchMedia("(max-width: 1279px)");
     const apply = () => {
       isMobileRef.current = mq.matches;
       setIsMobile(mq.matches);
