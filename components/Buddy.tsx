@@ -601,7 +601,7 @@ export default function Buddy() {
       setPos((p) => {
         if (p) {
           try {
-            localStorage.setItem("brst_buddy_pos", JSON.stringify(p));
+            localStorage.setItem("brst_buddy_pos_v2", JSON.stringify(p));
           } catch {
             /* ignore */
           }
@@ -613,14 +613,21 @@ export default function Buddy() {
     window.addEventListener("pointerup", up);
   }
 
-  // Restore a saved drag position.
+  // Restore a saved drag position (desktop only). The key was bumped to _v2 so
+  // old positions that parked the buddy over the ledger are discarded, and we
+  // refuse to restore any spot in the top-left ledger zone or off-screen.
   useEffect(() => {
     try {
-      const raw = localStorage.getItem("brst_buddy_pos");
-      if (raw) {
-        const p = JSON.parse(raw);
-        if (typeof p?.x === "number" && typeof p?.y === "number") setPos(p);
-      }
+      const raw = localStorage.getItem("brst_buddy_pos_v2");
+      if (!raw) return;
+      const p = JSON.parse(raw);
+      if (typeof p?.x !== "number" || typeof p?.y !== "number") return;
+      const overLedger = p.x < 300 && p.y < window.innerHeight * 0.45;
+      if (overLedger) return; // fall back to the clean default (bottom-left)
+      setPos({
+        x: Math.max(4, Math.min(p.x, window.innerWidth - 120)),
+        y: Math.max(4, Math.min(p.y, window.innerHeight - 160)),
+      });
     } catch {
       /* ignore */
     }
