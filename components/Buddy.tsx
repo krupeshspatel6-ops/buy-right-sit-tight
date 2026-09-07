@@ -48,6 +48,9 @@ const TOUR = [
 
 const STORE_KEY = "brst_buddy_v1";
 const TYPE_MS = 22;
+// A short, low-footprint greeting for the mobile corner launcher (the full
+// welcome shows inside the sheet once opened).
+const MOBILE_HELLO = "Hi! 👋 Tap me to chat about Krupesh's book.";
 
 type ChatMsg = { role: "user" | "assistant"; content: string };
 
@@ -85,6 +88,9 @@ export default function Buddy() {
   const pathname = usePathname() || "/";
   const [hidden, setHidden] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false); // panel open; collapses to the launcher
+  const [greetDismissed, setGreetDismissed] = useState(false); // mobile welcome toast
+  const [isMobile, setIsMobile] = useState(false);
+  const isMobileRef = useRef(false);
   const [pos, setPos] = useState<{ x: number; y: number } | null>(null); // drag position; null = anchored bottom-left
   const wrapperRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<{ sx: number; sy: number; bx: number; by: number } | null>(null);
@@ -347,6 +353,19 @@ export default function Buddy() {
     return () => clearTimeout(t);
   }, [text, target, captionOn]);
 
+  // Track viewport: phones get a compact corner launcher + bottom sheet so the
+  // buddy never sits over the book; desktop gets the free-standing character.
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 639px)");
+    const apply = () => {
+      isMobileRef.current = mq.matches;
+      setIsMobile(mq.matches);
+    };
+    apply();
+    mq.addEventListener("change", apply);
+    return () => mq.removeEventListener("change", apply);
+  }, []);
+
   // Greet on load (the character is free-standing and always present). The
   // guard lives inside the timer so React's dev double-mount can't cancel it.
   useEffect(() => {
@@ -367,11 +386,10 @@ export default function Buddy() {
       const line = returning ? WELCOME_BACK : WELCOME_FIRST;
       greetLineRef.current = line;
       setTarget(line);
-      // Greet on arrival. Desktop has a side gutter, so the welcome bubble opens
-      // there; phones have no gutter, so start collapsed (the character + a
-      // "Chat with me" tab) to keep the cover clear — tapping opens the same
-      // welcome bubble.
-      setMenuOpen(window.matchMedia("(min-width: 640px)").matches);
+      // Greet on arrival. Desktop opens the welcome bubble in its side gutter;
+      // phones stay collapsed (a tiny welcome toast by the corner launcher) so
+      // nothing covers the book — tapping opens the bottom sheet.
+      setMenuOpen(!isMobileRef.current);
       prefetchTts(line); // warm the voice so it plays on first interaction
     }, 200);
     return () => clearTimeout(t);
@@ -786,9 +804,80 @@ export default function Buddy() {
     </div>
   );
 
-  // The free-standing 3D character with a speech bubble above its head — the
-  // same buddy on every screen size. The wrapper ignores pointer events so the
-  // page stays clickable; the bubble, launcher tab, and controls opt back in.
+  // ------------------------------- Mobile -------------------------------
+  // A small character docked in the corner (still the buddy, not a generic
+  // icon), and — crucially — opening it raises a BOTTOM SHEET rather than a
+  // bubble that floats over the middle of the book. Collapsed, it barely
+  // touches the page; open, it's a panel the reader chose and can dismiss.
+  if (isMobile) {
+    return (
+      <div
+        ref={wrapperRef}
+        className="pointer-events-none fixed inset-x-0 bottom-0 z-50 print:hidden"
+      >
+        {open ? (
+          <div className="pointer-events-auto mx-auto mb-3 w-[calc(100%-1rem)] max-w-md overflow-hidden rounded-2xl border border-wall-dark bg-white shadow-2xl">
+            <div className="flex items-center gap-2 border-b border-wall-dark bg-wall/40 px-3 py-2">
+              <BuddyAvatar size={30} />
+              <div className="min-w-0 flex-1 leading-tight">
+                <div className="text-xs font-bold">Krupesh&apos;s AI assistant</div>
+                <div className="text-[10px] text-ink-soft">ask about the book — voice or text</div>
+              </div>
+              {chrome}
+            </div>
+            <div className="px-4 py-3 text-sm leading-relaxed">
+              {statusBlock}
+              {controlsBlock}
+            </div>
+          </div>
+        ) : (
+          <div className="pointer-events-auto absolute bottom-0 left-1 flex flex-col items-start">
+            {!greetDismissed && (
+              <div className="relative mb-1 ml-1 max-w-[62vw] rounded-2xl rounded-bl-sm border border-wall-dark bg-white px-3 py-2 pr-7 text-[13px] leading-snug shadow-lg">
+                <button
+                  onClick={() => {
+                    interactedRef.current = true;
+                    setMenuOpen(true);
+                  }}
+                  className="text-left"
+                >
+                  {MOBILE_HELLO}
+                </button>
+                <button
+                  onClick={() => setGreetDismissed(true)}
+                  aria-label="Dismiss"
+                  className="absolute right-1 top-1 grid h-5 w-5 place-items-center rounded-full text-ink-soft hover:bg-wall"
+                >
+                  ✕
+                </button>
+              </div>
+            )}
+            <button
+              onClick={() => {
+                interactedRef.current = true;
+                setMenuOpen(true);
+              }}
+              aria-label="Chat with Krupesh's assistant"
+              className="relative"
+              style={{ width: 77, height: 132 }}
+            >
+              <div className="absolute inset-0" style={{ pointerEvents: "none" }}>
+                <Character3D expressionRef={expressionRef} dancing={dancing} />
+              </div>
+              <span className="absolute right-0 top-2 rounded-full border border-wall-dark bg-white px-1.5 py-0.5 text-[10px] font-bold text-tape shadow-sm">
+                💬
+              </span>
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // ------------------------------- Desktop ------------------------------
+  // The free-standing 3D character with a speech bubble above its head. The
+  // wrapper ignores pointer events so the page stays clickable; the bubble,
+  // launcher tab, and controls opt back in.
   return (
     <div
       ref={wrapperRef}

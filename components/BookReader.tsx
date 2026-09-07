@@ -160,7 +160,8 @@ export default function BookReader({
           </div>
         </div>
 
-        <div className="mt-4 flex items-center justify-between text-sm text-ink-soft">
+        {/* extra left padding on mobile so the corner buddy doesn't cover "Previous" */}
+        <div className="mt-4 flex items-center justify-between pl-20 text-sm text-ink-soft sm:pl-0">
           <button
             onClick={() => goTo("prev")}
             disabled={index === 0}

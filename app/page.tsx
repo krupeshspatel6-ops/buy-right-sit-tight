@@ -154,7 +154,16 @@ export default async function Home() {
             className="h-[22vh] w-full object-cover object-center sm:h-[30vh]"
           />
         ) : (
-          <CoverArt progress={wallPct(chapters.length)} />
+          <>
+            {/* Mobile: whole scene (man included) at natural aspect. */}
+            <div className="sm:hidden">
+              <CoverArt progress={wallPct(chapters.length)} fit="contain" />
+            </div>
+            {/* Desktop: fills the band, anchored to the painted (left) edge. */}
+            <div className="hidden sm:block">
+              <CoverArt progress={wallPct(chapters.length)} fit="cover" />
+            </div>
+          </>
         )}
         <span className="absolute right-5 top-4 inline-flex items-center gap-1.5 rounded-full bg-white/90 px-3 py-1 text-xs font-bold uppercase tracking-widest text-tape shadow-sm">
           <span className="live-dot live-dot-pulse" aria-hidden /> live

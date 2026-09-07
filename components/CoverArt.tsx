@@ -11,7 +11,16 @@
 const W = 1500; // canvas width — kept close to the display box so a "slice"
                 // crops little; the man sits ~x1300, the paint grows from x0.
 
-export default function CoverArt({ progress }: { progress: number }) {
+// fit="cover" fills a fixed-height band and crops (desktop, wide gutter).
+// fit="contain" shows the WHOLE scene — man included — at its natural aspect
+// (mobile, where cropping the right would hide the person).
+export default function CoverArt({
+  progress,
+  fit = "cover",
+}: {
+  progress: number;
+  fit?: "cover" | "contain";
+}) {
   const p = Math.max(0, Math.min(100, progress));
   const e = (p / 100) * W; // painted frontier x-coordinate
 
@@ -28,8 +37,8 @@ export default function CoverArt({ progress }: { progress: number }) {
   return (
     <svg
       viewBox={`0 0 ${W} 500`}
-      preserveAspectRatio="xMinYMid slice"
-      className="h-[22vh] w-full sm:h-[30vh]"
+      preserveAspectRatio={fit === "contain" ? "xMidYMid meet" : "xMinYMid slice"}
+      className={fit === "contain" ? "block w-full" : "h-[22vh] w-full sm:h-[30vh]"}
       role="img"
       aria-label={`A wide room with a wall ${p} percent painted; far to the right a man sits in a folding chair with a mug, watching the paint dry.`}
     >
