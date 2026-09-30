@@ -390,8 +390,7 @@ export default async function Home() {
       const perf = scoreboard.chapterPerfs.get(c.chapter);
       const avgCost = costBasis(c) / totalShares(c);
       sideToc.push({
-        label: `Chapter ${c.chapter}`,
-        sub: c.company ? `${c.company} · ${c.ticker}` : c.ticker,
+        label: `Chapter ${c.chapter}: ${c.company ? `${c.company} · ${c.ticker}` : c.ticker}`,
         pageIndex: pages.length,
       });
       pages.push(
