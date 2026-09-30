@@ -35,8 +35,8 @@ makes it worth writing down.
 I want to learn to think the way **Warren Buffett, Charlie Munger, and
 Mohnish Pabrai** think. I am nowhere close. This is chapter one of trying.
 
-Not long ago my dad showed me a YouTube video of Mohnish Pabrai. (First honest
-reaction: I loved the mustache.) But the part that stuck was a story. Years back
+Not long ago my dad showed me [a YouTube interview with Mohnish Pabrai](https://www.youtube.com/watch?v=9TsjAaFZG20).
+(First honest reaction: I loved the mustache.) But the part that stuck was a story. Years back
 he owned a piece of Ferrari and then sold it — and Ferrari went on to become one
 of the most valuable car companies in the world, worth close to a hundred
 billion dollars. When I did the math afterward, even a small slice of that — say
@@ -52,8 +52,9 @@ picks to really work for the whole thing to turn out well, so patience beats
 being right every time; and the simplest, maybe most important one — spend less
 than you earn. Honestly, I'm just trying to copy him.
 
-Mohnish also mentioned a book called *100 to 1 in the Stock Market*. I've started
-it — not all the way through yet, I'll be honest — but the idea I took from it is
+In [another talk](https://www.youtube.com/watch?v=QTmurI1r4_0), Mohnish mentioned
+a book called *100 to 1 in the Stock Market*. I've started it — not all the way
+through yet, I'll be honest — but the idea I took from it is
 that a few ordinary stocks, held patiently for a very long time, quietly turned
 into around a hundred times what someone paid for them. I might be simplifying
 it, and I could be wrong about the details. But that idea is a big reason this
