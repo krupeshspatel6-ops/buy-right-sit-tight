@@ -186,25 +186,25 @@ export default function BookReader({
       </div>
 
       {sideToc && sideToc.length > 0 && (
-        <aside className="hidden xl:block w-64 shrink-0">
+        <aside className="hidden xl:block w-72 shrink-0">
           <div className="sticky top-10 flex max-h-[80vh] flex-col">
             <h3 className="text-xs uppercase tracking-widest text-ink-soft mb-3">
               In this book
             </h3>
-            <ul className="min-h-0 flex-1 space-y-1 overflow-y-auto pr-1 text-sm">
+            <ul className="min-h-0 flex-1 space-y-1 overflow-y-auto pr-1 text-[13px]">
               {sideToc.map((t) => (
                 <li key={t.pageIndex}>
                   <button
                     onClick={() => jumpTo(t.pageIndex)}
-                    className={`w-full rounded px-3 py-1.5 text-left transition-colors ${
+                    className={`w-full rounded px-1.5 py-1.5 text-left transition-colors ${
                       index === t.pageIndex
                         ? "bg-white font-semibold shadow-sm"
                         : "text-ink-soft hover:bg-white/70"
                     }`}
                   >
-                    <span className="block">{t.label}</span>
+                    <span className="block whitespace-nowrap">{t.label}</span>
                     {t.sub && (
-                      <span className="block text-xs text-ink-soft">{t.sub}</span>
+                      <span className="block whitespace-nowrap text-xs text-ink-soft">{t.sub}</span>
                     )}
                   </button>
                 </li>
