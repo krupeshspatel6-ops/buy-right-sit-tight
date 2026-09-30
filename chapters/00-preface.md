@@ -52,6 +52,17 @@ picks to really work for the whole thing to turn out well, so patience beats
 being right every time; and the simplest, maybe most important one — spend less
 than you earn. Honestly, I'm just trying to copy him.
 
+Mohnish also mentioned a book called *100 to 1 in the Stock Market*. I've started
+it — not all the way through yet, I'll be honest — but the idea I took from it is
+that a few ordinary stocks, held patiently for a very long time, quietly turned
+into around a hundred times what someone paid for them. I might be simplifying
+it, and I could be wrong about the details. But that idea is a big reason this
+book exists the way it does: written live, timestamped, and **never edited after
+I publish.** Decades from now, anyone can come back and count — how many of my
+picks reached 100x, or at least 50x, 25x, or even 10x — and how many went
+nowhere. I don't get to quietly delete the ones that didn't work. That's the
+whole test.
+
 And a small dream: once this book is worth reading, I want to email him. Maybe he
 replies, maybe he doesn't. But if he ever let me shadow him for a day, or even
 just meet him once, that would mean everything.
