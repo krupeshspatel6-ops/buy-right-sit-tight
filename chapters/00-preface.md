@@ -35,6 +35,27 @@ makes it worth writing down.
 I want to learn to think the way **Warren Buffett, Charlie Munger, and
 Mohnish Pabrai** think. I am nowhere close. This is chapter one of trying.
 
+Not long ago my dad showed me a YouTube video of Mohnish Pabrai. (First honest
+reaction: I loved the mustache.) But the part that stuck was a story. Years back
+he owned a piece of Ferrari and then sold it — and Ferrari went on to become one
+of the most valuable car companies in the world, worth close to a hundred
+billion dollars. When I did the math afterward, even a small slice of that — say
+around one percent — would have grown into roughly a billion dollars he let go
+of by selling early. (That one percent is my own rough estimate to make the
+point, not his exact words — but the point is enormous either way.)
+
+The lesson hit me hard: **the hardest part isn't finding a great company, it's
+not selling it.** That's the muscle I'm trying to build here — ideally not
+selling my best positions at all, and letting them compound for decades. A few
+other things he said that I keep coming back to: you only need a handful of your
+picks to really work for the whole thing to turn out well, so patience beats
+being right every time; and the simplest, maybe most important one — spend less
+than you earn. Honestly, I'm just trying to copy him.
+
+And a small dream: once this book is worth reading, I want to email him. Maybe he
+replies, maybe he doesn't. But if he ever let me shadow him for a day, or even
+just meet him once, that would mean everything.
+
 A few things I want to be crystal clear about, because they matter:
 
 - **I'm 15 as I start this book.** I can't legally have my own brokerage
