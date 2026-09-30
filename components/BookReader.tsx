@@ -192,25 +192,37 @@ export default function BookReader({
               In this book
             </h3>
             <ul className="min-h-0 flex-1 space-y-1 overflow-y-auto pr-1 text-[13px]">
-              {sideToc.map((t) => (
-                <li key={t.pageIndex}>
-                  <button
-                    onClick={() => jumpTo(t.pageIndex)}
-                    className={`w-full rounded px-1.5 py-1.5 text-left transition-colors ${
-                      index === t.pageIndex
-                        ? "bg-white font-semibold shadow-sm"
-                        : "text-ink-soft hover:bg-white/70"
-                    }`}
-                  >
-                    <span className="block whitespace-nowrap">
-                      {t.label}
-                      {t.sub && (
-                        <span className="font-normal text-ink-soft"> — {t.sub}</span>
-                      )}
-                    </span>
-                  </button>
-                </li>
-              ))}
+              {sideToc.map((t) => {
+                // Accent the "Chapter N:" prefix so the real trades stand out
+                // from the front/back matter.
+                const cm = /^(Chapter \d+:)(.*)$/.exec(t.label);
+                return (
+                  <li key={t.pageIndex}>
+                    <button
+                      onClick={() => jumpTo(t.pageIndex)}
+                      className={`w-full rounded px-1.5 py-1.5 text-left transition-colors ${
+                        index === t.pageIndex
+                          ? "bg-white font-semibold shadow-sm"
+                          : "text-ink-soft hover:bg-white/70"
+                      }`}
+                    >
+                      <span className="block whitespace-nowrap">
+                        {cm ? (
+                          <>
+                            <span className="text-tape">{cm[1]}</span>
+                            {cm[2]}
+                          </>
+                        ) : (
+                          t.label
+                        )}
+                        {t.sub && (
+                          <span className="font-normal text-ink-soft"> — {t.sub}</span>
+                        )}
+                      </span>
+                    </button>
+                  </li>
+                );
+              })}
             </ul>
           </div>
         </aside>
