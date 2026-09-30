@@ -202,10 +202,12 @@ export default function BookReader({
                         : "text-ink-soft hover:bg-white/70"
                     }`}
                   >
-                    <span className="block whitespace-nowrap">{t.label}</span>
-                    {t.sub && (
-                      <span className="block whitespace-nowrap text-xs text-ink-soft">{t.sub}</span>
-                    )}
+                    <span className="block whitespace-nowrap">
+                      {t.label}
+                      {t.sub && (
+                        <span className="font-normal text-ink-soft"> — {t.sub}</span>
+                      )}
+                    </span>
                   </button>
                 </li>
               ))}
