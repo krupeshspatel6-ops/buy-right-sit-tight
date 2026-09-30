@@ -13,16 +13,18 @@ acting confident. My dad saw right through it. He told me:
 > "You're careless, and you don't really care — because it's not your money
 > at stake."
 
-That stuck with me. So he made me a deal: if I could show him I was serious
-about actually learning, I'd put in **all the money I've saved up until today**,
-and he'd add some of his own on top. And that money is more than it sounds. My
-dad started slipping small amounts into my piggy bank the day I was born, and
-he's kept it up on every birthday, Diwali, and Christmas since. When my
-grandparents visit each year they used to bring gifts; I asked them to put the
-money in the piggy bank instead, and once the rest of the family saw that, they
-started doing the same. Add my own pocket money and what I've earned doing small
-jobs for my parents and relatives, and that piggy bank quietly grew into real
-savings. Real money. My money. Now that it's at stake, I have to care.
+That stuck with me. So he made me a deal: if I was serious about actually
+learning, I'd put in **all the money I've saved up until today**, and he'd add
+some of his own on top. I took it.
+
+And that money is more than it sounds. My dad started slipping small amounts into
+my piggy bank the day I was born, and he's kept it up on every birthday, Diwali,
+and Christmas since. When my grandparents visit each year they used to bring
+gifts; I asked them to put the money in the piggy bank instead, and once the rest
+of the family saw that, they started doing the same. Add my own pocket money and
+what I've earned doing small jobs for my parents and relatives, and that piggy
+bank quietly grew into real savings. Real money. My money. Now that it's at
+stake, I have to care.
 
 So this book is me learning, in public, with real money on the line. I'm
 trying to learn two things: how to find a company that is actually *worth*
