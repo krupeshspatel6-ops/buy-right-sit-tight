@@ -93,6 +93,12 @@ export default async function Home() {
     .sort()
     .pop();
 
+  // Unrealized gain/loss on open positions, shown with a direction arrow + %.
+  const unrealized = portfolioValue !== null ? portfolioValue - investedOpen : null;
+  const unrealizedPct =
+    unrealized !== null && investedOpen > 0 ? (unrealized / investedOpen) * 100 : null;
+  const up = (unrealized ?? 0) >= 0;
+
   const ledger = (
     <div>
       <div className="caption-rule mb-3">The ledger</div>
@@ -113,12 +119,14 @@ export default async function Home() {
         <div className="stat-sub">
           {open.length === 0 ? (
             "waiting for chapter one"
-          ) : portfolioValue !== null ? (
+          ) : unrealized !== null ? (
             <>
               unrealized{" "}
-              <span className={portfolioValue - investedOpen >= 0 ? "text-gain" : "text-loss"}>
-                {portfolioValue - investedOpen >= 0 ? "+" : "−"}
-                {fmtMoney(Math.abs(portfolioValue - investedOpen))}
+              <span className={up ? "text-gain" : "text-loss"}>
+                {up ? "▲" : "▼"}
+                {unrealizedPct !== null ? ` ${Math.abs(unrealizedPct).toFixed(1)}%` : ""} ·{" "}
+                {up ? "+" : "−"}
+                {fmtMoney(Math.abs(unrealized))}
               </span>
             </>
           ) : (
