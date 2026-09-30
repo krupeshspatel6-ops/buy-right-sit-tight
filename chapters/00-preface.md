@@ -36,13 +36,13 @@ I want to learn to think the way **Warren Buffett, Charlie Munger, and
 Mohnish Pabrai** think. I am nowhere close. This is chapter one of trying.
 
 Not long ago my dad showed me [a YouTube interview with Mohnish Pabrai](https://www.youtube.com/watch?v=9TsjAaFZG20).
-(First honest reaction: I loved the mustache.) But the part that stuck was a story. Years back
-he owned a piece of Ferrari and then sold it — and Ferrari went on to become one
-of the most valuable car companies in the world, worth close to a hundred
-billion dollars. When I did the math afterward, even a small slice of that — say
-around one percent — would have grown into roughly a billion dollars he let go
-of by selling early. (That one percent is my own rough estimate to make the
-point, not his exact words — but the point is enormous either way.)
+(First honest reaction: I loved the mustache.) But the part that stuck was a
+story. In it he says he once owned about one percent of Ferrari — and then he
+sold. Ferrari went on to become one of the most valuable car companies in the
+world, worth close to a hundred billion dollars, which would put that
+one-percent stake somewhere near a billion dollars he let go of by selling early.
+(I might be rounding the numbers, so watch the interview and judge for yourself —
+but the point is enormous either way.)
 
 The lesson hit me hard: **the hardest part isn't finding a great company, it's
 not selling it.** That's the muscle I'm trying to build here — ideally not
