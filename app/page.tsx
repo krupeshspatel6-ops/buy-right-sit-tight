@@ -111,9 +111,19 @@ export default async function Home() {
           {portfolioValue !== null ? fmtMoney(portfolioValue) : "—"}
         </div>
         <div className="stat-sub">
-          {open.length > 0
-            ? `${open.length} open position${open.length === 1 ? "" : "s"}`
-            : "waiting for chapter one"}
+          {open.length === 0 ? (
+            "waiting for chapter one"
+          ) : portfolioValue !== null ? (
+            <>
+              unrealized{" "}
+              <span className={portfolioValue - investedOpen >= 0 ? "text-gain" : "text-loss"}>
+                {portfolioValue - investedOpen >= 0 ? "+" : "−"}
+                {fmtMoney(Math.abs(portfolioValue - investedOpen))}
+              </span>
+            </>
+          ) : (
+            `${open.length} open position${open.length === 1 ? "" : "s"}`
+          )}
         </div>
       </div>
 
@@ -122,17 +132,7 @@ export default async function Home() {
           <div className="stat-label">Total invested · at cost</div>
           <div className="stat-num">{fmtMoney(investedOpen)}</div>
           <div className="stat-sub">
-            {portfolioValue !== null ? (
-              <>
-                unrealized{" "}
-                <span className={portfolioValue - investedOpen >= 0 ? "text-gain" : "text-loss"}>
-                  {portfolioValue - investedOpen >= 0 ? "+" : "−"}
-                  {fmtMoney(Math.abs(portfolioValue - investedOpen))}
-                </span>
-              </>
-            ) : (
-              `${open.length} chapter${open.length === 1 ? "" : "s"} · at cost`
-            )}
+            {open.length} open position{open.length === 1 ? "" : "s"}
           </div>
         </div>
       )}
