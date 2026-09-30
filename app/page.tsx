@@ -99,7 +99,17 @@ export default async function Home() {
 
       <div className="stat-card">
         <div className="stat-label">Portfolio value · EOD</div>
-        <div className="stat-num">{portfolioValue !== null ? fmtMoney(portfolioValue) : "—"}</div>
+        <div
+          className={`stat-num ${
+            open.length > 0 && portfolioValue !== null
+              ? portfolioValue >= investedOpen
+                ? "text-gain"
+                : "text-loss"
+              : ""
+          }`}
+        >
+          {portfolioValue !== null ? fmtMoney(portfolioValue) : "—"}
+        </div>
         <div className="stat-sub">
           {open.length > 0
             ? `${open.length} open position${open.length === 1 ? "" : "s"}`
