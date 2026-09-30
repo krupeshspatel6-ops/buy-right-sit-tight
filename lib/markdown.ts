@@ -20,7 +20,9 @@ export function renderMarkdown(md: string): string {
       "span",
     ],
     allowedAttributes: {
-      a: ["href", "title"],
+      // target/rel let the transformTags below actually stick — external links
+      // open in a new tab and carry the safe rel.
+      a: ["href", "title", "target", "rel"],
       img: ["src", "alt", "title"],
       "*": ["id"],
     },
