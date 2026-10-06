@@ -9,9 +9,9 @@
 // service. Never phrase it as "a code that beats the market" or invite anyone
 // to follow the signals. The record speaks; the code is just how a buy began.
 
-export type EntryKind = "code" | "copycat" | "manual";
+export type EntryKind = "code" | "copycat" | "research" | "manual";
 
-export const ENTRY_KINDS: EntryKind[] = ["code", "copycat", "manual"];
+export const ENTRY_KINDS: EntryKind[] = ["code", "copycat", "research", "manual"];
 
 export type EntryMeta = {
   kind: EntryKind;
@@ -39,6 +39,8 @@ export function entryMeta(kind: EntryKind, note?: string): EntryMeta {
         label: n ? `Copycat — ${n}` : "Copycat trade",
         short: n ? `Copycat — ${n}` : "Copycat",
       };
+    case "research":
+      return { kind, emoji: "🔎", label: "My own research", short: "Research" };
     case "manual":
       return { kind, emoji: "✋", label: "My own conviction", short: "Manual" };
   }

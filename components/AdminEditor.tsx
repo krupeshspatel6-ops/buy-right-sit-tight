@@ -56,7 +56,7 @@ export default function AdminEditor({
   const [title, setTitle] = useState("");
   const [logo, setLogo] = useState("");
   const [domain, setDomain] = useState("");
-  const [entry, setEntry] = useState<"code" | "copycat" | "manual">("code");
+  const [entry, setEntry] = useState<"code" | "copycat" | "research" | "manual">("code");
   const [entryNote, setEntryNote] = useState("");
   const [when, setWhen] = useState(nowLocalInput());
   const [price, setPrice] = useState("");
@@ -347,6 +347,7 @@ export default function AdminEditor({
               {([
                 { k: "code", txt: "⚡ Signal from the code" },
                 { k: "copycat", txt: "🧭 Copycat trade" },
+                { k: "research", txt: "🔎 My own research" },
                 { k: "manual", txt: "✋ My own conviction" },
               ] as const).map(({ k, txt }) => (
                 <button
