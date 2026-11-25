@@ -327,27 +327,10 @@ export default function AdminEditor({
           </div>
 
           <h2 className={sectionH}>2 · The buy</h2>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className={label}>Fill date &amp; time *</label>
-              <input type="datetime-local" className={field} value={when} onChange={(e) => setWhen(e.target.value)} />
-            </div>
-            <div>
-              <label className={label}>Buy note (optional)</label>
-              <input className={field} value={note} onChange={(e) => setNote(e.target.value)} placeholder="initial buy" />
-            </div>
-            <div>
-              <label className={label}>Price / share *</label>
-              <input className={field} value={price} onChange={(e) => setPrice(e.target.value)} placeholder="226.50" inputMode="decimal" />
-            </div>
-            <div>
-              <label className={label}>Shares *</label>
-              <input className={field} value={shares} onChange={(e) => setShares(e.target.value)} placeholder="10" inputMode="decimal" />
-            </div>
-          </div>
 
-          <div className="mt-3">
-            <label className={label}>Currency</label>
+          {/* Currency first — the price & shares below are entered IN this currency. */}
+          <div className="mb-3 rounded-lg border border-wall-dark bg-wall/30 px-3 py-2.5">
+            <label className={label}>Currency — the price below is in this</label>
             <div className="flex flex-wrap items-center gap-3">
               <select
                 className={`${field} max-w-[190px]`}
@@ -369,10 +352,37 @@ export default function AdminEditor({
             </div>
             {currency !== "USD" && (
               <p className="mt-1 text-[11px] text-ink-soft">
-                Price &amp; shares are in {currency}. Leave the rate blank and I&apos;ll use the
-                live USD/{currency} rate to show the USD value.
+                Enter the price &amp; shares in {currency}. Leave the rate blank and I&apos;ll use
+                the live USD/{currency} rate to show the USD value.
               </p>
             )}
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className={label}>Fill date &amp; time *</label>
+              <input type="datetime-local" className={field} value={when} onChange={(e) => setWhen(e.target.value)} />
+            </div>
+            <div>
+              <label className={label}>Buy note (optional)</label>
+              <input className={field} value={note} onChange={(e) => setNote(e.target.value)} placeholder="initial buy" />
+            </div>
+            <div>
+              <label className={label}>
+                Price / share{currency !== "USD" ? ` · in ${currency}` : ""} *
+              </label>
+              <input
+                className={field}
+                value={price}
+                onChange={(e) => setPrice(e.target.value)}
+                placeholder={currency === "USD" ? "226.50" : "46.70"}
+                inputMode="decimal"
+              />
+            </div>
+            <div>
+              <label className={label}>Shares *</label>
+              <input className={field} value={shares} onChange={(e) => setShares(e.target.value)} placeholder="10" inputMode="decimal" />
+            </div>
           </div>
 
           <div className="mt-4">
@@ -714,11 +724,15 @@ export default function AdminEditor({
                 <span>Buy{note ? ` — ${note}` : ""}</span>
                 <span className="text-ink-soft">{fmtTs(iso)}</span>
                 <span>
-                  ${Number.isFinite(priceNum) ? priceNum.toFixed(2) : "0.00"} × {shares || 0}
+                  {currency === "USD" ? "$" : ""}
+                  {Number.isFinite(priceNum) ? priceNum.toFixed(2) : "0.00"}
+                  {currency === "USD" ? "" : ` ${currency}`} × {shares || 0}
                 </span>
               </div>
               <div className="px-4 py-2 text-ink-soft">
-                Cost basis: ${cost.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                Cost basis: {currency === "USD" ? "$" : ""}
+                {cost.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                {currency === "USD" ? "" : ` ${currency}`}
               </div>
             </div>
 
