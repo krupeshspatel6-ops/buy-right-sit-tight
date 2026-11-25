@@ -2,7 +2,24 @@
 // Used to score each chapter against SPY from its first buy date. If the
 // API is unreachable the site still renders — performance cells show "—".
 
-import { Chapter, costBasis, firstBuyDate, totalShares } from "./chapters";
+import {
+  Chapter,
+  costBasis,
+  costBasisUsd,
+  firstBuyDate,
+  isForeign,
+  toUsdAtBuy,
+  totalShares,
+  yahooSymbol,
+} from "./chapters";
+
+// Live FX: units of a native currency per 1 USD (Yahoo "USD{CUR}=X"). Used to
+// convert a foreign position's live value into USD for the ledger.
+async function fxPerUsd(currency: string): Promise<number | null> {
+  if (currency === "USD") return 1;
+  const rows = await fetchDaily(`USD${currency.toUpperCase()}=X`);
+  return rows.length ? rows[rows.length - 1].close : null;
+}
 
 type Daily = { date: string; open: number; high: number; low: number; close: number };
 
@@ -48,9 +65,10 @@ export type Candle = { t: string; o: number; h: number; l: number; c: number };
 export type ChapterChart = {
   candles: Candle[];
   buyDate: string;
-  buyPrice: number; // (weighted) cost basis per share
+  buyPrice: number; // (weighted) cost basis per share, in the native currency
   period: "day" | "week" | "month";
   sell?: { date: string; price: number };
+  currency: string; // native currency of the candles ("USD" | "TRY" | …)
 };
 
 // Which calendar bucket a date falls in, so candles align to real periods:
@@ -69,7 +87,9 @@ function periodKey(date: string, period: "day" | "week" | "month"): string {
 // Open chapters extend live: each revalidate pulls fresh end-of-day data, so
 // new candles append on their own.
 export async function getChapterCandles(c: Chapter): Promise<ChapterChart | null> {
-  const rows = await fetchDaily(c.ticker);
+  // Candles stay in the stock's native market/currency (e.g. TRY on Borsa
+  // Istanbul); the buy line is the native cost, so they line up.
+  const rows = await fetchDaily(yahooSymbol(c));
   if (rows.length < 2) return null;
   const start = firstBuyDate(c).slice(0, 10);
   const end = c.sell?.date.slice(0, 10);
@@ -104,26 +124,47 @@ export async function getChapterCandles(c: Chapter): Promise<ChapterChart | null
     buyPrice: costBasis(c) / totalShares(c),
     period,
     sell: c.sell ? { date: c.sell.date.slice(0, 10), price: c.sell.price } : undefined,
+    currency: c.currency,
   };
 }
 
 export type ChapterPerf = {
-  currentPrice: number | null;
-  returnPct: number | null; // chapter return since (weighted) cost basis
+  currentPrice: number | null; // USD per share (ledger-facing)
+  returnPct: number | null; // USD return since (weighted) cost basis
   asOf: string | null; // date (YYYY-MM-DD) of the close behind currentPrice
+  currency: string; // native currency code ("USD" | "TRY" | …)
+  nativeCurrentPrice: number | null; // native per share (for display)
+  nativeAvgCost: number; // native per share (for display)
+  usdAvgCost: number; // USD per share at the purchase rate
 };
 
 export async function getChapterPerf(c: Chapter): Promise<ChapterPerf> {
-  const stock = await fetchDaily(c.ticker);
-  const avgCost = costBasis(c) / totalShares(c);
+  const stock = await fetchDaily(yahooSymbol(c));
+  const nativeAvgCost = costBasis(c) / totalShares(c);
+  const usdAvgCost = toUsdAtBuy(c, nativeAvgCost);
   const lastRow = stock.length ? stock[stock.length - 1] : null;
-  const exitPrice = c.sell ? c.sell.price : lastRow ? lastRow.close : null;
+  const nativeExit = c.sell ? c.sell.price : lastRow ? lastRow.close : null;
   const asOf = c.sell ? c.sell.date.slice(0, 10) : lastRow ? lastRow.date : null;
 
+  // Convert the live native price into USD (live FX for foreign positions).
+  let usdExit: number | null = null;
+  if (nativeExit !== null) {
+    if (!isForeign(c)) {
+      usdExit = nativeExit;
+    } else {
+      const rate = await fxPerUsd(c.currency);
+      usdExit = rate ? nativeExit / rate : null;
+    }
+  }
+
   return {
-    currentPrice: exitPrice,
-    returnPct: exitPrice !== null ? ((exitPrice - avgCost) / avgCost) * 100 : null,
+    currentPrice: usdExit,
+    returnPct: usdExit !== null ? ((usdExit - usdAvgCost) / usdAvgCost) * 100 : null,
     asOf,
+    currency: c.currency,
+    nativeCurrentPrice: nativeExit,
+    nativeAvgCost,
+    usdAvgCost,
   };
 }
 
@@ -142,7 +183,7 @@ export async function getScoreboard(chapters: Chapter[]): Promise<Scoreboard> {
   chapters.forEach((c, i) => {
     const p = perfs[i];
     if (p.returnPct !== null) {
-      const basis = costBasis(c);
+      const basis = costBasisUsd(c); // one currency (USD) across the book
       cost += basis;
       value += basis * (1 + p.returnPct / 100);
     }

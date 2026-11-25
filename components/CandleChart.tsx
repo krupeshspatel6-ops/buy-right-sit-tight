@@ -21,6 +21,9 @@ function fmtAxisDate(iso: string): string {
 export default function CandleChart({ data, ticker }: { data: ChapterChart; ticker: string }) {
   const { candles, buyPrice, sell } = data;
   if (candles.length < 2) return null;
+  // Native-currency symbol for the axis + buy line (prices are in data.currency).
+  const sym = data.currency === "TRY" ? "₺" : data.currency && data.currency !== "USD" ? "" : "$";
+  const suffix = sym ? "" : ` ${data.currency}`;
 
   const W = 720;
   const H = 260;
@@ -74,7 +77,7 @@ export default function CandleChart({ data, ticker }: { data: ChapterChart; tick
           <g key={i}>
             <line x1={padL} x2={W - padR} y1={g.yy} y2={g.yy} stroke={WALL_DARK} strokeWidth={1} />
             <text x={padL - 6} y={g.yy + 3} textAnchor="end" fontSize={10} fill={INK_SOFT} fontFamily="Archivo, system-ui, sans-serif">
-              ${g.p.toFixed(priceDecimals)}
+              {sym}{g.p.toFixed(priceDecimals)}{suffix}
             </text>
           </g>
         ))}
@@ -82,7 +85,7 @@ export default function CandleChart({ data, ticker }: { data: ChapterChart; tick
         {/* the buy-price line */}
         <line x1={padL} x2={W - padR} y1={buyY} y2={buyY} stroke={TAPE} strokeWidth={1.4} strokeDasharray="5 4" />
         <text x={W - padR} y={buyY - 4} textAnchor="end" fontSize={10} fontWeight={700} fill={TAPE} fontFamily="Archivo, system-ui, sans-serif">
-          bought ${buyPrice.toFixed(2)}
+          bought {sym}{buyPrice.toFixed(2)}{suffix}
         </text>
 
         {/* candles */}

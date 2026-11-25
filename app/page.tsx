@@ -8,6 +8,9 @@ import {
   loadChapters,
   loadPreface,
   costBasis,
+  costBasisUsd,
+  toUsdAtBuy,
+  fmtPrice,
   firstBuyDate,
   totalShares,
   chapterOtsUrl,
@@ -81,11 +84,11 @@ export default async function Home() {
       : openRows.every((r) => r.value !== null)
         ? openRows.reduce((s, r) => s + (r.value ?? 0), 0)
         : null;
-  const investedOpen = open.reduce((s, c) => s + costBasis(c), 0);
+  const investedOpen = open.reduce((s, c) => s + costBasisUsd(c), 0);
   const realized = closed.reduce((s, c) => {
     const shares = totalShares(c);
     const avg = costBasis(c) / shares;
-    return s + ((c.sell?.price ?? avg) - avg) * shares;
+    return s + toUsdAtBuy(c, ((c.sell?.price ?? avg) - avg) * shares);
   }, 0);
   const asOf = [...scoreboard.chapterPerfs.values()]
     .map((p) => p.asOf)
@@ -441,7 +444,7 @@ export default async function Home() {
                 <span className="font-bold">Buy{b.note ? ` — ${b.note}` : ""}</span>
                 <span className="text-ink-soft">{fmtTimestamp(b.date)}</span>
                 <span className="font-semibold">
-                  ${b.price.toFixed(2)} × {b.shares}
+                  {fmtPrice(c, b.price)} × {b.shares}
                 </span>
               </div>
             ))}
@@ -449,7 +452,7 @@ export default async function Home() {
               <div className="rule-dashed font-grotesk flex items-baseline justify-between gap-3 py-2.5 text-[13px] font-bold">
                 <span>Sold{c.sell.note ? ` — ${c.sell.note}` : ""}</span>
                 <span className="text-ink-soft">{fmtTimestamp(c.sell.date)}</span>
-                <span>${c.sell.price.toFixed(2)}</span>
+                <span>{fmtPrice(c, c.sell.price)}</span>
               </div>
             )}
           </div>
@@ -468,7 +471,10 @@ export default async function Home() {
                   : "—"}
               </div>
               <div className="stat-sub">
-                avg ${avgCost.toFixed(2)} → ${perf?.currentPrice?.toFixed(2) ?? "—"}
+                avg {fmtPrice(c, avgCost, perf?.usdAvgCost)} →{" "}
+                {perf?.nativeCurrentPrice != null
+                  ? fmtPrice(c, perf.nativeCurrentPrice, perf.currentPrice ?? undefined)
+                  : "—"}
                 {perf?.asOf ? ` · ${fmtDate(perf.asOf)}` : ""}
               </div>
             </div>

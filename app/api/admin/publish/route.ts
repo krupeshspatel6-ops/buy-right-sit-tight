@@ -33,7 +33,35 @@ export async function POST(req: Request) {
   if (!String(input.body || "").trim()) errors.push("Write the 'why' before publishing.");
   const entry = isEntryKind(input.entry) ? input.entry : "manual";
   const entryNote = entry === "copycat" ? String(input.entryNote || "").trim() : undefined;
+  const currency = String(input.currency || "USD").toUpperCase().replace(/[^A-Z]/g, "") || "USD";
   if (errors.length) return NextResponse.json({ ok: false, error: errors.join(" ") }, { status: 400 });
+
+  // For a non-USD buy, record the FX rate at purchase (native units per 1 USD)
+  // so the USD cost basis is fixed. Use the value the admin supplied, or fetch
+  // the live rate now (we're publishing right after the fill).
+  let fxAtBuy: number | undefined;
+  if (currency !== "USD") {
+    fxAtBuy = Number(input.fxAtBuy) > 0 ? Number(input.fxAtBuy) : undefined;
+    if (!fxAtBuy) {
+      try {
+        const r = await fetch(
+          `https://query1.finance.yahoo.com/v8/finance/chart/USD${currency}=X?range=5d&interval=1d`,
+          { headers: { "User-Agent": "Mozilla/5.0" }, cache: "no-store" }
+        );
+        const j = await r.json();
+        const p = j?.chart?.result?.[0]?.meta?.regularMarketPrice;
+        if (Number(p) > 0) fxAtBuy = Number(p);
+      } catch {
+        /* leave undefined — admin can supply it */
+      }
+    }
+    if (!fxAtBuy) {
+      return NextResponse.json(
+        { ok: false, error: `Couldn't get the USD/${currency} rate — enter it in the FX field and retry.` },
+        { status: 400 }
+      );
+    }
+  }
 
   const fileText = buildChapterFile({
     chapter,
@@ -50,6 +78,8 @@ export async function POST(req: Request) {
     exitTest: input.exitTest,
     entry,
     entryNote,
+    currency,
+    fxAtBuy,
     body: input.body,
   });
 

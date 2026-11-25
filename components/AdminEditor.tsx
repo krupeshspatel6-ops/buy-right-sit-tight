@@ -61,6 +61,9 @@ export default function AdminEditor({
   const [when, setWhen] = useState(nowLocalInput());
   const [price, setPrice] = useState("");
   const [shares, setShares] = useState("");
+  const [currency, setCurrency] = useState("USD");
+  const [fxAtBuy, setFxAtBuy] = useState(""); // optional override; else fetched live
+
   const [note, setNote] = useState("");
   const [exitTest, setExitTest] = useState("");
   const [proofs, setProofs] = useState("");
@@ -222,6 +225,8 @@ export default function AdminEditor({
           exitTest,
           entry,
           entryNote,
+          currency,
+          fxAtBuy: fxAtBuy.trim() ? Number(fxAtBuy) : undefined,
           body,
           deploy,
         }),
@@ -339,6 +344,35 @@ export default function AdminEditor({
               <label className={label}>Shares *</label>
               <input className={field} value={shares} onChange={(e) => setShares(e.target.value)} placeholder="10" inputMode="decimal" />
             </div>
+          </div>
+
+          <div className="mt-3">
+            <label className={label}>Currency</label>
+            <div className="flex flex-wrap items-center gap-3">
+              <select
+                className={`${field} max-w-[190px]`}
+                value={currency}
+                onChange={(e) => setCurrency(e.target.value)}
+              >
+                <option value="USD">USD — US stock</option>
+                <option value="TRY">TRY — Borsa Istanbul</option>
+              </select>
+              {currency !== "USD" && (
+                <input
+                  className={`${field} max-w-[230px]`}
+                  value={fxAtBuy}
+                  onChange={(e) => setFxAtBuy(e.target.value)}
+                  placeholder={`USD/${currency} at buy (blank = live)`}
+                  inputMode="decimal"
+                />
+              )}
+            </div>
+            {currency !== "USD" && (
+              <p className="mt-1 text-[11px] text-ink-soft">
+                Price &amp; shares are in {currency}. Leave the rate blank and I&apos;ll use the
+                live USD/{currency} rate to show the USD value.
+              </p>
+            )}
           </div>
 
           <div className="mt-4">

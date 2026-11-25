@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { renderMarkdown } from "@/lib/markdown";
-import { getChapter, loadChapters, costBasis, totalShares, firstBuyDate, chapterOtsUrl, chapterBitcoinProof } from "@/lib/chapters";
+import { getChapter, loadChapters, costBasis, totalShares, firstBuyDate, chapterOtsUrl, chapterBitcoinProof, fmtPrice } from "@/lib/chapters";
 import { getChapterPerf, getChapterCandles } from "@/lib/quotes";
 import { formatFillTime, formatDate } from "@/lib/format";
 import BrandMark from "@/components/BrandMark";
@@ -86,7 +86,7 @@ export default async function ChapterPage({
                   Buy{b.note ? ` — ${b.note}` : ""}
                 </td>
                 <td className="px-4 py-3 whitespace-nowrap">{fmtTimestamp(b.date)}</td>
-                <td className="px-4 py-3 text-right">${b.price.toFixed(2)}</td>
+                <td className="px-4 py-3 text-right">{fmtPrice(chapter, b.price)}</td>
                 <td className="px-4 py-3 text-right">{b.shares}</td>
               </tr>
             ))}
@@ -98,17 +98,19 @@ export default async function ChapterPage({
                 <td className="px-4 py-3 whitespace-nowrap">
                   {fmtTimestamp(chapter.sell.date)}
                 </td>
-                <td className="px-4 py-3 text-right">${chapter.sell.price.toFixed(2)}</td>
+                <td className="px-4 py-3 text-right">{fmtPrice(chapter, chapter.sell.price)}</td>
                 <td className="px-4 py-3 text-right">all</td>
               </tr>
             )}
           </tbody>
         </table>
         <div className="px-4 py-3 text-sm text-ink-soft border-t border-wall flex flex-wrap gap-x-6 gap-y-1">
-          <span>Avg cost: ${avgCost.toFixed(2)}</span>
+          <span>Avg cost: {fmtPrice(chapter, avgCost, perf.usdAvgCost)}</span>
           <span>
             {chapter.status === "open" ? "Last close" : "Exit"}:{" "}
-            {perf.currentPrice !== null ? `$${perf.currentPrice.toFixed(2)}` : "—"}
+            {perf.nativeCurrentPrice !== null
+              ? fmtPrice(chapter, perf.nativeCurrentPrice, perf.currentPrice ?? undefined)
+              : "—"}
             {perf.asOf ? ` (${formatDate(perf.asOf)})` : ""}
           </span>
           <span>

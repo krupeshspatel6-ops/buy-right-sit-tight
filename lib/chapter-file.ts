@@ -18,6 +18,8 @@ export type ChapterFileInput = {
   exitTest: string;
   entry?: EntryKind; // how this trade started
   entryNote?: string; // e.g. who was copied
+  currency?: string; // native currency (default USD); e.g. "TRY"
+  fxAtBuy?: number; // native units per 1 USD at purchase (non-USD only)
   body: string;
 };
 
@@ -67,6 +69,9 @@ export function buildChapterFile(i: ChapterFileInput): string {
     ...(i.domain ? [`domain: ${JSON.stringify(i.domain)}`] : []),
     ...(i.entry ? [`entry: ${i.entry}`] : []),
     ...(i.entry === "copycat" && i.entryNote ? [`entryNote: ${JSON.stringify(i.entryNote)}`] : []),
+    ...(i.currency && i.currency.toUpperCase() !== "USD"
+      ? [`currency: ${i.currency.toUpperCase()}`, ...(i.fxAtBuy ? [`fxAtBuy: ${i.fxAtBuy}`] : [])]
+      : []),
     "buys:",
     `  - date: "${i.date}"`,
     `    price: ${i.price}`,

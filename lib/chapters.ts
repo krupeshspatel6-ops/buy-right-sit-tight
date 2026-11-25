@@ -31,6 +31,8 @@ export type Chapter = {
   proofs: string[]; // paths under /public — broker fill screenshots / statement excerpts
   entry?: EntryKind; // how the trade started: code signal / copycat / manual
   entryNote?: string; // refines a copycat ("Pabrai") or adds a short qualifier
+  currency: string; // native trading currency, e.g. "USD" (default) or "TRY"
+  fxAtBuy?: number; // for non-USD: native units per 1 USD at purchase (e.g. 50.62 TRY/USD)
   body: string;
 };
 
@@ -90,6 +92,11 @@ export function loadChapters(): Chapter[] {
         exitTest: String(data.exitTest ?? ""),
         entry,
         entryNote,
+        currency: data.currency ? String(data.currency).toUpperCase() : "USD",
+        fxAtBuy:
+          data.fxAtBuy != null && Number.isFinite(Number(data.fxAtBuy))
+            ? Number(data.fxAtBuy)
+            : undefined,
         body: content.trim(),
       };
       return c;
@@ -115,6 +122,42 @@ export function costBasis(c: Chapter): number {
 
 export function totalShares(c: Chapter): number {
   return c.buys.reduce((sum, b) => sum + b.shares, 0);
+}
+
+// ---- Currency helpers ---------------------------------------------------
+// Positions can trade in a non-USD currency (e.g. Gimat on Borsa Istanbul, in
+// TRY). We store the native price + the FX rate at purchase, show both, and
+// convert to USD so the ledger stays in one currency.
+
+export function isForeign(c: Chapter): boolean {
+  return c.currency !== "USD";
+}
+
+// Yahoo symbol: Borsa Istanbul (TRY) tickers need the ".IS" suffix.
+export function yahooSymbol(c: Chapter): string {
+  if (c.currency === "TRY") return `${c.ticker}.IS`;
+  return c.ticker;
+}
+
+// Convert a native-currency amount to USD at the (fixed) purchase FX rate.
+export function toUsdAtBuy(c: Chapter, nativeAmount: number): number {
+  if (!isForeign(c) || !c.fxAtBuy) return nativeAmount;
+  return nativeAmount / c.fxAtBuy;
+}
+
+// Cost basis in USD (fixed, at the purchase FX rate) — what the ledger sums.
+export function costBasisUsd(c: Chapter): number {
+  return toUsdAtBuy(c, costBasis(c));
+}
+
+// Format a native price, with the USD equivalent in parentheses for foreign
+// positions. `usd` lets the caller pass a live-rate conversion (e.g. the
+// current price); otherwise it falls back to the purchase rate.
+export function fmtPrice(c: Chapter, native: number, usd?: number): string {
+  if (!isForeign(c)) return `$${native.toFixed(2)}`;
+  const inUsd = usd ?? toUsdAtBuy(c, native);
+  const nat = native.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return `${nat} ${c.currency} ($${inUsd.toFixed(2)})`;
 }
 
 export function firstBuyDate(c: Chapter): string {
