@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { marked } from "marked";
@@ -63,6 +63,7 @@ export default function AdminEditor({
   const [shares, setShares] = useState("");
   const [currency, setCurrency] = useState("USD");
   const [fxAtBuy, setFxAtBuy] = useState(""); // optional override; else fetched live
+  const [liveFx, setLiveFx] = useState<number | null>(null); // live rate for the preview
 
   const [note, setNote] = useState("");
   const [exitTest, setExitTest] = useState("");
@@ -98,6 +99,28 @@ export default function AdminEditor({
   const priceNum = Number(price);
   const sharesNum = Number(shares);
   const cost = Number.isFinite(priceNum) && Number.isFinite(sharesNum) ? priceNum * sharesNum : 0;
+
+  // Live FX for the preview, so a non-USD buy shows its USD equivalent.
+  useEffect(() => {
+    if (currency === "USD") {
+      setLiveFx(null);
+      return;
+    }
+    let cancel = false;
+    fetch(`/api/admin/fx?currency=${encodeURIComponent(currency)}`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (!cancel) setLiveFx(Number(d?.rate) > 0 ? Number(d.rate) : null);
+      })
+      .catch(() => {});
+    return () => {
+      cancel = true;
+    };
+  }, [currency]);
+  // The rate the USD preview uses: the manual override if given, else the live rate.
+  const previewFx = Number(fxAtBuy) > 0 ? Number(fxAtBuy) : liveFx;
+  const usdCost = currency !== "USD" && previewFx ? cost / previewFx : null;
+  const usdPerShare = currency !== "USD" && previewFx && priceNum > 0 ? priceNum / previewFx : null;
 
   async function askAI(mode: "improve" | "questions") {
     setAi({ busy: true, text: "", mode });
@@ -726,13 +749,18 @@ export default function AdminEditor({
                 <span>
                   {currency === "USD" ? "$" : ""}
                   {Number.isFinite(priceNum) ? priceNum.toFixed(2) : "0.00"}
-                  {currency === "USD" ? "" : ` ${currency}`} × {shares || 0}
+                  {currency === "USD" ? "" : ` ${currency}`}
+                  {usdPerShare != null ? ` (≈ $${usdPerShare.toFixed(2)})` : ""} × {shares || 0}
                 </span>
               </div>
               <div className="px-4 py-2 text-ink-soft">
                 Cost basis: {currency === "USD" ? "$" : ""}
                 {cost.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 {currency === "USD" ? "" : ` ${currency}`}
+                {currency !== "USD" &&
+                  (usdCost != null
+                    ? ` (≈ $${usdCost.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })})`
+                    : " (≈ USD set at publish)")}
               </div>
             </div>
 
